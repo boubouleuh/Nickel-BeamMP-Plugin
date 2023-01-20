@@ -25,7 +25,7 @@ To install the plugin, you can download the latest version from the link below:
 
 (the github link will come later)
 
-Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory (its an exemple). On the first launch of the server with the plugin, you will need to modify the staffs.txt file located in the server root directory and add your username in order to access the commands. From there, you can use the ;addstaff command to add additional staff members to the server.
+Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory (its an exemple). On the first launch of the server with the plugin, you will need to modify the staffs.txt file located in the server root directory and add your username or use "addstaff <username>" in the server console in order to access the commands. From there, you can use the ;addstaff command to add additional staff members to the server.
 
 # Conclusion
 Nickel is a powerful and easy-to-use moderation plugin that is perfect for managing your BeamMP server. Even though it's in alpha version, it's already packed with useful features and will continue to improve over time. Try it out today and see how it can improve your server management experience!
