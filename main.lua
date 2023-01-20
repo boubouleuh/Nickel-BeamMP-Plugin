@@ -1,6 +1,90 @@
 
-PREFIX = ";"
+CONFIG = {
+    PREFIX = ";",
+    NOGUEST = "true"
+}
 COMMANDLIST = {}
+
+
+function onInit()
+    --crée le fichier toml si il n'existe pas
+    if not io.open("config.toml") then
+        local file = io.open("config.toml", "w")
+
+        --write array to file without toml
+        for key, value in pairs(CONFIG) do
+            file:write(key .. " = " .. value .. "\n")
+        end
+        file:close()
+    else
+        --check if file contains the same keys as config array
+        local file = io.open("config.toml", "r")
+        local content = file:read("*all")
+        file:close()
+
+        --loop in config array
+        for key, value in pairs(CONFIG) do
+            --check if key is not in file
+            if not string.match(content, key) then
+                --add key to file
+                file = io.open("config.toml", "a")
+                file:write(key .. " = " .. value .. "\n")
+                file:close()
+            end
+        end
+    end
+
+
+    --prefix and guest
+    PREFIX = getConfigValue("PREFIX")
+
+    --check files
+    --array with all file name
+    local files = {"staff.txt", "bans.txt", "banips.txt"}
+    
+    --loop in files
+    for key, value in pairs(files) do
+        checkFileEndWithNewLine(value)
+    end
+
+
+    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o plugin loaded successfully")
+
+end
+
+
+--function getConfigValue
+function getConfigValue(config_name)
+    local file = io.open("config.toml", "r")
+    local content = file:read("*all")
+    file:close()
+
+    --string match for value like : VARIABLE = value (work for every variable and value)
+
+    return string.match(content, config_name .. "%s*=%s*(.-)%s*\n")
+    
+end
+
+--function editConfigValue
+function editConfigValue(config_name, new_value)
+    local file = io.open("config.toml", "r")
+    local content = file:read("*all")
+    file:close()
+
+    --string match for value like : VARIABLE = value (work for every variable and value)
+
+    local value = string.match(content, config_name .. "%s*=%s*(.-)%s*\n")
+    
+    --check if value is not nil
+    if value ~= nil then
+        --replace value
+        content = string.gsub(content, config_name .. "%s*=%s*(.-)%s*\n", config_name .. " = " .. new_value .. "\n")
+        --write new content to file
+        file = io.open("config.toml", "w")
+        file:write(content)
+        file:close()
+    end
+end
 
 
 -- GetPlayerId function
@@ -56,7 +140,7 @@ function CreateCommandWithParameter(sender_id, message, command, callback)
             COMMANDLIST[command] = command
         end
         if string.match(message, command .. "$") then
-            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Please enter a name")
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Please enter a parameter")
             return
         end
             if string.match(message, command .. "%s") then
@@ -208,19 +292,33 @@ function ban(sender_id, parameter)
 
 end
 
-function onInit()
-    --array with all file name
-    local files = {"staff.txt", "bans.txt", "banips.txt"}
-    
-    --loop in files
-    for key, value in pairs(files) do
-        checkFileEndWithNewLine(value)
+--noguest command, parameter can be true or false
+function noguest(sender_id, parameter)
+    -- check if parameter is true or false
+    local actual_noguest = getConfigValue("NOGUEST")
+    if parameter == "true" then
+        if actual_noguest == "true" then
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No guest mode already activated")
+        else
+            -- set noguest to true
+            editConfigValue("NOGUEST", "true")
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No guest mode activated")
+        end
+    elseif parameter == "false" then
+        if actual_noguest == "false" then
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No guest mode already deactivated")
+        else
+            -- set noguest to false
+            editConfigValue("NOGUEST", "false")
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No guest mode deactivated")
+        end
+        
+    else
+        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid parameter. Valid parameter : true or false")
     end
-
-
-    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o plugin loaded successfully")
-
 end
+
+
 function handleConsoleInput(cmd)
     local delim = cmd:find(' ')
     if delim then
@@ -378,9 +476,15 @@ function onPlayerJoin(player_id, player_name)
     end
 end
 
-function onPlayerAuth(name, role)
+function onPlayerAuth(name, role, isGuest)
     local normalban = io.open("bans.txt", "a+")
-   
+    local noguest = getConfigValue("NOGUEST")
+    if noguest == "true" then
+        if isGuest then
+            return "You must be signed in to join this server!"
+        end
+    end
+
     if normalban:read("*a"):find(name) then
         return "You are banned from this server"
     end
@@ -420,6 +524,7 @@ function MyChatMessageHandler(sender_id, sender_name, message)
                     CreateCommandWithParameter(sender_id, message, "banip", banip)
                     CreateCommandWithParameter(sender_id, message, "unban", unban)
                     CreateCommandWithParameter(sender_id, message, "unbanip", unbanip)
+                    CreateCommandWithParameter(sender_id, message, "noguest", noguest)
 
                     CreateCommandWithoutParameter(sender_id, message, "help", help)
 
