@@ -18,12 +18,9 @@ The ";" prefix for commands is customizable, allowing you to choose the prefix t
 # Installation
 To install the plugin, you can download the latest version from the link below:
 
+(I fixed a bug that prevents the correct addition of a staff, Thanks to O1LER) Github here !
 
-(I fixed a bug that prevents the correct addition of a staff, Thanks to O1LER) All other updates will be on the github that I will make available here
-
-[Download Nickel](https://cdn.discordapp.com/attachments/905419282169597963/1066036057528868966/main.lua)
-
-(the github link will come later)
+[Download Nickel on Github](https://github.com/boubouleuh/Nickel-BeamMP-Plugin)
 
 Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory (its an exemple). On the first launch of the server with the plugin, you will need to modify the staffs.txt file located in the server root directory and add your username or use "addstaff <username>" in the server console in order to access the commands. From there, you can use the ;addstaff command to add additional staff members to the server.
 
