@@ -11,6 +11,8 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 - ;unbanip - unban a player's IP from the server
 - ;Kick - kicks a player from the server
 - ;ip - retrieves the IP of a player on the server
+- ;noguest - choose if guests players can join
+- ;help - show all commands
 
 # Customization
 The ";" prefix for commands is customizable, allowing you to choose the prefix that works best for your server.
