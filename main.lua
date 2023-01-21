@@ -197,10 +197,12 @@ end
 --addStaff
 function addStaff(sender_id, parameter)
     -- check if parameter is not already in staffs
+    player_target = GetPlayerId(parameter)
     local is_in_staffs = false
     for key, value in pairs(STAFFS) do
         if value == parameter then
             is_in_staffs = true
+            break
         end
     end
     -- if not in staffs, add it
@@ -211,6 +213,7 @@ function addStaff(sender_id, parameter)
         file:write(parameter .. "\n")
         file:close()
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " added")
+        MP.SendChatMessage(player_target, "^l^7 Nickel |^r^o You are now a staff")
     else
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " already in staffs")
     end
@@ -221,10 +224,12 @@ end
 --removeStaff
 function removeStaff(sender_id, parameter)
     -- check if parameter is in staffs
+    player_target = GetPlayerId(parameter)
     local is_in_staffs = false
     for key, value in pairs(STAFFS) do
         if value == parameter then
             is_in_staffs = true
+            break
         end
     end
     -- if in staffs, remove it
@@ -239,6 +244,7 @@ function removeStaff(sender_id, parameter)
         end
         file:close()
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " removed")
+        MP.SendChatMessage(player_target, "^l^7 Nickel |^r^o You are no longer a staff")
     else
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " not in staffs")
     end
@@ -282,6 +288,7 @@ function ban(sender_id, parameter)
         for line in file:lines() do
             if line == parameter then
                 is_in_bans = true
+                break
             end
         end
         if is_in_bans == false then
@@ -339,6 +346,7 @@ function handleConsoleInput(cmd)
             for key, value in pairs(STAFFS) do
                 if value == message then
                     is_in_staffs = true
+                    break
                 end
             end
             -- if not in staffs, add it
@@ -379,6 +387,7 @@ function banip(sender_id, parameter)
         for line in file:lines() do
             if line == parameter then
                 is_in_bans = true
+                break
             end
         end
         if is_in_bans == false then
@@ -455,10 +464,21 @@ function unbanip(sender_id, parameter)
     for i, line in ipairs(lines) do
         fileWrite:write(line .. "\n")
     end
-        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Ip " .. parameter .. " unbanned")
-        fileWrite:close()
-        return 
+    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Ip " .. parameter .. " unbanned")
+    fileWrite:close()
 
+end
+
+--countdown
+function countdown(sender_id)
+    local time = 5
+
+    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Countdown started")
+    for i = time, 1, -1 do
+        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. i)
+        MP.Sleep(1000)
+    end
+    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
 end
 
 function CountSeconds()
@@ -481,9 +501,16 @@ function onPlayerJoin(player_id, player_name)
     for key, value in pairs(STAFFS) do
         if value == player_name then
             -- send message to player
-            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o Welcome staff " .. player_name)
+            is_staff = true
+            break
         end
     end
+    if is_staff then
+        MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o Welcome staff " .. player_name)
+    else
+        MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o Welcome " .. player_name)
+    end
+
 end
 
 function onPlayerAuth(name, role, isGuest)
@@ -513,52 +540,53 @@ function onPlayerConnecting(player_id)
     ipban:close()
 end
 
-
 function MyChatMessageHandler(sender_id, sender_name, message)
 
-
-        --if message start with PREFIX
-        if string.sub(message, 1, string.len(PREFIX)) == PREFIX then
-
-            -- check if sender is staff
-            for key, value in pairs(STAFFS) do
-                if value == sender_name then
-                    
-                    --get the first word of message
-                    local command = string.match(message, "%S+")
-                
-
-                    CreateCommandWithParameter(sender_id, message, "removestaff", removeStaff)
-                    CreateCommandWithParameter(sender_id, message, "addstaff", addStaff)
-                    CreateCommandWithoutParameter(sender_id, message, "ip", ip)
-                    CreateCommandWithParameter(sender_id, message, "kick", kick)
-                    CreateCommandWithParameter(sender_id, message, "ban", ban)
-                    CreateCommandWithParameter(sender_id, message, "banip", banip)
-                    CreateCommandWithParameter(sender_id, message, "unban", unban)
-                    CreateCommandWithParameter(sender_id, message, "unbanip", unbanip)
-                    CreateCommandWithParameter(sender_id, message, "noguest", noguest)
-
-                    CreateCommandWithoutParameter(sender_id, message, "help", help)
-
-                    if COMMANDLIST[command] == nil then
-                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Command not found")
-                    end
-
-
-                    return -1
-                end
-                --if value equal the last value of STAFFS
-                if value == STAFFS[#STAFFS] then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You are not staff")
-                    return -1
-                end
+    --if message start with PREFIX
+    if string.sub(message, 1, string.len(PREFIX)) == PREFIX then
+        is_staff = false
+        for key, value in pairs(STAFFS) do
+            if value == sender_name then
+                is_staff = true
+                break
             end
-        
         end
+        --get the first word of message
+        local command = string.match(message, "%S+")
+        if is_staff then
+
+
+            CreateCommandWithParameter(sender_id, message, "removestaff", removeStaff)
+            CreateCommandWithParameter(sender_id, message, "addstaff", addStaff)
+            CreateCommandWithoutParameter(sender_id, message, "ip", ip)
+            CreateCommandWithParameter(sender_id, message, "kick", kick)
+            CreateCommandWithParameter(sender_id, message, "ban", ban)
+            CreateCommandWithParameter(sender_id, message, "banip", banip)
+            CreateCommandWithParameter(sender_id, message, "unban", unban)
+            CreateCommandWithParameter(sender_id, message, "unbanip", unbanip)
+            CreateCommandWithParameter(sender_id, message, "noguest", noguest)
+            CreateCommandWithoutParameter(sender_id, message, "countdown", countdown)
+
+            CreateCommandWithoutParameter(sender_id, message, "help", help)
+            if COMMANDLIST[command] == nil then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Command not found")
+            end
+            COMMANDLIST = {}
+            return -1
+        else
+            CreateCommandWithoutParameter(sender_id, message, "countdown", countdown)
+
+            CreateCommandWithoutParameter(sender_id, message, "help", help)
+            if COMMANDLIST[command] == nil then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Command not found")
+            end
+            COMMANDLIST = {}
+            return -1
+        end
+    end
+
+
 end
-
-
-
 
 
 
@@ -571,4 +599,3 @@ MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 
 
 MP.CreateEventTimer("EverySecond", 1000)
-
