@@ -100,6 +100,16 @@ end
 
 
 function checkFileEndWithNewLine(file_name)
+
+
+    --check if file exists
+    if not io.open(file_name) then
+        local file = io.open(file_name, "w")
+        file:close()
+        print(file_name .. " created")
+        return
+    end
+    
     local file = io.open(file_name, "r")
     local content = file:read("*all")
 
@@ -477,7 +487,7 @@ function onPlayerJoin(player_id, player_name)
 end
 
 function onPlayerAuth(name, role, isGuest)
-    local normalban = io.open("bans.txt", "a+")
+    local normalban = io.open("bans.txt", "r")
     local noguest = getConfigValue("NOGUEST")
     if noguest == "true" then
         if isGuest then
@@ -488,10 +498,11 @@ function onPlayerAuth(name, role, isGuest)
     if normalban:read("*a"):find(name) then
         return "You are banned from this server"
     end
+    normalban:close()
 end
 
 function onPlayerConnecting(player_id)
-    local ipban = io.open("banips.txt", "a+")
+    local ipban = io.open("banips.txt", "r")
     --get ip of player
     local player_identifiers = MP.GetPlayerIdentifiers(player_id)
     local player_ip = player_identifiers['ip']
@@ -499,6 +510,7 @@ function onPlayerConnecting(player_id)
     if ipban:read("*a"):find(player_ip) then
         MP.DropPlayer(player_id, "You are ip banned from this server")
     end
+    ipban:close()
 end
 
 
