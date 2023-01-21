@@ -35,6 +35,33 @@ function onInit()
     end
 
 
+    --open ban file then loop in bans line
+    local file = io.open("bans.txt", "r")
+    local content = file:read("*all")
+    file:close()
+
+    --loop in lines
+    for line in content:gmatch("[^\r\n]+") do
+        --check if line is not empty
+        if line ~= "" then
+            --if line have beammp id after name
+            if string.match(line, "%s") then
+                print(line .. " ban line good")
+            else
+                --delete line
+                print(line .. " ban line bad, deleting line (please reban the player with the command)")
+                content = string.gsub(content, line .. "\n", "")
+                --write new content to file
+                file = io.open("bans.txt", "w")
+                file:write(content)
+                file:close()
+            end
+        end
+    end
+
+
+ 
+
     --prefix and guest
     PREFIX = getConfigValue("PREFIX")
 
@@ -96,6 +123,13 @@ function GetPlayerId(player_name)
         end
     end
     return -1
+end
+
+--getPlayerBeamMPID with GetPlayerIdentifiers
+function getPlayerBeamMPID(player_id)
+    local identifiers = MP.GetPlayerIdentifiers(player_id)
+    local player_beammp_id = identifiers['beammp']
+    return player_beammp_id
 end
 
 
@@ -210,7 +244,8 @@ function addStaff(sender_id, parameter)
         checkFileEndWithNewLine("staff.txt")
         --write staff to file
         local file = io.open("staff.txt", "a+")
-        file:write(parameter .. "\n")
+        local beammp_id = getPlayerBeamMPID(player_target)
+        file:write(parameter .. " " .. beammp_id .. "\n")
         file:close()
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " added")
         MP.SendChatMessage(player_target, "^l^7 Nickel |^r^o You are now a staff")
@@ -239,7 +274,8 @@ function removeStaff(sender_id, parameter)
         local file = io.open("staff.txt", "w")
         for key, value in pairs(STAFFS) do
             if value ~= parameter then
-                file:write(value .. "\n")
+                local beammp_id = getPlayerBeamMPID(value)
+                file:write(value .. " " .. beammp_id .. "\n")
             end
         end
         file:close()
@@ -275,10 +311,12 @@ function kick(sender_id, parameter)
     end
 end 
 
+
 --ban command
 function ban(sender_id, parameter)
     -- get player id
     local player_id = GetPlayerId(parameter)
+    local player_beammp_id = getPlayerBeamMPID(player_id)
     -- check if player is online
     if player_id ~= -1 then
         local file = io.open("bans.txt", "a+")
@@ -286,14 +324,16 @@ function ban(sender_id, parameter)
         --check if parameter exist in file
         local is_in_bans = false
         for line in file:lines() do
-            if line == parameter then
+
+            --if line start with parameter
+            if string.match(line, parameter) then
                 is_in_bans = true
                 break
             end
         end
         if is_in_bans == false then
             checkFileEndWithNewLine("bans.txt")
-            file:write(parameter .. "\n")
+            file:write(parameter .. " " .. player_beammp_id .. "\n")
             file:close()
             -- ban player
             MP.DropPlayer(player_id, "Banned by ".. MP.GetPlayerName(sender_id))
@@ -337,6 +377,10 @@ end
 
 
 function handleConsoleInput(cmd)
+
+    if cmd == "addstaff" or cmd == "addstaff " then
+        return "Usage : addstaff <player_name>"
+    end
     local delim = cmd:find(' ')
     if delim then
         local message = cmd:sub(delim+1)
@@ -359,10 +403,9 @@ function handleConsoleInput(cmd)
             else
                 return "Staff " .. message .. " already in staffs"
             end
-                
+               
         end
-    else
-        return "Please insert a name after this command"
+
 
     end
 end
@@ -407,7 +450,16 @@ function banip(sender_id, parameter)
     end
 end
 
---unban command
+
+
+
+
+
+
+
+
+
+
 function unban(sender_id, parameter)
     -- get player id
     local player_id = GetPlayerId(parameter)
@@ -417,10 +469,11 @@ function unban(sender_id, parameter)
         lines = {}
         is_banned = false
         for line in fileRead:lines() do
-            if line ~= parameter then
-                lines[#lines + 1] = line
-            else
+            --if line start with parameter
+            if string.match(line, parameter) then
                 is_banned = true
+            else
+                lines[#lines + 1] = line
             end
         end
         fileRead:close()
@@ -482,21 +535,51 @@ function countdown(sender_id)
 end
 
 function CountSeconds()
-    local file = io.open("staff.txt", "a+")
+
+    local file = io.open("staff.txt", "r")
+
+    --check if line contain a staff and if yes check if there is the beammp id after the name and if not append the beammp id
+    for line in file:lines() do
+        local staff = line
+        local staff_id = GetPlayerId(staff)
+        if staff_id ~= -1 then
+            local staff_beammp_id = getPlayerBeamMPID(staff_id)
+            if string.find(line, staff_beammp_id) == nil then
+                lines = {}
+                for line in file:lines() do
+                    if line ~= staff then
+                        lines[#lines + 1] = line
+                    else
+                        lines[#lines + 1] = staff .. " " .. staff_beammp_id
+                    end
+                end
+                file:close()
+                local fileWrite = io.open("staff.txt", "w")
+                for i, line in ipairs(lines) do
+                    fileWrite:write(line .. "\n")
+                end
+                fileWrite:close()
+            end
+        end
+    end
 
     -- global value staff
+    local file = io.open("staff.txt", "r")
     STAFFS = {}
     -- append every line to staffs 
     for line in file:lines() do
-        table.insert(STAFFS, line)
+        --get first word of line
+        local staff = string.match(line, "%S+")
+        table.insert(STAFFS, staff)
 
     end
+    file:close()
 end
 
 
-function onPlayerJoin(player_id, player_name)
+function onPlayerJoin(player_id)
     -- check if player is staff
-
+    local player_name = MP.GetPlayerName(player_id)
 
     for key, value in pairs(STAFFS) do
         if value == player_name then
@@ -514,7 +597,7 @@ function onPlayerJoin(player_id, player_name)
 end
 
 function onPlayerAuth(name, role, isGuest)
-    local normalban = io.open("bans.txt", "r")
+
     local noguest = getConfigValue("NOGUEST")
     if noguest == "true" then
         if isGuest then
@@ -522,10 +605,7 @@ function onPlayerAuth(name, role, isGuest)
         end
     end
 
-    if normalban:read("*a"):find(name) then
-        return "You are banned from this server"
-    end
-    normalban:close()
+
 end
 
 function onPlayerConnecting(player_id)
@@ -538,6 +618,13 @@ function onPlayerConnecting(player_id)
         MP.DropPlayer(player_id, "You are ip banned from this server")
     end
     ipban:close()
+
+    local normalban = io.open("bans.txt", "r")
+    local player_beammpid = getPlayerBeamMPID(player_id)
+    if normalban:read("*a"):find(player_beammpid) then
+        MP.DropPlayer(player_id, "You are banned from this server")
+    end
+    normalban:close()
 end
 
 function MyChatMessageHandler(sender_id, sender_name, message)
