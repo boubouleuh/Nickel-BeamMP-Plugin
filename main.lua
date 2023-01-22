@@ -537,31 +537,27 @@ end
 function CountSeconds()
 
     local file = io.open("staff.txt", "r")
+    lines = {}
 
     --check if line contain a staff and if yes check if there is the beammp id after the name and if not append the beammp id
     for line in file:lines() do
-        local staff = line
+        --get first word of line
+        local staff = string.match(line, "%S+")
         local staff_id = GetPlayerId(staff)
         if staff_id ~= -1 then
             local staff_beammp_id = getPlayerBeamMPID(staff_id)
             if string.find(line, staff_beammp_id) == nil then
-                lines = {}
-                for line in file:lines() do
-                    if line ~= staff then
-                        lines[#lines + 1] = line
-                    else
-                        lines[#lines + 1] = staff .. " " .. staff_beammp_id
-                    end
-                end
-                file:close()
-                local fileWrite = io.open("staff.txt", "w")
-                for i, line in ipairs(lines) do
-                    fileWrite:write(line .. "\n")
-                end
-                fileWrite:close()
+                line = staff .. " " .. staff_beammp_id
             end
         end
+        lines[#lines + 1] = line
     end
+    file:close()
+    local fileWrite = io.open("staff.txt", "w")
+    for _, line in pairs(lines) do
+        fileWrite:write(line .. "\n")
+    end
+    fileWrite:close()
 
     -- global value staff
     local file = io.open("staff.txt", "r")
@@ -571,7 +567,6 @@ function CountSeconds()
         --get first word of line
         local staff = string.match(line, "%S+")
         table.insert(STAFFS, staff)
-
     end
     file:close()
 end
