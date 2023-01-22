@@ -567,7 +567,7 @@ end
 function onPlayerJoin(player_id)
     -- check if player is staff
     local player_name = MP.GetPlayerName(player_id)
-
+    local is_staff = false
     for key, value in pairs(STAFFS) do
         if value == player_name then
             -- send message to player
