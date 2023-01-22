@@ -230,21 +230,24 @@ end
 
 --addStaff
 function addStaff(sender_id, parameter)
-    -- check if parameter is not already in staffs
-    player_target = GetPlayerId(parameter)
+    -- check if parameter is already in staffs
+    local player_target = GetPlayerId(parameter)
     local is_in_staffs = false
-    for key, value in pairs(STAFFS) do
-        if value == parameter then
+    local file = io.open("staff.txt", "r")
+    for line in file:lines() do
+        local staff_name, beammp_id = string.match(line, "(%S+)%s+(%S+)")
+        if staff_name == parameter then
             is_in_staffs = true
             break
         end
     end
+    file:close()
     -- if not in staffs, add it
-    if is_in_staffs == false then
+    if not is_in_staffs then
+        local beammp_id = getPlayerBeamMPID(player_target)
         checkFileEndWithNewLine("staff.txt")
         --write staff to file
         local file = io.open("staff.txt", "a+")
-        local beammp_id = getPlayerBeamMPID(player_target)
         file:write(parameter .. " " .. beammp_id .. "\n")
         file:close()
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " added")
@@ -254,37 +257,34 @@ function addStaff(sender_id, parameter)
     end
 end
 
-
-
---removeStaff
+--removeStaff function
 function removeStaff(sender_id, parameter)
     -- check if parameter is in staffs
-    player_target = GetPlayerId(parameter)
     local is_in_staffs = false
-    for key, value in pairs(STAFFS) do
-        if value == parameter then
+    local file = io.open("staff.txt", "r")
+    for line in file:lines() do
+        local staff_name, beammp_id = string.match(line, "(%S+)%s+(%S+)")
+        if staff_name == parameter then
             is_in_staffs = true
             break
         end
     end
+    file:close()
     -- if in staffs, remove it
-    if is_in_staffs == true then
-        checkFileEndWithNewLine("staff.txt")
-        --write staff to file
-        local file = io.open("staff.txt", "w")
-        for key, value in pairs(STAFFS) do
-            if value ~= parameter then
-                local beammp_id = getPlayerBeamMPID(value)
-                file:write(value .. " " .. beammp_id .. "\n")
-            end
-        end
+    if is_in_staffs then
+        local file = io.open("staff.txt", "r")
+        local content = file:read("*all")
+        file:close()
+        content = string.gsub(content, parameter .. "%s+%S+%s*\n", "")
+        file = io.open("staff.txt", "w")
+        file:write(content)
         file:close()
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " removed")
-        MP.SendChatMessage(player_target, "^l^7 Nickel |^r^o You are no longer a staff")
     else
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Staff " .. parameter .. " not in staffs")
     end
 end
+
 
 --help
 function help(sender_id)
@@ -461,43 +461,32 @@ end
 
 
 function unban(sender_id, parameter)
-    -- get player id
-    local player_id = GetPlayerId(parameter)
-    -- check if player is online
-    if player_id ~= -1 then
-        local fileRead = io.open("bans.txt", "r")
-        lines = {}
-        is_banned = false
-        for line in fileRead:lines() do
-            --if line start with parameter
-            if string.match(line, parameter) then
-                is_banned = true
-            else
-                lines[#lines + 1] = line
-            end
+    local fileRead = io.open("bans.txt", "r")
+    lines = {}
+    is_banned = false
+    for line in fileRead:lines() do
+        --if line start with parameter
+        if string.match(line, parameter) then
+            is_banned = true
+        else
+            lines[#lines + 1] = line
         end
-        fileRead:close()
-        if is_banned == false then
-            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " not banned")
-            return
-        end
-        local fileWrite = io.open("bans.txt", "w")
-        for i, line in ipairs(lines) do
-            fileWrite:write(line .. "\n")
-        end
-            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " unbanned")
-            fileWrite:close()
-            return 
-        
-    else
-        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " not found")
     end
-
+    fileRead:close()
+    if is_banned == false then
+        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " not banned")
+        return
+    end
+    local fileWrite = io.open("bans.txt", "w")
+    for i, line in ipairs(lines) do
+        fileWrite:write(line .. "\n")
+    end
+        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " unbanned")
+        fileWrite:close()
 end
 
 --unbanip command
 function unbanip(sender_id, parameter)
-    -- check if player is online
     local fileRead = io.open("banips.txt", "r")
     lines = {}
     is_banned = false
@@ -538,7 +527,7 @@ function CountSeconds()
 
     local file = io.open("staff.txt", "r")
     lines = {}
-
+    local modif = false
     --check if line contain a staff and if yes check if there is the beammp id after the name and if not append the beammp id
     for line in file:lines() do
         --get first word of line
@@ -548,16 +537,19 @@ function CountSeconds()
             local staff_beammp_id = getPlayerBeamMPID(staff_id)
             if string.find(line, staff_beammp_id) == nil then
                 line = staff .. " " .. staff_beammp_id
+                modif = true
             end
         end
         lines[#lines + 1] = line
     end
     file:close()
-    local fileWrite = io.open("staff.txt", "w")
-    for _, line in pairs(lines) do
-        fileWrite:write(line .. "\n")
+    if modif == true then
+        local fileWrite = io.open("staff.txt", "w")
+        for _, line in pairs(lines) do
+            fileWrite:write(line .. "\n")
+        end
+        fileWrite:close()
     end
-    fileWrite:close()
 
     -- global value staff
     local file = io.open("staff.txt", "r")
@@ -584,9 +576,9 @@ function onPlayerJoin(player_id)
         end
     end
     if is_staff then
-        MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o Welcome staff " .. player_name)
+        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Welcome staff " .. player_name)
     else
-        MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o Welcome " .. player_name)
+        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Welcome " .. player_name)
     end
 
 end
