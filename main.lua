@@ -1,13 +1,16 @@
 
 CONFIG = {
     PREFIX = ";",
-    NOGUEST = "true"
+    NOGUEST = "true",
+    NOGUESTMSG = "Guest are forbidden, please create a beammp account :)",
+    WELCOMESTAFF = "Welcome Staff",
+    WELCOMEPLAYER = "Welcome"
 }
 COMMANDLIST = {}
 
 
 function onInit()
-    --crée le fichier toml si il n'existe pas
+    --crÃ©e le fichier toml si il n'existe pas
     if not io.open("config.toml") then
         local file = io.open("config.toml", "w")
 
@@ -36,6 +39,10 @@ function onInit()
 
 
     --open ban file then loop in bans line
+    if not io.open("bans.txt") then
+        local file = io.open("bans.txt", "w")
+        file:close()
+    end    
     local file = io.open("bans.txt", "r")
     local content = file:read("*all")
     file:close()
@@ -566,6 +573,8 @@ end
 
 function onPlayerJoin(player_id)
     -- check if player is staff
+    local WELCOMESTAFF = getConfigValue("WELCOMESTAFF")
+    local WELCOMEPLAYER = getConfigValue("WELCOMEPLAYER")
     local player_name = MP.GetPlayerName(player_id)
     local is_staff = false
     for key, value in pairs(STAFFS) do
@@ -576,9 +585,9 @@ function onPlayerJoin(player_id)
         end
     end
     if is_staff then
-        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Welcome staff " .. player_name)
+        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o  " .. WELCOMESTAFF .. " " .. player_name)
     else
-        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Welcome " .. player_name)
+        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. WELCOMEPLAYER .. " " .. player_name)
     end
 
 end
@@ -586,9 +595,10 @@ end
 function onPlayerAuth(name, role, isGuest)
 
     local noguest = getConfigValue("NOGUEST")
+    local noguestmsg = getConfigValue("NOGUESTMSG")
     if noguest == "true" then
         if isGuest then
-            return "You must be signed in to join this server!"
+            return noguestmsg
         end
     end
 
