@@ -17,7 +17,7 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 # Configuration
 The plugin includes a configuration file that allows you to modify certain messages sent by the plugin and also change values to enable or disable features.
 
-# Auto update
+# Auto update (WIP, probably not working as intended)
 The plugin includes an auto-update feature that can be enabled or disabled.
 
 # Installation
