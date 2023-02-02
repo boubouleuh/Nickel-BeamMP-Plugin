@@ -4,34 +4,102 @@ CONFIG = {
     NOGUEST = "true",
     NOGUESTMSG = "Guest are forbidden, please create a beammp account :)",
     WELCOMESTAFF = "Welcome Staff",
-    WELCOMEPLAYER = "Welcome"
+    WELCOMEPLAYER = "Welcome",
+    AUTOUPDATE = "false"
 }
+function script_path()
+    return debug.getinfo(2, "S").source:match("(.*[/\\])") or "./"
+end
+
+function file_exists(name)
+    local f = io.open(name, "r")
+    return f ~= nil and io.close(f)
+ end
+
 COMMANDLIST = {}
+VERSIONPATH = script_path() .. "version.txt"
+CONFIGPATH = script_path() .. "NickelConfig.toml"
+VERSION = "1.2.0"
+
 
 
 function onInit()
-    --crÃ©e le fichier toml si il n'existe pas
-    if not io.open("config.toml") then
-        local file = io.open("config.toml", "w")
 
-        --write array to file without toml
-        for key, value in pairs(CONFIG) do
-            file:write(key .. " = " .. value .. "\n")
+--make version txt if not exist
+    if not file_exists(VERSIONPATH) then
+        local file = io.open(VERSIONPATH, "w")
+        file:write(VERSION)
+        file:close()
+    end
+
+
+--check if old config.toml exist to move it
+
+    if not file_exists("config.toml") then
+        if not file_exists(CONFIGPATH) then
+            local file = io.open(CONFIGPATH, "w")
+
+            for key, value in pairs(CONFIG) do
+                file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+            end
+            file:close()
+        else
+            --check if file contains the same keys as config array
+            local file = io.open(CONFIGPATH, "r")
+            local content = file:read("*all")
+            file:close()
+
+            --loop in config array
+            for key, value in pairs(CONFIG) do
+                --check if key is not in file
+                if not string.match(content, key) then
+                    --add key to file
+                    file = io.open(CONFIGPATH, "a")
+                    file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+                    file:close()
+                end
+            end
         end
-        file:close()
     else
-        --check if file contains the same keys as config array
-        local file = io.open("config.toml", "r")
-        local content = file:read("*all")
-        file:close()
+        local oldfile = io.open("config.toml", "r")
+        local oldcontent = oldfile:read("*all")
+        oldfile:close()
+        --write newfile
+        local newfile = io.open(CONFIGPATH, "w")
+        --add newline on the end of the content
+        oldcontent = oldcontent .. "\n"
+        --remove newline at the end of the value and add "" on the value and add the newline after this
+        oldcontent = string.gsub(oldcontent, "(.-)%s*=%s*(.-)%s*\n", "%1 = \"%2\"\n")
+  
+        newfile:write(oldcontent)
+        newfile:close()
+        --delete old file
 
+        local os = MP.GetOSName()
+        if os == "Windows" then
+            local exec = io.popen("del config.toml")
+            if exec then
+                print("config.toml moved to " .. CONFIGPATH)
+            else
+                print("failed to delete old config file ")
+            end
+        else
+            local error, error_message = FS.Remove("config.toml")
+            if error then
+                print("failed to delete old config file " .. error_message)
+            else
+                print("config.toml moved to " .. CONFIGPATH)
+            end
+        end
+
+        
         --loop in config array
         for key, value in pairs(CONFIG) do
             --check if key is not in file
-            if not string.match(content, key) then
+            if not string.match(oldcontent, key) then
                 --add key to file
-                file = io.open("config.toml", "a")
-                file:write(key .. " = " .. value .. "\n")
+                file = io.open(CONFIGPATH, "a")
+                file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
                 file:close()
             end
         end
@@ -39,7 +107,7 @@ function onInit()
 
 
     --open ban file then loop in bans line
-    if not io.open("bans.txt") then
+    if not file_exists("bans.txt") then
         local file = io.open("bans.txt", "w")
         file:close()
     end    
@@ -66,9 +134,6 @@ function onInit()
         end
     end
 
-
- 
-
     --prefix and guest
     PREFIX = getConfigValue("PREFIX")
 
@@ -89,19 +154,19 @@ end
 
 --function getConfigValue
 function getConfigValue(config_name)
-    local file = io.open("config.toml", "r")
+    local file = io.open(CONFIGPATH, "r")
     local content = file:read("*all")
     file:close()
 
-    --string match for value like : VARIABLE = value (work for every variable and value)
+    --string match for value like : VARIABLE = "value" (work for every variable and value)
 
-    return string.match(content, config_name .. "%s*=%s*(.-)%s*\n")
+    return string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
     
 end
 
 --function editConfigValue
 function editConfigValue(config_name, new_value)
-    local file = io.open("config.toml", "r")
+    local file = io.open(CONFIGPATH, "r")
     local content = file:read("*all")
     file:close()
 
@@ -114,7 +179,7 @@ function editConfigValue(config_name, new_value)
         --replace value
         content = string.gsub(content, config_name .. "%s*=%s*(.-)%s*\n", config_name .. " = " .. new_value .. "\n")
         --write new content to file
-        file = io.open("config.toml", "w")
+        file = io.open(CONFIGPATH, "w")
         file:write(content)
         file:close()
     end
@@ -135,6 +200,9 @@ end
 --getPlayerBeamMPID with GetPlayerIdentifiers
 function getPlayerBeamMPID(player_id)
     local identifiers = MP.GetPlayerIdentifiers(player_id)
+    if identifiers == nil then
+        return -1
+    end
     local player_beammp_id = identifiers['beammp']
     return player_beammp_id
 end
@@ -144,7 +212,7 @@ function checkFileEndWithNewLine(file_name)
 
 
     --check if file exists
-    if not io.open(file_name) then
+    if not file_exists(file_name) then
         local file = io.open(file_name, "w")
         file:close()
         print(file_name .. " created")
@@ -530,6 +598,80 @@ function countdown(sender_id)
     MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
 end
 
+function checkForUpdates()
+
+    if getConfigValue("AUTOUPDATE") == "true" then
+        local socket = require("socket")
+        local function httpRequest(url)
+        -- Séparer l'URL en hôte et chemin
+        local host, path = string.match(url, "https://([^/]+)(.*)")
+        
+        -- Ouvrir une connexion TCP
+        local conn = socket.tcp()
+        conn:connect(host, 443)
+        
+        -- Envoyer une requête HTTP GET
+        local request = "GET " .. path .. " HTTP/1.1\r\nHost: " .. host .. "\r\n\r\n"
+        conn:send(request)
+        
+        -- Récupérer la réponse HTTP
+        local response = ""
+        while true do
+            local chunk = conn:receive()
+            if chunk then
+            response = response .. chunk
+            else
+            break
+            end
+        end
+        
+        -- Fermer la connexion TCP
+        conn:close()
+        
+        -- Retourner la réponse
+        return response
+        end
+        
+        -- Récupérer la version actuelle de votre script local à partir de version.txt
+        local oldversion = io.open("version.txt", "r")
+        local localVersion = file:read()
+        oldversion:close()
+        
+        -- Récupérer la dernière release disponible sur GitHub à partir de l'API GitHub
+        local response = httpRequest("https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest")
+        local remoteVersion = response:match('"tag_name":"(%d+.%d+.%d+)"')
+        
+        -- Comparer les versions locales et distantes
+        if remoteVersion > localVersion then
+            -- Effectuer la mise à jour
+            print("Update available !")
+            -- Récupérer le lien de téléchargement du script de la release
+            local downloadUrl = response:match('"browser_download_url":"([^"]+%.lua)"')
+            
+            -- Télécharger la dernière version de votre script depuis GitHub
+            response = httpRequest(downloadUrl)
+            
+            --if download fail 
+            if response == nil then
+                print("Update failed !")
+                return
+            end
+            -- Écrire la réponse dans un fichier pour mettre à jour votre script
+            local main = io.open("main.lua", "w")
+            main:write(response)
+            main:close()
+            
+            -- Mettre à jour la version locale dans version.txt
+            local newversion = io.open(VERSIONPATH, "w")
+            newversion:write(remoteVersion)
+            newversion:close()
+        end
+
+    end
+end
+
+
+
 function CountSeconds()
 
     local file = io.open("staff.txt", "r")
@@ -681,5 +823,9 @@ MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
 MP.RegisterEvent("EverySecond", "CountSeconds")
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 
-
 MP.CreateEventTimer("EverySecond", 1000)
+
+
+MP.RegisterEvent("CheckUpdate", "checkForUpdate")
+MP.CreateEventTimer("CheckUpdate", 60000)
+
