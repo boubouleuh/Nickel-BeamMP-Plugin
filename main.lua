@@ -19,7 +19,7 @@ function file_exists(name)
 COMMANDLIST = {}
 VERSIONPATH = script_path() .. "version.txt"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
-VERSION = "1.2.1"
+VERSION = "1.2.3"
 
 
 
@@ -640,11 +640,10 @@ function checkForUpdates()
 
         oldversion:close()
         
-        -- Récupérer la dernière release disponible sur GitHub à partir de l'API GitHub
 
-        --test this if is not working https://martadash.fr/downloads/bouboule/data.txt
+        --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
 
-        local response = httpRequest("https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest")
+        local response = httpRequest("https://nickel.martadash.fr/version.txt")
 
         if response == "" then
             print("Get remote version failed to check update !")
