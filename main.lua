@@ -676,7 +676,7 @@ function checkForUpdates()
                 print("Update downloaded !")
             end
             -- Écrire la réponse dans un fichier pour mettre à jour votre script
-            local main = io.open(script_path .. "main.lua", "w")
+            local main = io.open(script_path() .. "main.lua", "w")
             main:write(response)
             main:close()
             
