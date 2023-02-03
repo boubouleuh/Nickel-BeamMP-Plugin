@@ -19,7 +19,7 @@ function file_exists(name)
 COMMANDLIST = {}
 VERSIONPATH = script_path() .. "version.txt"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 
 
@@ -28,7 +28,7 @@ function onInit()
 --make version txt if not exist
     if not file_exists(VERSIONPATH) then
         local file = io.open(VERSIONPATH, "w")
-        file:write(VERSION)
+        file:write("--" .. VERSION) -- two (-) to not trigger an error with beammp
         file:close()
     end
 
@@ -599,72 +599,93 @@ function countdown(sender_id)
 end
 
 function checkForUpdates()
-
     if getConfigValue("AUTOUPDATE") == "true" then
-        local socket = require("socket")
         local function httpRequest(url)
-        -- Séparer l'URL en hôte et chemin
-        local host, path = string.match(url, "https://([^/]+)(.*)")
-        
-        -- Ouvrir une connexion TCP
-        local conn = socket.tcp()
-        conn:connect(host, 443)
-        
-        -- Envoyer une requête HTTP GET
-        local request = "GET " .. path .. " HTTP/1.1\r\nHost: " .. host .. "\r\n\r\n"
-        conn:send(request)
-        
-        -- Récupérer la réponse HTTP
-        local response = ""
-        while true do
-            local chunk = conn:receive()
-            if chunk then
-            response = response .. chunk
+            --check os
+            if MP.GetOSName() == "Windows" then
+                local response = io.popen("curl -s " .. url .. " --output temp.txt", "r")
+                response:close()
+                if response then
+                    local file = io.open("temp.txt", "r")
+                    local content = file:read("*all")
+                    file:close()
+                    os.remove("temp.txt")
+                    return content
+                else
+                    return ""
+                end
             else
-            break
+                --dont use curl
+                local response = io.popen("wget -q -O temp.txt " .. url, "r")
+                response:close()
+                if response then
+                    local file = io.open("temp.txt", "r")
+                    local content = file:read("*all")
+                    file:close()
+                    os.remove("temp.txt")
+                    return content
+                else
+                    return ""
+                end
             end
         end
         
-        -- Fermer la connexion TCP
-        conn:close()
-        
-        -- Retourner la réponse
-        return response
-        end
-        
         -- Récupérer la version actuelle de votre script local à partir de version.txt
-        local oldversion = io.open("version.txt", "r")
-        local localVersion = file:read()
+        local oldversion = io.open(VERSIONPATH, "r")
+        local localVersion = oldversion:read()
+
+
+        --retire les deux premier caractères de localVersion (--)
+        localVersion = string.sub(localVersion, 3)
+
         oldversion:close()
         
         -- Récupérer la dernière release disponible sur GitHub à partir de l'API GitHub
+
+        --test this if is not working https://martadash.fr/downloads/bouboule/data.txt
+
         local response = httpRequest("https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest")
-        local remoteVersion = response:match('"tag_name":"(%d+.%d+.%d+)"')
-        
+
+        if response == "" then
+            print("Get remote version failed to check update !")
+            return
+        end
+        -- Récupérer la version distante à partir de la réponse
+
+        local remoteVersion = response:match('"tag_name": "([^"]+)"')
+
+        if remoteVersion == nil then
+            print("Get remote version failed to check update ! Try again later ! (if this message show up every time, disable auto update in config)")
+            return
+        end
+ 
         -- Comparer les versions locales et distantes
         if remoteVersion > localVersion then
+            print(localVersion, remoteVersion)
             -- Effectuer la mise à jour
             print("Update available !")
-            -- Récupérer le lien de téléchargement du script de la release
-            local downloadUrl = response:match('"browser_download_url":"([^"]+%.lua)"')
-            
+            local url = "https://raw.githubusercontent.com/boubouleuh/Nickel-BeamMP-Plugin/" .. remoteVersion .. "/main.lua"
             -- Télécharger la dernière version de votre script depuis GitHub
-            response = httpRequest(downloadUrl)
-            
+            local response = httpRequest(url)
+            print(url)
             --if download fail 
             if response == nil then
                 print("Update failed !")
                 return
+            else
+                print("Update downloaded !")
             end
             -- Écrire la réponse dans un fichier pour mettre à jour votre script
-            local main = io.open("main.lua", "w")
+            local main = io.open(script_path .. "main.lua", "w")
             main:write(response)
             main:close()
             
             -- Mettre à jour la version locale dans version.txt
             local newversion = io.open(VERSIONPATH, "w")
-            newversion:write(remoteVersion)
+            newversion:write("--" .. remoteVersion)
             newversion:close()
+
+            print("Update done !")
         end
 
     end
@@ -826,6 +847,5 @@ MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.CreateEventTimer("EverySecond", 1000)
 
 
-MP.RegisterEvent("CheckUpdate", "checkForUpdate")
+MP.RegisterEvent("CheckUpdate", "checkForUpdates")
 MP.CreateEventTimer("CheckUpdate", 60000)
-
