@@ -5,7 +5,8 @@ CONFIG = {
     NOGUESTMSG = "Guest are forbidden, please create a beammp account :)",
     WELCOMESTAFF = "Welcome Staff",
     WELCOMEPLAYER = "Welcome",
-    AUTOUPDATE = "false"
+    AUTOUPDATE = "true",
+    VOTEKICK = "true",
 }
 function script_path()
     return debug.getinfo(2, "S").source:match("(.*[/\\])") or "./"
@@ -16,16 +17,149 @@ function file_exists(name)
     return f ~= nil and io.close(f)
  end
 
+--function getConfigValue
+function getConfigValue(config_name)
+    local file = io.open(CONFIGPATH, "r")
+    local content = file:read("*all")
+    file:close()
+
+    --string match for value like : VARIABLE = "value" (work for every variable and value)
+
+    return string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
+    
+end
+
+--function editConfigValue
+function editConfigValue(config_name, new_value)
+    local file = io.open(CONFIGPATH, "r")
+    local content = file:read("*all")
+    file:close()
+
+    --string match for value like : VARIABLE = value (work for every variable and value)
+
+    local value = string.match(content, config_name .. "%s*=%s*(.-)%s*\n")
+    
+    --check if value is not nil
+    if value ~= nil then
+        --replace value
+        content = string.gsub(content, config_name .. "%s*=%s*(.-)%s*\n", config_name .. " = " .. new_value .. "\n")
+        --write new content to file
+        file = io.open(CONFIGPATH, "w")
+        file:write(content)
+        file:close()
+    end
+end
+
+-- GetPlayerId function
+function GetPlayerId(player_name)
+    local players = MP.GetPlayers()
+    for key, value in pairs(players) do
+        if value == player_name then
+            return key
+        end
+    end
+    return -1
+end
+
+--getPlayerBeamMPID with GetPlayerIdentifiers
+function getPlayerBeamMPID(player_id)
+    local identifiers = MP.GetPlayerIdentifiers(player_id)
+    if identifiers == nil then
+        return -1
+    end
+    local player_beammp_id = identifiers['beammp']
+    return player_beammp_id
+end
+
+
+function checkFileEndWithNewLine(file_name)
+
+
+    --check if file exists
+    if not file_exists(file_name) then
+        local file = io.open(file_name, "w")
+        file:close()
+        print(print_color("[NICKEL] ", "gray") .. file_name .. " created")
+        return
+    end
+    
+    local file = io.open(file_name, "r")
+    local content = file:read("*all")
+
+    --check if file is empty
+    if content == "" then
+        file:close()
+        print(print_color("[NICKEL] ", "gray") .. file_name .. " is empty")
+        return
+    end
+    file:close()
+    
+    local modified = false
+    if content:sub(-1) ~= "\n" then
+        content = content .. "\n"
+        modified = true
+    end
+    
+    if modified then
+        file = io.open(file_name, "w")
+        file:write(content)
+        file:close()
+        print(print_color("[NICKEL] ", "gray") .. "Modified " .. file_name .. " and added newline character at the end of each line.")
+    else
+        print(print_color("[NICKEL] ", "gray") .. file_name .. " is already formatted correctly.")
+    end
+end
+
+--is staff function
+function isStaff(player_id)
+    local player_beammp_id = getPlayerBeamMPID(player_id)
+    if player_beammp_id == -1 then
+        return false
+    end
+    local file = io.open("staff.txt", "r")
+    local content = file:read("*all")
+    file:close()
+    if string.match(content, player_beammp_id) then
+        return true
+    end
+    return false
+end
+
+function print_color(message, color)
+    -- Les codes de couleur ANSI pour différentes couleurs
+    local colors = {
+      black = "\27[30m",
+      red = "\27[31m",
+      green = "\27[32m",
+      yellow = "\27[33m",
+      blue = "\27[34m",
+      magenta = "\27[35m",
+      cyan = "\27[36m",
+      white = "\27[37m",
+      gray = "\27[90m",
+    }
+  
+    -- Vérifie si la couleur spécifiée est valide
+    if not colors[color] then
+      color = "white"
+    end
+  
+    -- Affiche le message dans la couleur spécifiée
+    return colors[color] .. message .. "\27[0m"
+end
+
+
+VOTEKICKLIST = {}
 COMMANDLIST = {}
 VERSIONPATH = script_path() .. "version.txt"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 
 
 
 function onInit()
-
 --make version txt if not exist
+    print(print_color("[NICKEL]", "gray") .. " Starting Nickel plugin version : " .. VERSION )
     if not file_exists(VERSIONPATH) then
         local file = io.open(VERSIONPATH, "w")
         file:write("--" .. VERSION) -- two (-) to not trigger an error with beammp
@@ -79,16 +213,16 @@ function onInit()
         if os == "Windows" then
             local exec = io.popen("del config.toml")
             if exec then
-                print("config.toml moved to " .. CONFIGPATH)
+                print(print_color("[NICKEL] ", "gray") .. "config.toml moved to " .. CONFIGPATH)
             else
-                print("failed to delete old config file ")
+                print(print_color("[NICKEL] ", "gray") .. print_color("failed to delete old config file", "red"))
             end
         else
             local error, error_message = FS.Remove("config.toml")
             if error then
-                print("failed to delete old config file " .. error_message)
+                print(print_color("[NICKEL] ", "gray") .. print_color("failed to delete old config file " .. error_message, "red"))
             else
-                print("config.toml moved to " .. CONFIGPATH)
+                print(print_color("[NICKEL] ", "gray") .. "config.toml moved to " .. CONFIGPATH)
             end
         end
 
@@ -121,10 +255,10 @@ function onInit()
         if line ~= "" then
             --if line have beammp id after name
             if string.match(line, "%s") then
-                print(line .. " ban line good")
+                print(print_color("[NICKEL] ", "gray") .. line .. " ban line good")
             else
                 --delete line
-                print(line .. " ban line bad, deleting line (please reban the player with the command)")
+                print(print_color("[NICKEL] ", "gray") .. print_color(line .. " ban line bad, deleting line (please reban the player with the command)", "red"))
                 content = string.gsub(content, line .. "\n", "")
                 --write new content to file
                 file = io.open("bans.txt", "w")
@@ -150,102 +284,6 @@ function onInit()
     MP.SendChatMessage(-1, "^l^7 Nickel |^r^o plugin loaded successfully")
 
 end
-
-
---function getConfigValue
-function getConfigValue(config_name)
-    local file = io.open(CONFIGPATH, "r")
-    local content = file:read("*all")
-    file:close()
-
-    --string match for value like : VARIABLE = "value" (work for every variable and value)
-
-    return string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
-    
-end
-
---function editConfigValue
-function editConfigValue(config_name, new_value)
-    local file = io.open(CONFIGPATH, "r")
-    local content = file:read("*all")
-    file:close()
-
-    --string match for value like : VARIABLE = value (work for every variable and value)
-
-    local value = string.match(content, config_name .. "%s*=%s*(.-)%s*\n")
-    
-    --check if value is not nil
-    if value ~= nil then
-        --replace value
-        content = string.gsub(content, config_name .. "%s*=%s*(.-)%s*\n", config_name .. " = " .. new_value .. "\n")
-        --write new content to file
-        file = io.open(CONFIGPATH, "w")
-        file:write(content)
-        file:close()
-    end
-end
-
-
--- GetPlayerId function
-function GetPlayerId(player_name)
-    local players = MP.GetPlayers()
-    for key, value in pairs(players) do
-        if value == player_name then
-            return key
-        end
-    end
-    return -1
-end
-
---getPlayerBeamMPID with GetPlayerIdentifiers
-function getPlayerBeamMPID(player_id)
-    local identifiers = MP.GetPlayerIdentifiers(player_id)
-    if identifiers == nil then
-        return -1
-    end
-    local player_beammp_id = identifiers['beammp']
-    return player_beammp_id
-end
-
-
-function checkFileEndWithNewLine(file_name)
-
-
-    --check if file exists
-    if not file_exists(file_name) then
-        local file = io.open(file_name, "w")
-        file:close()
-        print(file_name .. " created")
-        return
-    end
-    
-    local file = io.open(file_name, "r")
-    local content = file:read("*all")
-
-    --check if file is empty
-    if content == "" then
-        file:close()
-        print(file_name .. " is empty")
-        return
-    end
-    file:close()
-    
-    local modified = false
-    if content:sub(-1) ~= "\n" then
-        content = content .. "\n"
-        modified = true
-    end
-    
-    if modified then
-        file = io.open(file_name, "w")
-        file:write(content)
-        file:close()
-        print("Modified " .. file_name .. " and added newline character at the end of each line.")
-    else
-        print(file_name .. " is already formatted correctly.")
-    end
-end
-
 
 
 -- function to create command with parameter (using chatmessage handler and message value)
@@ -371,6 +409,75 @@ function help(sender_id)
     end
 end
 
+--votekick command
+function votekick(sender_id, parameter)
+    -- get player id
+    local sender_name = MP.GetPlayerName(sender_id)
+    local player_id = GetPlayerId(parameter)
+    local is_staff = isStaff(player_id)
+    if getConfigValue("VOTEKICK") == "true" then
+        if player_id ~= sender_id then
+            if not is_staff then
+                -- check if player is online
+                if player_id ~= -1 then
+                    if #MP.GetPlayers() > 2 then
+                        -- check if player is not already in votekick
+                        if VOTEKICKLIST[player_id] == nil then
+                            -- add player to votekick list
+
+                            VOTEKICKLIST[player_id] = {votes = 1 , senders = {sender_id}} --register senderid
+                            -- send chat message to all players
+                            MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Player " .. sender_name .. " started a vote to kick " .. parameter .. " from the server")
+                            MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Type ^l^7 ;votekick " .. parameter .. " ^r^o to vote")
+                        else
+                            -- check if every sender id is connected, if not remove the sender id and a vote
+                            for key, value in pairs(VOTEKICKLIST[player_id].senders) do
+                                if not MP.IsPlayerConnected(key) then
+                                    VOTEKICKLIST[player_id][key] = nil
+                                    VOTEKICKLIST[player_id] = VOTEKICKLIST[player_id].votes - 1
+                                end
+                            end
+                            -- check if sender id is already in senders
+                            local is_in_senders = false
+                            for key, value in pairs(VOTEKICKLIST[player_id].senders) do
+                                if value == sender_id then
+                                    is_in_senders = true
+                                    break
+                                end
+                            end
+                            if not is_in_senders then
+                                VOTEKICKLIST[player_id].votes = VOTEKICKLIST[player_id].votes + 1
+                                table.insert(VOTEKICKLIST[player_id].senders, sender_id) --register player who voted 
+                                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You voted to kick " .. parameter)
+                                --votekick ratio
+                                local ratio = #MP.GetPlayers() / 2
+                                if VOTEKICKLIST[player_id].votes >= ratio then
+                                    MP.DropPlayer(player_id, "Kicked by vote")
+                                    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Player " .. parameter .. " kicked with " .. VOTEKICKLIST[player_id].votes .. " votes")
+                                    VOTEKICKLIST[player_id] = nil
+                                else
+                                    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Player " .. parameter .. " has " .. VOTEKICKLIST[player_id].votes .. " votes")
+                                end
+                            else
+                                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You already voted to kick " .. parameter)
+                            end
+                        end
+                    else
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant votekick player " .. parameter .. " because there is not enough players")
+                    end
+                else
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " not found")
+                end
+            else
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant votekick player " .. parameter .. " because is a staff")
+            end
+        else
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant votekick yourself")
+        end
+    else
+        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant votekick player " .. parameter .. " because votekick is disabled on this server")
+    end
+end
 
 -- kick command
 function kick(sender_id, parameter)
@@ -486,7 +593,6 @@ function handleConsoleInput(cmd)
 end
 
 
-
 --banip command with banips.txt
 function banip(sender_id, parameter)
 
@@ -524,16 +630,6 @@ function banip(sender_id, parameter)
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " not found")
     end
 end
-
-
-
-
-
-
-
-
-
-
 
 function unban(sender_id, parameter)
     local fileRead = io.open("bans.txt", "r")
@@ -586,6 +682,7 @@ function unbanip(sender_id, parameter)
 
 end
 
+
 --countdown
 function countdown(sender_id)
     local time = 5
@@ -599,80 +696,85 @@ function countdown(sender_id)
 end
 
 function checkForUpdates()
-    if getConfigValue("AUTOUPDATE") == "true" then
-        local function httpRequest(url)
-            --check os
-            if MP.GetOSName() == "Windows" then
-                local response = io.popen("curl -s " .. url .. " --output temp.txt", "r")
-                response:close()
-                if response then
-                    local file = io.open("temp.txt", "r")
-                    local content = file:read("*all")
-                    file:close()
-                    os.remove("temp.txt")
-                    return content
-                else
-                    return ""
-                end
+
+    local function httpRequest(url)
+        --check os
+        if MP.GetOSName() == "Windows" then
+            local response = io.popen("curl -s " .. url .. " --output temp.txt", "r")
+            response:close()
+            if response then
+                local file = io.open("temp.txt", "r")
+                local content = file:read("*all")
+                file:close()
+                os.remove("temp.txt")
+                return content
             else
-                --dont use curl
-                local response = io.popen("wget -q -O temp.txt " .. url, "r")
-                response:close()
-                if response then
-                    local file = io.open("temp.txt", "r")
-                    local content = file:read("*all")
-                    file:close()
-                    os.remove("temp.txt")
-                    return content
-                else
-                    return ""
-                end
+                return ""
+            end
+        else
+            --dont use curl
+            local response = io.popen("wget -q -O temp.txt " .. url, "r")
+            response:close()
+            if response then
+                local file = io.open("temp.txt", "r")
+                local content = file:read("*all")
+                file:close()
+                os.remove("temp.txt")
+                return content
+            else
+                return ""
             end
         end
-        
-        -- Récupérer la version actuelle de votre script local à partir de version.txt
-        local oldversion = io.open(VERSIONPATH, "r")
-        local localVersion = oldversion:read()
+    end
+    
+    -- Récupérer la version actuelle de votre script local à partir de version.txt
+    local oldversion = io.open(VERSIONPATH, "r")
+    local localVersion = oldversion:read()
 
 
-        --retire les deux premier caractères de localVersion (--)
-        localVersion = string.sub(localVersion, 3)
+    --retire les deux premier caractères de localVersion (--)
+    localVersion = string.sub(localVersion, 3)
 
-        oldversion:close()
-        
+    oldversion:close()
+    
 
-        --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
+    --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
 
-        local response = httpRequest("https://nickel.martadash.fr/version.txt")
+    local response = httpRequest("https://nickel.martadash.fr/version.txt")
 
-        if response == "" then
-            print("Get remote version failed to check update !")
+    if response == "" then
+        print(print_color("[NICKEL] ", "gray") .. print_color("Get remote version failed to check update !", "red"))
+        return
+    end
+    -- Récupérer la version distante à partir de la réponse
+
+    local remoteVersion = response:match('"tag_name": "([^"]+)"')
+
+    if remoteVersion == nil then
+        print(print_color("[NICKEL] ", "gray") .. print_color("Get remote version failed to check update ! Try again later ! (if this message show up every time, disable auto update in config)", "red"))
+        return
+    end
+
+    -- Comparer les versions locales et distantes
+    if remoteVersion > localVersion then
+        -- Effectuer la mise à jour
+        if getConfigValue("AUTOUPDATE") == "false" then
+            --print_color("[NICKEL] ", "gray") .. 
+
+            print(print_color("[NICKEL] ", "gray") .. print_color("An update is available ! " .. localVersion .. " -> " .. remoteVersion .. "\nAUTOUPDATE is deactivated in " .. CONFIGPATH .. " if you want to update automatically, set it to true", "yellow"))
+
+
             return
-        end
-        -- Récupérer la version distante à partir de la réponse
-
-        local remoteVersion = response:match('"tag_name": "([^"]+)"')
-
-        if remoteVersion == nil then
-            print("Get remote version failed to check update ! Try again later ! (if this message show up every time, disable auto update in config)")
-            return
-        end
- 
-        -- Comparer les versions locales et distantes
-        if remoteVersion > localVersion then
-            print(localVersion, remoteVersion)
-            -- Effectuer la mise à jour
-            print("Update available !")
+        else
             local url = "https://raw.githubusercontent.com/boubouleuh/Nickel-BeamMP-Plugin/" .. remoteVersion .. "/main.lua"
             -- Télécharger la dernière version de votre script depuis GitHub
             local response = httpRequest(url)
-            print(url)
             --if download fail 
             if response == nil then
-                print("Update failed !")
+                print(print_color("[NICKEL] ", "gray") .. print_color("Update failed !", "red"))
                 return
             else
-                print("Update downloaded !")
+                print(print_color("[NICKEL] ", "gray") .. "Update downloaded !")
             end
             -- Écrire la réponse dans un fichier pour mettre à jour votre script
             local main = io.open(script_path() .. "main.lua", "w")
@@ -684,10 +786,11 @@ function checkForUpdates()
             newversion:write("--" .. remoteVersion)
             newversion:close()
 
-            print("Update done !")
+            print(print_color("[NICKEL] ", "gray") .. "Update done !")
         end
-
+        
     end
+
 end
 
 
@@ -738,14 +841,7 @@ function onPlayerJoin(player_id)
     local WELCOMESTAFF = getConfigValue("WELCOMESTAFF")
     local WELCOMEPLAYER = getConfigValue("WELCOMEPLAYER")
     local player_name = MP.GetPlayerName(player_id)
-    local is_staff = false
-    for key, value in pairs(STAFFS) do
-        if value == player_name then
-            -- send message to player
-            is_staff = true
-            break
-        end
-    end
+    local is_staff = isStaff(player_id)
     if is_staff then
         MP.SendChatMessage(-1, "^l^7 Nickel |^r^o  " .. WELCOMESTAFF .. " " .. player_name)
     else
@@ -790,13 +886,7 @@ function MyChatMessageHandler(sender_id, sender_name, message)
 
     --if message start with PREFIX
     if string.sub(message, 1, string.len(PREFIX)) == PREFIX then
-        is_staff = false
-        for key, value in pairs(STAFFS) do
-            if value == sender_name then
-                is_staff = true
-                break
-            end
-        end
+        local is_staff = isStaff(sender_id)
         --get the first word of message
         local command = string.match(message, "%S+")
         if is_staff then
@@ -812,6 +902,7 @@ function MyChatMessageHandler(sender_id, sender_name, message)
             CreateCommandWithParameter(sender_id, message, "unbanip", unbanip)
             CreateCommandWithParameter(sender_id, message, "noguest", noguest)
             CreateCommandWithoutParameter(sender_id, message, "countdown", countdown)
+            CreateCommandWithParameter(sender_id, message, "votekick", votekick)
 
             CreateCommandWithoutParameter(sender_id, message, "help", help)
             if COMMANDLIST[command] == nil then
@@ -821,6 +912,7 @@ function MyChatMessageHandler(sender_id, sender_name, message)
             return -1
         else
             CreateCommandWithoutParameter(sender_id, message, "countdown", countdown)
+            CreateCommandWithParameter(sender_id, message, "votekick", votekick)
 
             CreateCommandWithoutParameter(sender_id, message, "help", help)
             if COMMANDLIST[command] == nil then
