@@ -153,7 +153,7 @@ VOTEKICKLIST = {}
 COMMANDLIST = {}
 VERSIONPATH = script_path() .. "version.txt"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
-VERSION = "1.2.4"
+VERSION = "1.2.5"
 
 
 
@@ -700,8 +700,8 @@ function checkForUpdates()
     local function httpRequest(url)
         --check os
         if MP.GetOSName() == "Windows" then
-            local response = io.popen("curl -s " .. url .. " --output temp.txt", "r")
-            response:close()
+            local response = os.execute("curl -s " .. url .. " --output temp.txt", "r")
+            -- response:close()
             if response then
                 local file = io.open("temp.txt", "r")
                 local content = file:read("*all")
@@ -713,8 +713,8 @@ function checkForUpdates()
             end
         else
             --dont use curl
-            local response = io.popen("wget -q -O temp.txt " .. url, "r")
-            response:close()
+            local response = os.execute("wget -q -O temp.txt " .. url, "r")
+            -- response:close()
             if response then
                 local file = io.open("temp.txt", "r")
                 local content = file:read("*all")
@@ -939,4 +939,4 @@ MP.CreateEventTimer("EverySecond", 1000)
 
 
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
-MP.CreateEventTimer("CheckUpdate", 60000)
+MP.CreateEventTimer("CheckUpdate", 1800000)
