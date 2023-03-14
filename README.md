@@ -26,7 +26,7 @@ To install the plugin, you can download the latest version from the link below:
 
 [Download Nickel on Github](https://github.com/boubouleuh/Nickel-BeamMP-Plugin)
 
-Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory (it's an example). On the first launch of the server with the plugin, you will need to modify the staffs.txt file located in the server root directory and add your username or use "addstaff <username>" in the server console in order to access the commands. From there, you can use the ;addstaff command to add additional staff members to the server.
+Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory (it's an example). On the first launch of the server with the plugin, you will need to modify the staffs.txt file located in the server root directory and add your username or use "addstaff <username>" in the server console in order to access the commands (!!OTHERS COMMANDS WORK ONLY IN THE IN GAME CHAT!!). From there, you can use the ;addstaff command in the in game chat to add additional staff members to the server.
 
 # Discord
 WE NOW HAVE A DISCORD ! GO CHECK IT OUT :
