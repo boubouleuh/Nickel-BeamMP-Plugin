@@ -509,7 +509,7 @@ function getJsonUserByName(player_name)
     end
 end
 
---time converter, in input we can have : 5s / 5m / 5h / 5d (5 is an exemple) and in output i want it in second
+--time converter
 function timeConverter(time)
     local oldtime = time
 
@@ -1381,10 +1381,10 @@ InitCMD("tempban", function(sender_id, name, time, reason)
         if not is_staff then
             if time == nil then
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple")
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example")
                     return
                 else
-                    return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple"
+                    return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example"
                 end
             end
             time = timeConverter(time)
@@ -1717,10 +1717,10 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
             time = timeConverter(time)
             if time == nil then
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple")
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example")
                     return
                 else
-                    return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple"
+                    return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example"
                 end
             end
             time = timeConverter(time)
@@ -1764,10 +1764,10 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
                 time = timeConverter(time)
                 if time == nil then
                     if sender_id ~= "console" then
-                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple")
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example")
                         return
                     else
-                        return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for exemple"
+                        return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example"
                     end
                 end
 
