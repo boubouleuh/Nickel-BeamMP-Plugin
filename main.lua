@@ -1165,7 +1165,7 @@ InitCMD("kick", function(sender_id, parameter)
     -- check if player is online
     if player_id ~= -1 then
         if not is_staff then
-            MP.DropPlayer(player_id, "Kicked by " .. MP.GetPlayerName(sender_id))
+            MP.DropPlayer(player_id, "Kicked")
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " kicked")
                 return      
@@ -1220,7 +1220,7 @@ InitCMD("ban", function(sender_id, name, reason)
             end
             updateComplexValueOfUser(player_id, "banned", "bool", true)
             updateComplexValueOfUser(player_id, "banned", "reason", reason)
-            MP.DropPlayer(player_id, "Banned by " .. MP.GetPlayerName(sender_id) .. " for " .. reason)
+            MP.DropPlayer(player_id, "Banned" .. " for " .. reason)
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason)
                 return
@@ -1330,7 +1330,9 @@ InitCMD("banip", function(sender_id, name, reason)
             end
             updateComplexValueOfUser(player_id, "ipbanned", "bool", true)
             updateComplexValueOfUser(player_id, "ipbanned", "reason", reason)
-            MP.DropPlayer(player_id, "Ip banned by " .. MP.GetPlayerName(sender_id) .. " for " .. reason)
+            print("work")
+            MP.DropPlayer(player_id, "Ip banned" .. " for " .. reason)
+            print("work")
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip banned for " .. reason)
                 return
@@ -1355,6 +1357,8 @@ InitCMD("banip", function(sender_id, name, reason)
     end
 end
 , "Ban ip a very troublesome player")
+
+
 
 --tempban command
 InitCMD("tempban", function(sender_id, name, time, reason)
@@ -1398,7 +1402,7 @@ InitCMD("tempban", function(sender_id, name, time, reason)
             updateComplexValueOfUser(player_id, "tempbanned", "bool", true)
             updateComplexValueOfUser(player_id, "tempbanned", "reason", reason .. " until " .. enddate)
             updateComplexValueOfUser(player_id, "tempbanned", "time", endtime)
-            MP.DropPlayer(player_id, "Banned by " .. MP.GetPlayerName(sender_id) .. " for " .. reason .. " until " .. enddate)
+            MP.DropPlayer(player_id, "Banned" .. " for " .. reason .. " until " .. enddate)
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason .. " until " .. enddate)
                 return
@@ -1577,11 +1581,11 @@ InitCMD("mute", function(sender_id, name, reason)
             updateComplexValueOfUser(player_id, "muted", "bool", true)
             updateComplexValueOfUser(player_id, "muted", "reason", reason)
             if sender_id ~= "console" then
-                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted by " .. MP.GetPlayerName(sender_id) .. " for " .. reason)
+                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted" .. " for " .. reason)
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " muted for " .. reason)
                 return
             else
-                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted by " .. MP.GetPlayerName(sender_id) .. " for " .. reason)
+                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted" .. " for " .. reason)
                 return "Player " .. name .. " muted for " .. reason
             end
 
@@ -1735,11 +1739,11 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
             updateComplexValueOfUser(player_id, "tempmuted", "reason", reason .. " until " .. enddate)
             updateComplexValueOfUser(player_id, "tempmuted", "time", endtime)
             if sender_id ~= "console" then
-                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted by " .. MP.GetPlayerName(sender_id) .. " for " .. reason .. " until " .. enddate)
+                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted" .. " for " .. reason .. " until " .. enddate)
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " muted for " .. reason .. " until " .. enddate)
                 return
             else
-                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted by " .. MP.GetPlayerName(sender_id) .. " for " .. reason .. " until " .. enddate)
+                MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been muted" .. " for " .. reason .. " until " .. enddate)
                 return "Player " .. name .. " muted for " .. reason .. " until " .. enddate
             end
         else
@@ -1925,11 +1929,11 @@ InitCMD("whitelist", function(sender_id, parameter, name)
         end
         updateComplexValueOfUser(player_id, "whitelisted", "bool", true)
         if sender_id ~= "console" then
-            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted by " .. MP.GetPlayerName(sender_id))
+            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " whitelisted")
             return
         else
-            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted by " .. MP.GetPlayerName(sender_id))
+            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted")
             return "Player " .. name .. " whitelisted"
         end
     elseif parameter == "remove" then
@@ -1943,11 +1947,11 @@ InitCMD("whitelist", function(sender_id, parameter, name)
         end
         updateComplexValueOfUser(player_id, "whitelisted", "bool", false)
         if sender_id ~= "console" then
-            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted by " .. MP.GetPlayerName(sender_id))
+            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unwhitelisted")
             return
         else
-            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted by " .. MP.GetPlayerName(sender_id))
+            MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted")
             return "Player " .. name .. " unwhitelisted"
         end
     else
