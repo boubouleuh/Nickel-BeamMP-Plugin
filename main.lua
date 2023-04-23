@@ -2060,9 +2060,9 @@ function onPlayerJoin(player_id)
     local WELCOMEPLAYER = getConfigValue("WELCOMEPLAYER")
     local player_name = MP.GetPlayerName(player_id)
     local is_staff = isStaff(player_id)
-    if is_staff then
+    if is_staff and WELCOMESTAFF ~= "" then
         MP.SendChatMessage(-1, "^l^7 Nickel |^r^o  " .. WELCOMESTAFF .. " " .. player_name)
-    else
+    elseif WELCOMEPLAYER ~= "" then
         MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. WELCOMEPLAYER .. " " .. player_name)
     end
 
