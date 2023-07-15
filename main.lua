@@ -27,6 +27,9 @@ CONFIG = {
     VOTEKICK = "true",
     KEEPINGLOGSDAYS = "3",
     WHITELIST = "false",
+    MAXPING = "500",
+    PINGTRESHOLD = "20",
+    KICKPINGMSG = "Too high ping"
 }
 
 
@@ -2173,8 +2176,55 @@ function MyChatMessageHandler(sender_id, sender_name, message)
     end
 end
 
+PINGARRAY = {}
+
+function CheckPing()
+
+    local players = MP.GetPlayers()
+
+    for key, value in pairs(players) do
+
+        print(PINGARRAY)
+
+        local vehicleRaw = MP.GetPlayerVehicles(key)
+        if vehicleRaw ~= nil then
+
+         
+        
+            local vehicleRaw = MP.GetPlayerVehicles(key)
+            local vehicle = vehicleRaw[#vehicleRaw] --Get only existing vehicle
+            local username, num1, num2 = string.match(vehicle, 'USER:(%w+):(%d+)-(%d+)')
+
+            local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+
+            -- print(Raw.ping)
+
+            local Maxping = "0." .. getConfigValue("MAXPING")
+
+            if Raw.ping > tonumber(Maxping) then
+
+                if PINGARRAY[key] == nil then
+                    PINGARRAY[key] = 1
+                
+                else
+                    PINGARRAY[key] = PINGARRAY[key] + 1
+                end
+
+                if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                    MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                end
+            elseif Raw.ping <= tonumber(Maxping) / 2 then
+                PINGARRAY[key] = 0
+            end
+        end
+    end
+end
 
 ------------ END OF EVENTS ------------
+
+MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
+MP.CancelEventTimer("CheckPing")
+MP.CreateEventTimer("CheckPing", 1000)
 
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.RegisterEvent("onChatMessage", "MyChatMessageHandler")
