@@ -37,7 +37,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -754,6 +754,13 @@ function initUser(id)
             decodedJson.ip = user.ip
             edited = true
         end
+
+        --check if name have changed
+        if decodedJson.name ~= user.name then
+            decodedJson.name = user.name
+            edited = true
+        end
+
         if edited then
             json = io.open(file, "w")
             json:write(Util.JsonEncode(decodedJson))
@@ -1210,6 +1217,8 @@ InitCMD("ban", function(sender_id, name, reason)
     if player_id ~= -1 then
         if not is_staff then
             local jsonUser = getJsonUserByName(name)
+            
+
             if jsonUser.banned.bool or jsonUser.tempbanned.bool then
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already banned")
@@ -2048,6 +2057,11 @@ function handleConsoleInput(cmd)
         local commandWithoutPrefix = string.sub(command, 2)
 
         --run function in CommandWIthoutPrefix (its a string name of the function)
+
+        if FUNCTIONSCOMMANDTABLE[commandWithoutPrefix] == nil then
+            return
+        end
+
         return CreateCommand("console", cmd, commandWithoutPrefix, true, FUNCTIONSCOMMANDTABLE[commandWithoutPrefix].command)
 
     end
@@ -2080,10 +2094,6 @@ function onPlayerAuth(name, role, isGuest)
 
 
 end
-
-
-
--- NEED TO TEST THIS 
 
 
 function onPlayerConnecting(player_id)
@@ -2161,12 +2171,11 @@ end
 
 ------------ END OF EVENTS ------------
 
+MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.RegisterEvent("onChatMessage", "MyChatMessageHandler")
 MP.RegisterEvent("onPlayerJoin", "onPlayerJoin")
 MP.RegisterEvent("onPlayerAuth", "onPlayerAuth")
 MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
-MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
-
 MP.CancelEventTimer("EverySecond")
 
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
