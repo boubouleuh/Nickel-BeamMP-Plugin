@@ -926,15 +926,15 @@ InitCMD("ip", function(sender_id)
         -- create list
         local players = MP.GetPlayers()
         -- loop in players and add their name to the list
-        local playersAndId = {}
+        local playersAndIp = {}
         for key, value in pairs(players) do
             local player_name = value
             local player_identifiers = MP.GetPlayerIdentifiers(key)
             local player_ip = player_identifiers['ip']
-            table.insert(playersAndId, player_name .. " - " .. player_ip)
+            table.insert(playersAndIp, player_name .. " - " .. player_ip)
         end
         -- if players is empty
-        if #playersAndId == 0 then
+        if #playersAndIp == 0 then
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No players online")
             else
@@ -942,14 +942,19 @@ InitCMD("ip", function(sender_id)
             end
         end
 
-        for key, value in pairs(playersAndId) do
+        local message = ""
+        for key, value in pairs(playersAndIp) do
             if sender_id ~= "console" then
 
                 MP.SendChatMessage(sender_id,"^l^7 Nickel |^r^o " .. value)
             else
-                return value
+                message = message .. value .. "\n"
             end
         end
+        if #message ~= 0 then
+            return message
+        end
+  
     end
 , "Show players ip")
 
