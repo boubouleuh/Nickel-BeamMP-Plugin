@@ -2061,7 +2061,6 @@ function handleConsoleInput(cmd)
     if string.sub(cmd, 1, string.len(PREFIX)) == PREFIX then
 
         local command = string.match(cmd, "%S+")
-
         local commandWithoutPrefix = string.sub(command, 2)
 
         --run function in CommandWIthoutPrefix (its a string name of the function)
@@ -2077,6 +2076,7 @@ function handleConsoleInput(cmd)
 
 
 function onPlayerJoin(player_id)
+
     -- check if player is staff
     local WELCOMESTAFF = getConfigValue("WELCOMESTAFF")
     local WELCOMEPLAYER = getConfigValue("WELCOMEPLAYER")
@@ -2184,8 +2184,6 @@ function CheckPing()
 
     for key, value in pairs(players) do
 
-        print(PINGARRAY)
-
         local vehicleRaw = MP.GetPlayerVehicles(key)
         if vehicleRaw ~= nil then
 
@@ -2197,7 +2195,6 @@ function CheckPing()
 
             local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
 
-            -- print(Raw.ping)
 
             local Maxping = "0." .. getConfigValue("MAXPING")
 
@@ -2220,6 +2217,8 @@ function CheckPing()
     end
 end
 
+
+
 ------------ END OF EVENTS ------------
 
 MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
@@ -2235,3 +2234,90 @@ MP.CancelEventTimer("EverySecond")
 
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
 MP.CreateEventTimer("CheckUpdate", 1800000)
+
+
+
+
+
+-- Client integration --
+
+local players_synced = {} -- id | true
+-- cannot be trusted
+function SyncJoining(playerId)
+    players_synced[playerId] = os.time()
+end
+-- cannot be trusted
+function SyncDisconnect(playerId)
+    players_synced[playerId] = nil
+end
+function playerCheck() -- called once a second
+    for playerId, _ in pairs(players_synced) do
+        if MP.GetPlayerName(playerId) == "" then -- IF Player has left but onPlayerDisconnect failed
+            players_synced[playerId] = nil
+        else
+            if type(players_synced[playerId]) == "number" then
+                if os.difftime(os.time(), players_synced[playerId]) > 10 then -- after 10 seconds consider them to be synced
+                    players_synced[playerId] = true
+
+                    local jsonPlayer = GetJsonUser(playerId)
+
+                    local players = MP.GetPlayers();
+
+                    local playersInfoTable = {}
+
+                    local playersPermsTable = {}
+
+                    for key, value in pairs(players) do
+                        playersInfoTable[key] = GetJsonUser(key)
+
+                        for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
+                            
+                            playersPermsTable[k] = HasPermission(key, k)
+
+                        end
+                        print(playersPermsTable)
+                        local data2 = Util.JsonEncode(playersPermsTable)
+                        MP.TriggerClientEvent(playerId, "playersPermissions", data2)
+
+                    end
+
+                    local data = Util.JsonEncode(playersInfoTable)
+                    MP.TriggerClientEvent(-1, "getPlayers", data)
+                    print(MP.GetPlayerName(playerId) .. " synced")
+                end
+            end
+        end
+    end
+end
+function hotReload()
+    for playerId, _ in pairs(MP.GetPlayers()) do
+        players_synced[playerId] = os.time()
+    end
+end             --- Player list sender for Nickel Interface
+hotReload()     
+
+--Thanks neverless for this <3
+
+
+
+function interfaceCommand(senderId, data)
+
+    --command runnable here for the interface
+    local command = string.match(data, "%S+")
+
+    if FUNCTIONSCOMMANDTABLE[command] == nil then
+        return
+    end
+
+    return CreateCommand(senderId, PREFIX .. data, command, true, FUNCTIONSCOMMANDTABLE[command].command)
+
+end
+
+
+
+MP.RegisterEvent("interfaceCommand", "interfaceCommand")
+MP.RegisterEvent("onPlayerJoin","SyncJoining")
+MP.RegisterEvent("onPlayerDisconnect","SyncDisconnect")
+MP.RegisterEvent("playerCheck", "playerCheck")
+MP.CancelEventTimer("playerCheck")
+MP.CreateEventTimer("playerCheck", 1000)
