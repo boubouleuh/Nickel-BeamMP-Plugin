@@ -28,8 +28,8 @@ CONFIG = {
     KEEPINGLOGSDAYS = "3",
     WHITELIST = "false",
     MAXPING = "500",
-    PINGTRESHOLD = "20",
-    KICKPINGMSG = "Too high ping"
+    PINGTHRESHOLD = "20",
+    KICKPINGMSG = "Ping too high"
 }
 
 
@@ -609,65 +609,90 @@ function onInit()
     end
 
 
---check if old config.toml exist to move it
+-- Vérifier si une clé existe dans le fichier config.toml
+local function keyExistsInConfigFile(key, content)
+    return string.match(content, key .. " = ")
+end
 
-    if not file_exists("config.toml") then
-        if not file_exists(CONFIGPATH) then
-            local file = io.open(CONFIGPATH, "w")
-
-            for key, value in pairs(CONFIG) do
-                file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
-            end
-            file:close()
-        else
-            --check if file contains the same keys as config array
-            local file = io.open(CONFIGPATH, "r")
-            local content = file:read("*all")
-            file:close()
-
-            --loop in config array
-            for key, value in pairs(CONFIG) do
-                --check if key is not in file
-                if not string.match(content, key) then
-                    --add key to file
-                    file = io.open(CONFIGPATH, "a")
-                    file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
-                    file:close()
-                end
-            end
-        end
-    else
-        local oldfile = io.open("config.toml", "r")
-        local oldcontent = oldfile:read("*all")
-        oldfile:close()
-        --write newfile
-        local newfile = io.open(CONFIGPATH, "w")
-        --add newline on the end of the content
-        oldcontent = oldcontent .. "\n"
-        --remove newline at the end of the value and add "" on the value and add the newline after this
-        oldcontent = string.gsub(oldcontent, "(.-)%s*=%s*(.-)%s*\n", "%1 = \"%2\"\n")
-  
-        newfile:write(oldcontent)
-        newfile:close()
-        --delete old file
-
-        local os = MP.GetOSName()
-        if os == "Windows" then
-            local exec = io.popen("del config.toml")
-            if exec then
-                print("config.toml moved to " .. CONFIGPATH)
-            else
-                print("failed to delete old config file")
-            end
-        else                --ONLY PRINT HERE TO PREVENT BUG
-            local error, error_message = FS.Remove("config.toml")
-            if error then
-                print("failed to delete old config file " .. error_message)
-            else
-                print("config.toml moved to " .. CONFIGPATH)
-            end
+-- Recherche d'un élément dans une table
+local function indexOf(table, value)
+    for i, v in ipairs(table) do
+        if v == value then
+            return i
         end
     end
+    return -1
+end
+
+-- Lire le contenu du fichier config.toml et le stocker dans une table
+local function readConfigFile()
+    local file = io.open(CONFIGPATH, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        local lines = {}
+        for line in content:gmatch("[^\r\n]+") do
+            table.insert(lines, line)
+        end
+        return lines, content
+    end
+    return nil
+end
+
+-- Écrire le contenu mis à jour dans le fichier config.toml
+local function writeUpdatedConfigFile(lines)
+    local file = io.open(CONFIGPATH, "w")
+    if file then
+        file:write(table.concat(lines, "\n") .. "\n")
+        file:close()
+    end
+end
+
+-- Obtenir le contenu actuel du fichier config.toml et les lignes individuelles
+local configFileLines, configFileContent = readConfigFile()
+
+if configFileLines then
+    local updatedConfigFileLines = {}
+    local configKeys = {}
+
+    -- Remplir le tableau configKeys avec les clés du tableau CONFIG pour faciliter la recherche
+    for key, _ in pairs(CONFIG) do
+        table.insert(configKeys, key)
+    end
+
+    -- Parcourir chaque ligne du fichier
+    for _, line in ipairs(configFileLines) do
+        local key = line:match("^(.-)%s*=") -- extraire la clé de la ligne
+
+        if key then
+            key = key:gsub("%s+", "") -- supprimer les espaces de la clé
+
+            -- Vérifier si la clé existe dans le tableau CONFIG
+            if indexOf(configKeys, key) ~= -1 then
+                -- La clé existe dans le tableau CONFIG, conserver cette ligne dans le fichier
+                table.insert(updatedConfigFileLines, line)
+            end
+        else
+            -- Si la ligne ne correspond pas à un format clé = valeur, conserver cette ligne dans le fichier
+            table.insert(updatedConfigFileLines, line)
+        end
+    end
+
+    -- Vérifier les clés manquantes dans le fichier et les supprimer
+    for key, value in pairs(CONFIG) do
+        if not keyExistsInConfigFile(key, configFileContent) then
+            table.insert(updatedConfigFileLines, key .. " = " .. '"' .. value .. '"' .. "\n")
+        end
+    end
+
+    -- Écrire le contenu mis à jour dans le fichier config.toml
+    writeUpdatedConfigFile(updatedConfigFileLines)
+
+    print("Mise à jour du fichier config.toml terminée.")
+else
+    print("Le fichier config.toml n'existe pas.")
+end
+
 
 
 
@@ -2192,7 +2217,7 @@ function CheckPing()
         
             local vehicleRaw = MP.GetPlayerVehicles(key)
             local vehicle = vehicleRaw[#vehicleRaw] --Get only existing vehicle
-            local username, num1, num2 = string.match(vehicle, 'USER:(%w+):(%d+)-(%d+)')
+            local username, num1, num2 = string.match(vehicle, 'USER:(%w+):(%d+)-(%d+)') --USER CAN PROBABLY BE DIFFERENT ! EDIT THIS !
 
             local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
 
@@ -2291,11 +2316,16 @@ end
 
 local playersPermsTable = {}
 function sync()
-    -- local playersVehicles = {}
+
+    local playersVehicles = {}
     local playersInfoTable = {}
     for key, value in pairs(players_synced) do
         if value then
-            -- playersVehicles = MP.GetPlayerVehicles(key)
+            local playerVehiclesValue = MP.GetPlayerVehicles(key)
+            if playerVehiclesValue ~= nil then
+                playersVehicles = playerVehiclesValue
+            end
+  
             playersInfoTable[tostring(key)] = GetJsonUser(key)
             
  
@@ -2312,7 +2342,9 @@ function sync()
         end
     end
 
-    -- local data3 = Util.JsonEncode(playersVehicles)
+    local data3 = Util.JsonEncode(playersVehicles)
+
+    MP.TriggerClientEvent(-1, "playersVehicles", data3)
 
     
     local data = Util.JsonEncode(playersInfoTable)
