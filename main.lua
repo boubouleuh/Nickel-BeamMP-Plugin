@@ -688,9 +688,6 @@ if configFileLines then
     -- Écrire le contenu mis à jour dans le fichier config.toml
     writeUpdatedConfigFile(updatedConfigFileLines)
 
-    print("Mise à jour du fichier config.toml terminée.")
-else
-    print("Le fichier config.toml n'existe pas.")
 end
 
 
