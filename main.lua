@@ -40,7 +40,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.2"
+VERSION = "2.0.3"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
