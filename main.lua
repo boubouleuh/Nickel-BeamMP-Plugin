@@ -1347,9 +1347,9 @@ InitCMD("banip", function(sender_id, name, reason)
             end
             updateComplexValueOfUser(player_id, "ipbanned", "bool", true)
             updateComplexValueOfUser(player_id, "ipbanned", "reason", reason)
-            print("work")
+            
             MP.DropPlayer(player_id, "Ip banned" .. " for " .. reason)
-            print("work")
+          
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip banned for " .. reason)
                 return
@@ -2248,7 +2248,7 @@ function SyncJoining(playerId)
 end
 -- cannot be trusted
 function SyncDisconnect(playerId)
-    players_synced[playerId] = nil
+   players_synced[playerId] = nil
 end
 function playerCheck() -- called once a second
     for playerId, _ in pairs(players_synced) do
@@ -2258,31 +2258,6 @@ function playerCheck() -- called once a second
             if type(players_synced[playerId]) == "number" then
                 if os.difftime(os.time(), players_synced[playerId]) > 10 then -- after 10 seconds consider them to be synced
                     players_synced[playerId] = true
-
-                    local jsonPlayer = GetJsonUser(playerId)
-
-                    local players = MP.GetPlayers();
-
-                    local playersInfoTable = {}
-
-                    local playersPermsTable = {}
-
-                    for key, value in pairs(players) do
-                        playersInfoTable[key] = GetJsonUser(key)
-
-                        for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
-                            
-                            playersPermsTable[k] = HasPermission(key, k)
-
-                        end
-                        print(playersPermsTable)
-                        local data2 = Util.JsonEncode(playersPermsTable)
-                        MP.TriggerClientEvent(playerId, "playersPermissions", data2)
-
-                    end
-
-                    local data = Util.JsonEncode(playersInfoTable)
-                    MP.TriggerClientEvent(-1, "getPlayers", data)
                     print(MP.GetPlayerName(playerId) .. " synced")
                 end
             end
@@ -2313,8 +2288,37 @@ function interfaceCommand(senderId, data)
 
 end
 
+local playersPermsTable = {}
+function sync()
+
+    local playersInfoTable = {}
+    for key, value in pairs(players_synced) do
+        if value then
+            
+            playersInfoTable[tostring(key)] = GetJsonUser(key)
+            
+ 
+
+            for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
+                
+                playersPermsTable[k] = HasPermission(key, k)
+
+            end
+        
+
+            local data2 = Util.JsonEncode(playersPermsTable)
+            MP.TriggerClientEvent(key, "playersPermissions", data2)
+        end
+    end
+    local data = Util.JsonEncode(playersInfoTable)
+    MP.TriggerClientEvent(-1, "getPlayers", data)
+end
 
 
+
+MP.RegisterEvent("sync", "sync")
+MP.CancelEventTimer("sync")
+MP.CreateEventTimer("sync", 1000)
 MP.RegisterEvent("interfaceCommand", "interfaceCommand")
 MP.RegisterEvent("onPlayerJoin","SyncJoining")
 MP.RegisterEvent("onPlayerDisconnect","SyncDisconnect")
