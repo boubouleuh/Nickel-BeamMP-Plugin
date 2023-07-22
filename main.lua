@@ -1868,7 +1868,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
             return "Usage : whitelist [add/remove] [player]"
         end
     end
-    local player_id = MP.GetPlayerId(name)
+    local player_id = GetPlayerId(name)
     if player_id == nil then
 
         --whitelist offline
@@ -2290,11 +2290,11 @@ end
 
 local playersPermsTable = {}
 function sync()
-
+    local playersVehicles = {}
     local playersInfoTable = {}
     for key, value in pairs(players_synced) do
         if value then
-            
+            playersVehicles = MP.GetPlayerVehicles(key)
             playersInfoTable[tostring(key)] = GetJsonUser(key)
             
  
@@ -2310,6 +2310,10 @@ function sync()
             MP.TriggerClientEvent(key, "playersPermissions", data2)
         end
     end
+
+    local data3 = Util.JsonEncode(playersVehicles)
+
+    
     local data = Util.JsonEncode(playersInfoTable)
     MP.TriggerClientEvent(-1, "getPlayers", data)
 end
