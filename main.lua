@@ -608,7 +608,6 @@ function onInit()
         file:close()
     end
 
-
 -- Vérifier si une clé existe dans le fichier config.toml
 local function keyExistsInConfigFile(key, content)
     return string.match(content, key .. " = ")
@@ -621,7 +620,6 @@ local function indexOf(table, value)
             return i
         end
     end
-    return -1
 end
 
 -- Lire le contenu du fichier config.toml et le stocker dans une table
@@ -654,6 +652,7 @@ local configFileLines, configFileContent = readConfigFile()
 if configFileLines then
     local updatedConfigFileLines = {}
     local configKeys = {}
+    local edited = false -- Variable pour suivre si des modifications ont été apportées
 
     -- Remplir le tableau configKeys avec les clés du tableau CONFIG pour faciliter la recherche
     for key, _ in pairs(CONFIG) do
@@ -667,10 +666,13 @@ if configFileLines then
         if key then
             key = key:gsub("%s+", "") -- supprimer les espaces de la clé
 
-            -- Vérifier si la clé existe dans le tableau CONFIG
-            if indexOf(configKeys, key) ~= -1 then
-                -- La clé existe dans le tableau CONFIG, conserver cette ligne dans le fichier
+            -- Vérifier si la clé existe dans le fichier et dans le tableau CONFIG
+            if keyExistsInConfigFile(key, configFileContent) and indexOf(configKeys, key) then
+                -- La clé existe dans le fichier et dans le tableau CONFIG, conserver cette ligne dans le fichier
                 table.insert(updatedConfigFileLines, line)
+            else
+                -- La clé n'existe pas dans le fichier ou n'existe pas dans le tableau CONFIG, marquer les modifications
+                edited = true
             end
         else
             -- Si la ligne ne correspond pas à un format clé = valeur, conserver cette ligne dans le fichier
@@ -678,16 +680,18 @@ if configFileLines then
         end
     end
 
-    -- Vérifier les clés manquantes dans le fichier et les supprimer
+    -- Vérifier les clés manquantes dans le fichier et les ajouter
     for key, value in pairs(CONFIG) do
         if not keyExistsInConfigFile(key, configFileContent) then
             table.insert(updatedConfigFileLines, key .. " = " .. '"' .. value .. '"' .. "\n")
+            edited = true
         end
     end
 
-    -- Écrire le contenu mis à jour dans le fichier config.toml
-    writeUpdatedConfigFile(updatedConfigFileLines)
-
+    -- Écrire le contenu mis à jour dans le fichier config.toml si des modifications ont été apportées
+    if edited then
+        writeUpdatedConfigFile(updatedConfigFileLines)
+    end
 end
 
 
