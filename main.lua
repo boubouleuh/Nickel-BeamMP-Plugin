@@ -300,7 +300,7 @@ function GetPlayerId(player_name)
             return key
         end
     end
-    return -1
+    return nil
 end
 
 --getPlayerBeamMPID with GetPlayerIdentifiers
@@ -1885,7 +1885,8 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                         return "Player " .. name .. " already whitelisted"
                     end
                 end
-                updateComplexValueOfUserWithJson(jsonUser, "whitelisted", "bool", true)
+                updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", true)
+
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " whitelisted")
                     return
@@ -1901,7 +1902,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                         return "Player " .. name .. " not whitelisted"
                     end
                 end
-                updateComplexValueOfUserWithJson(jsonUser, "whitelisted", "bool", false)
+                updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", false)
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unwhitelisted")
                     return
@@ -1944,7 +1945,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                 return "Player " .. name .. " already whitelisted"
             end
         end
-        updateComplexValueOfUser(player_id, "whitelisted", "bool", true)
+        updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", true)
         if sender_id ~= "console" then
             MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " whitelisted")
@@ -1962,7 +1963,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                 return "Player " .. name .. " not whitelisted"
             end
         end
-        updateComplexValueOfUser(player_id, "whitelisted", "bool", false)
+        updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", false)
         if sender_id ~= "console" then
             MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unwhitelisted")
@@ -2290,11 +2291,11 @@ end
 
 local playersPermsTable = {}
 function sync()
-    local playersVehicles = {}
+    -- local playersVehicles = {}
     local playersInfoTable = {}
     for key, value in pairs(players_synced) do
         if value then
-            playersVehicles = MP.GetPlayerVehicles(key)
+            -- playersVehicles = MP.GetPlayerVehicles(key)
             playersInfoTable[tostring(key)] = GetJsonUser(key)
             
  
@@ -2311,7 +2312,7 @@ function sync()
         end
     end
 
-    local data3 = Util.JsonEncode(playersVehicles)
+    -- local data3 = Util.JsonEncode(playersVehicles)
 
     
     local data = Util.JsonEncode(playersInfoTable)
