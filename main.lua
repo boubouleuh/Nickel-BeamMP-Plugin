@@ -27,6 +27,9 @@ CONFIG = {
     VOTEKICK = "true",
     KEEPINGLOGSDAYS = "3",
     WHITELIST = "false",
+    MAXPING = "500",
+    PINGTRESHOLD = "20",
+    KICKPINGMSG = "Too high ping"
 }
 
 
@@ -37,7 +40,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.2"
+VERSION = "2.0.3"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -297,7 +300,7 @@ function GetPlayerId(player_name)
             return key
         end
     end
-    return -1
+    return nil
 end
 
 --getPlayerBeamMPID with GetPlayerIdentifiers
@@ -926,15 +929,15 @@ InitCMD("ip", function(sender_id)
         -- create list
         local players = MP.GetPlayers()
         -- loop in players and add their name to the list
-        local playersAndId = {}
+        local playersAndIp = {}
         for key, value in pairs(players) do
             local player_name = value
             local player_identifiers = MP.GetPlayerIdentifiers(key)
             local player_ip = player_identifiers['ip']
-            table.insert(playersAndId, player_name .. " - " .. player_ip)
+            table.insert(playersAndIp, player_name .. " - " .. player_ip)
         end
         -- if players is empty
-        if #playersAndId == 0 then
+        if #playersAndIp == 0 then
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o No players online")
             else
@@ -942,14 +945,19 @@ InitCMD("ip", function(sender_id)
             end
         end
 
-        for key, value in pairs(playersAndId) do
+        local message = ""
+        for key, value in pairs(playersAndIp) do
             if sender_id ~= "console" then
 
                 MP.SendChatMessage(sender_id,"^l^7 Nickel |^r^o " .. value)
             else
-                return value
+                message = message .. value .. "\n"
             end
         end
+        if #message ~= 0 then
+            return message
+        end
+  
     end
 , "Show players ip")
 
@@ -1339,9 +1347,9 @@ InitCMD("banip", function(sender_id, name, reason)
             end
             updateComplexValueOfUser(player_id, "ipbanned", "bool", true)
             updateComplexValueOfUser(player_id, "ipbanned", "reason", reason)
-            print("work")
+            
             MP.DropPlayer(player_id, "Ip banned" .. " for " .. reason)
-            print("work")
+          
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip banned for " .. reason)
                 return
@@ -1860,7 +1868,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
             return "Usage : whitelist [add/remove] [player]"
         end
     end
-    local player_id = MP.GetPlayerId(name)
+    local player_id = GetPlayerId(name)
     if player_id == nil then
 
         --whitelist offline
@@ -1877,7 +1885,8 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                         return "Player " .. name .. " already whitelisted"
                     end
                 end
-                updateComplexValueOfUserWithJson(jsonUser, "whitelisted", "bool", true)
+                updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", true)
+
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " whitelisted")
                     return
@@ -1893,7 +1902,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                         return "Player " .. name .. " not whitelisted"
                     end
                 end
-                updateComplexValueOfUserWithJson(jsonUser, "whitelisted", "bool", false)
+                updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", false)
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unwhitelisted")
                     return
@@ -1936,7 +1945,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                 return "Player " .. name .. " already whitelisted"
             end
         end
-        updateComplexValueOfUser(player_id, "whitelisted", "bool", true)
+        updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", true)
         if sender_id ~= "console" then
             MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been whitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " whitelisted")
@@ -1954,7 +1963,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
                 return "Player " .. name .. " not whitelisted"
             end
         end
-        updateComplexValueOfUser(player_id, "whitelisted", "bool", false)
+        updateSimpleValueOfUserWithJson(jsonUser, "whitelisted", false)
         if sender_id ~= "console" then
             MP.SendChatMessage(player_id, "^l^7 Nickel |^r^o You have been unwhitelisted")
             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unwhitelisted")
@@ -2053,7 +2062,6 @@ function handleConsoleInput(cmd)
     if string.sub(cmd, 1, string.len(PREFIX)) == PREFIX then
 
         local command = string.match(cmd, "%S+")
-
         local commandWithoutPrefix = string.sub(command, 2)
 
         --run function in CommandWIthoutPrefix (its a string name of the function)
@@ -2069,6 +2077,7 @@ function handleConsoleInput(cmd)
 
 
 function onPlayerJoin(player_id)
+
     -- check if player is staff
     local WELCOMESTAFF = getConfigValue("WELCOMESTAFF")
     local WELCOMEPLAYER = getConfigValue("WELCOMEPLAYER")
@@ -2168,8 +2177,54 @@ function MyChatMessageHandler(sender_id, sender_name, message)
     end
 end
 
+PINGARRAY = {}
+
+function CheckPing()
+
+    local players = MP.GetPlayers()
+
+    for key, value in pairs(players) do
+
+        local vehicleRaw = MP.GetPlayerVehicles(key)
+        if vehicleRaw ~= nil then
+
+         
+        
+            local vehicleRaw = MP.GetPlayerVehicles(key)
+            local vehicle = vehicleRaw[#vehicleRaw] --Get only existing vehicle
+            local username, num1, num2 = string.match(vehicle, 'USER:(%w+):(%d+)-(%d+)')
+
+            local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+
+
+            local Maxping = "0." .. getConfigValue("MAXPING")
+
+            if Raw.ping > tonumber(Maxping) then
+
+                if PINGARRAY[key] == nil then
+                    PINGARRAY[key] = 1
+                
+                else
+                    PINGARRAY[key] = PINGARRAY[key] + 1
+                end
+
+                if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                    MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                end
+            elseif Raw.ping <= tonumber(Maxping) / 2 then
+                PINGARRAY[key] = 0
+            end
+        end
+    end
+end
+
+
 
 ------------ END OF EVENTS ------------
+
+MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
+MP.CancelEventTimer("CheckPing")
+MP.CreateEventTimer("CheckPing", 1000)
 
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.RegisterEvent("onChatMessage", "MyChatMessageHandler")
@@ -2180,3 +2235,98 @@ MP.CancelEventTimer("EverySecond")
 
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
 MP.CreateEventTimer("CheckUpdate", 1800000)
+
+
+
+
+
+-- Client integration --
+
+local players_synced = {} -- id | true
+-- cannot be trusted
+function SyncJoining(playerId)
+    players_synced[playerId] = os.time()
+end
+-- cannot be trusted
+function SyncDisconnect(playerId)
+   players_synced[playerId] = nil
+end
+function playerCheck() -- called once a second
+    for playerId, _ in pairs(players_synced) do
+        if MP.GetPlayerName(playerId) == "" then -- IF Player has left but onPlayerDisconnect failed
+            players_synced[playerId] = nil
+        else
+            if type(players_synced[playerId]) == "number" then
+                if os.difftime(os.time(), players_synced[playerId]) > 10 then -- after 10 seconds consider them to be synced
+                    players_synced[playerId] = true
+                    print(MP.GetPlayerName(playerId) .. " synced")
+                end
+            end
+        end
+    end
+end
+function hotReload()
+    for playerId, _ in pairs(MP.GetPlayers()) do
+        players_synced[playerId] = os.time()
+    end
+end             --- Player list sender for Nickel Interface
+hotReload()     
+
+--Thanks neverless for this <3
+
+
+
+function interfaceCommand(senderId, data)
+
+    --command runnable here for the interface
+    local command = string.match(data, "%S+")
+
+    if FUNCTIONSCOMMANDTABLE[command] == nil then
+        return
+    end
+
+    return CreateCommand(senderId, PREFIX .. data, command, true, FUNCTIONSCOMMANDTABLE[command].command)
+
+end
+
+local playersPermsTable = {}
+function sync()
+    -- local playersVehicles = {}
+    local playersInfoTable = {}
+    for key, value in pairs(players_synced) do
+        if value then
+            -- playersVehicles = MP.GetPlayerVehicles(key)
+            playersInfoTable[tostring(key)] = GetJsonUser(key)
+            
+ 
+
+            for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
+                
+                playersPermsTable[k] = HasPermission(key, k)
+
+            end
+        
+
+            local data2 = Util.JsonEncode(playersPermsTable)
+            MP.TriggerClientEvent(key, "playersPermissions", data2)
+        end
+    end
+
+    -- local data3 = Util.JsonEncode(playersVehicles)
+
+    
+    local data = Util.JsonEncode(playersInfoTable)
+    MP.TriggerClientEvent(-1, "getPlayers", data)
+end
+
+
+
+MP.RegisterEvent("sync", "sync")
+MP.CancelEventTimer("sync")
+MP.CreateEventTimer("sync", 1000)
+MP.RegisterEvent("interfaceCommand", "interfaceCommand")
+MP.RegisterEvent("onPlayerJoin","SyncJoining")
+MP.RegisterEvent("onPlayerDisconnect","SyncDisconnect")
+MP.RegisterEvent("playerCheck", "playerCheck")
+MP.CancelEventTimer("playerCheck")
+MP.CreateEventTimer("playerCheck", 1000)

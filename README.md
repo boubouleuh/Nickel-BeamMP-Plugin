@@ -2,23 +2,39 @@
 Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. This plugin contains a variety of commands for managing your server, including removing and adding staff members, banning and unbanning players, and kicking players. Additionally, the plugin includes a command to retrieve the IP of users on the server.
 
 # Commands
-- ;setrole - set the role of a player
-- ;ban - bans a player from the server
-- ;unban - unban a player from the server
-- ;banip - bans a player's IP from the server
-- ;mute - mute a player
-- ;unmute - unmute a player
-- ;tempmute - tempmute a player
-- ;kick - kicks a player from the server
-- ;ip - retrieves the IP of a player on the server
-- ;noguest - choose if guests players can join
-- ;countdown - user command useful for racing
-- ;votekick - user can votekick an other user to kick him
-- ;dm - send a private message to another player
-- ;say - broadcast a message to all players
-- ;help - show all commands
-- ;whitelist - add or remove a player from the whitelist
+``;setrole <name> <role>``: Assign a role to a player on the server. Example: ;setrole player1 moderator
 
+``;tempban <name> <time> <reason>``: Temporarily ban a player from the server for a given reason. Time must be specified in seconds (s), minutes (m), hours (h), or days (d).
+
+``;ban <name> <reason>``: Ban a player from the server for a given reason.
+
+``;unban <name>``: Unban a player from the server.
+
+``;banip <name> <reason>``: Ban the player and the IP from the server for a given reason.
+
+``;mute <name> <reason>``: Mute a player on the server.
+
+``;unmute <name>``: Unmute a player on the server.
+
+``;tempmute <name> <time> <reason>``: Temporarily mute a player on the server for a given reason. Time must be specified in seconds (s), minutes (m), hours (h), or days (d).
+
+``;kick <name>``: Kick a player from the server.
+
+``;ip <name>``: Retrieve the IP address of a player on the server.
+
+``;noguest <true/false>``: Allow or disallow guest players to join the server.
+
+``;countdown``: Start a countdown for races.
+
+``;votekick <name>``: Initiate a vote to kick a player.
+
+``;dm <name> <message>``: Send a private message to a player on the server.
+
+``;say <message>``: Broadcast a message to all players on the server.
+
+``;help``: Show a list of all available commands on the server.
+
+``;whitelist <add/remove> <name>``: Add or remove a player from the server's whitelist.
 # Configuration
 The plugin includes a configuration file that allows you to modify certain messages sent by the plugin and also change values to enable or disable features.
 
