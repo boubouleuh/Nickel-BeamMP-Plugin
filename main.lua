@@ -40,7 +40,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.3"
+VERSION = "2.0.4"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -300,7 +300,7 @@ function GetPlayerId(player_name)
             return key
         end
     end
-    return nil
+    return -1
 end
 
 --getPlayerBeamMPID with GetPlayerIdentifiers
@@ -1895,7 +1895,7 @@ InitCMD("whitelist", function(sender_id, parameter, name)
         end
     end
     local player_id = GetPlayerId(name)
-    if player_id == nil then
+    if player_id == -1 then
 
         --whitelist offline
         local beamid = getBeamIDFromApi(name)
