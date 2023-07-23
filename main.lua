@@ -814,21 +814,21 @@ function InitPerm()
                 level = 0,
                 name = "member",
                 commands = {
-                    "votekick","countdown","help","dm"
+                    "votekick","countdown","help","dm","interface"
                 }
             },
             {
                 level = 1,
                 name = "moderator",
                 commands = {
-                    "ban","unban","kick","tempban","mute","tempmute","unmute","say"
+                    "ban","unban","kick","tempban","mute","tempmute","unmute","say","whitelist"
                 }
             },
             {
                 level = 2,
                 name = "administrator",
                 commands = {
-                    "ip","banip","unbanip","noguest","setrole"
+                    "ip","banip","setrole"
                 }
             },
             }
@@ -840,10 +840,35 @@ function InitPerm()
         local file = io.open(PERMISSIONPATH, "w")
         file:write(configPretty)
         file:close()
+    else
+        local file = io.open(PERMISSIONPATH, "r")
+        local json = Util.JsonDecode(file:read("*a"))
+        local commandInPermissions = {}
+        for key, value in pairs(json.permissionLevels) do
+            for key2, value2 in pairs(value.commands) do
+                if FUNCTIONSCOMMANDTABLE[value2] == nil then
+                    json.permissionLevels[key].commands[key2] = nil
+                    nkprintwarning("The command " .. value2 " in " .. PERMISSIONPATH .. " does not exist and has been deleted")
+                else
+                    commandInPermissions[value2] = value2
+                end
+            end
+        end
+        local file = io.open(PERMISSIONPATH, "w+")
+        local jsonStr = Util.JsonEncode(json) 
+        local jsonPretty = Util.JsonPrettify(jsonStr)
+        file:write(jsonPretty)
+        file:close()
+
+        for key, value in pairs(FUNCTIONSCOMMANDTABLE) do
+            if commandInPermissions[key] == nil then
+               nkprintwarning("The command '" .. key .. "' is not set up in " .. PERMISSIONPATH .. ", making it inaccessible in game")
+            end
+        end
+        
     end
 end
 ------------ END OF INITIALIZATION ------------
-
 
 
 ------------ START OF COMMAND CREATOR ------------
@@ -2008,6 +2033,19 @@ InitCMD("whitelist", function(sender_id, parameter, name)
     end
 end
 , "Add or remove a player from the whitelist")
+
+
+InitCMD("interface", function(sender_id)
+    MP.TriggerClientEvent(sender_id, "window", "")
+
+end
+,"Show or hide the Nickel Interface if installed")
+
+
+
+
+
+
 ------------ END OF COMMANDS ------------
 
 
@@ -2206,43 +2244,39 @@ end
 PINGARRAY = {}
 
 function CheckPing()
-
     local players = MP.GetPlayers()
 
     for key, value in pairs(players) do
-
         local vehicleRaw = MP.GetPlayerVehicles(key)
+
         if vehicleRaw ~= nil then
+            local vehicle = vehicleRaw[#vehicleRaw] -- Récupérer seulement le véhicule existant
+            local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') -- Capture le nom d'utilisateur et les nombres
+            if username and num1 and num2 then
+                local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
 
-         
-        
-            local vehicleRaw = MP.GetPlayerVehicles(key)
-            local vehicle = vehicleRaw[#vehicleRaw] --Get only existing vehicle
-            local username, num1, num2 = string.match(vehicle, 'USER:(%w+):(%d+)-(%d+)') --USER CAN PROBABLY BE DIFFERENT ! EDIT THIS !
+                local Maxping = "0." .. getConfigValue("MAXPING")
+                if Raw.ping > tonumber(Maxping) then
+                    if PINGARRAY[key] == nil then
+                        PINGARRAY[key] = 1
+                    else
+                        PINGARRAY[key] = PINGARRAY[key] + 1
+                    end
 
-            local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
-
-
-            local Maxping = "0." .. getConfigValue("MAXPING")
-
-            if Raw.ping > tonumber(Maxping) then
-
-                if PINGARRAY[key] == nil then
-                    PINGARRAY[key] = 1
-                
-                else
-                    PINGARRAY[key] = PINGARRAY[key] + 1
+                    if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                        MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                    end
+                elseif Raw.ping <= tonumber(Maxping) / 2 then
+                    PINGARRAY[key] = 0
                 end
-
-                if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
-                    MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
-                end
-            elseif Raw.ping <= tonumber(Maxping) / 2 then
-                PINGARRAY[key] = 0
+            else
+                -- Gérer le cas où la correspondance de l'expression régulière n'a pas réussi
+                -- Peut-être afficher un message d'erreur ou prendre une action appropriée
             end
         end
     end
 end
+
 
 
 
