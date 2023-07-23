@@ -40,7 +40,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.5"
+VERSION = "2.0.6"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -848,7 +848,7 @@ function InitPerm()
             for key2, value2 in pairs(value.commands) do
                 if FUNCTIONSCOMMANDTABLE[value2] == nil then
                     json.permissionLevels[key].commands[key2] = nil
-                    nkprintwarning("The command " .. value2 " in " .. PERMISSIONPATH .. " does not exist and has been deleted")
+                    nkprintwarning("The command " .. value2 .. " in " .. PERMISSIONPATH .. " does not exist and has been deleted")
                 else
                     commandInPermissions[value2] = value2
                 end
