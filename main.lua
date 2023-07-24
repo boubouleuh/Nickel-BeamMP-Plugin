@@ -40,7 +40,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.5"
+VERSION = "2.0.6"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -649,6 +649,26 @@ end
 -- Obtenir le contenu actuel du fichier config.toml et les lignes individuelles
 local configFileLines, configFileContent = readConfigFile()
 
+
+if configFileLines then
+    -- Le fichier existe, nous pouvons procéder à la vérification des clés et à la mise à jour si nécessaire
+    -- ...
+
+else
+    -- Le fichier n'existe pas, nous devons le créer et écrire les valeurs par défaut du tableau CONFIG
+    local file = io.open(CONFIGPATH, "w")
+    if file then
+        -- Écrire les valeurs par défaut du tableau CONFIG dans le fichier config.toml
+        for key, value in pairs(CONFIG) do
+            file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+        end
+        file:close()
+    else
+        -- Afficher un message d'erreur si le fichier ne peut pas être créé
+        print("Failed to create config.toml file.")
+    end
+end
+    
 if configFileLines then
     local updatedConfigFileLines = {}
     local configKeys = {}
@@ -848,7 +868,7 @@ function InitPerm()
             for key2, value2 in pairs(value.commands) do
                 if FUNCTIONSCOMMANDTABLE[value2] == nil then
                     json.permissionLevels[key].commands[key2] = nil
-                    nkprintwarning("The command " .. value2 " in " .. PERMISSIONPATH .. " does not exist and has been deleted")
+                    nkprintwarning("The command " .. value2 .. " in " .. PERMISSIONPATH .. " does not exist and has been deleted")
                 else
                     commandInPermissions[value2] = value2
                 end
@@ -2254,20 +2274,21 @@ function CheckPing()
             local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') -- Capture le nom d'utilisateur et les nombres
             if username and num1 and num2 then
                 local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+                if Raw ~= nil then
+                    local Maxping = "0." .. getConfigValue("MAXPING")
+                    if Raw.ping > tonumber(Maxping) then
+                        if PINGARRAY[key] == nil then
+                            PINGARRAY[key] = 1
+                        else
+                            PINGARRAY[key] = PINGARRAY[key] + 1
+                        end
 
-                local Maxping = "0." .. getConfigValue("MAXPING")
-                if Raw.ping > tonumber(Maxping) then
-                    if PINGARRAY[key] == nil then
-                        PINGARRAY[key] = 1
-                    else
-                        PINGARRAY[key] = PINGARRAY[key] + 1
+                        if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                            MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                        end
+                    elseif Raw.ping <= tonumber(Maxping) / 2 then
+                        PINGARRAY[key] = 0
                     end
-
-                    if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
-                        MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
-                    end
-                elseif Raw.ping <= tonumber(Maxping) / 2 then
-                    PINGARRAY[key] = 0
                 end
             else
                 -- Gérer le cas où la correspondance de l'expression régulière n'a pas réussi
