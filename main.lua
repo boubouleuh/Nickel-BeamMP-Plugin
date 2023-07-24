@@ -649,6 +649,26 @@ end
 -- Obtenir le contenu actuel du fichier config.toml et les lignes individuelles
 local configFileLines, configFileContent = readConfigFile()
 
+
+if configFileLines then
+    -- Le fichier existe, nous pouvons procéder à la vérification des clés et à la mise à jour si nécessaire
+    -- ...
+
+else
+    -- Le fichier n'existe pas, nous devons le créer et écrire les valeurs par défaut du tableau CONFIG
+    local file = io.open(CONFIGPATH, "w")
+    if file then
+        -- Écrire les valeurs par défaut du tableau CONFIG dans le fichier config.toml
+        for key, value in pairs(CONFIG) do
+            file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+        end
+        file:close()
+    else
+        -- Afficher un message d'erreur si le fichier ne peut pas être créé
+        print("Failed to create config.toml file.")
+    end
+end
+    
 if configFileLines then
     local updatedConfigFileLines = {}
     local configKeys = {}
