@@ -637,6 +637,8 @@ local function readConfigFile()
     return nil
 end
 
+
+
 -- Écrire le contenu mis à jour dans le fichier config.toml
 local function writeUpdatedConfigFile(lines)
     local file = io.open(CONFIGPATH, "w")
@@ -648,6 +650,25 @@ end
 
 -- Obtenir le contenu actuel du fichier config.toml et les lignes individuelles
 local configFileLines, configFileContent = readConfigFile()
+
+if configFileLines then
+    -- Le fichier existe, nous pouvons procéder à la vérification des clés et à la mise à jour si nécessaire
+    -- ...
+
+else
+    -- Le fichier n'existe pas, nous devons le créer et écrire les valeurs par défaut du tableau CONFIG
+    local file = io.open(CONFIGPATH, "w")
+    if file then
+        -- Écrire les valeurs par défaut du tableau CONFIG dans le fichier config.toml
+        for key, value in pairs(CONFIG) do
+            file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+        end
+        file:close()
+    else
+        -- Afficher un message d'erreur si le fichier ne peut pas être créé
+        print("Failed to create config.toml file.")
+    end
+end
 
 if configFileLines then
     local updatedConfigFileLines = {}
@@ -1023,7 +1044,18 @@ InitCMD("setrole",function(sender_id, name, rolename)
             return "Usage : setrole [name] [rolename]"
         end
     end
-    -- check if parameter is already in staffs
+
+    local id = GetPlayerId(name)
+    if MP.IsPlayerGuest(id) then
+        if sender_id ~= "console" then
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+            return
+        else
+            return "You cant do this to a guest"
+        end
+    end
+    
+   
     local player_target = GetPlayerId(name)
     local target_json = GetJsonUser(player_target)
     local permlvl = getPermLevelOfName(rolename)
@@ -1035,16 +1067,15 @@ InitCMD("setrole",function(sender_id, name, rolename)
         if beamid ~= nil then
             InitUserWithBeamMPID(beamid, name)
             local jsonUser = getJsonUserByName(name)
-            local permlvl = getPermLevelOfName(rolename)
 
             if sender_id ~= "console" then
                 local senderJson = GetJsonUser(sender_id)
-                if jsonUser.permlvl >= senderJson.permlvl then
+                if jsonUser.permlvl >= senderJson.permlvl or permlvl >= senderJson.permlvl then
                     if sender_id ~= "console" then
-                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to this user")
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this")
                         return
                     else
-                        return "You cant do this to this user"
+                        return "You cant do this"
                     end
                 end
             end
@@ -1081,12 +1112,13 @@ InitCMD("setrole",function(sender_id, name, rolename)
     end
     if sender_id ~= "console" then
         local senderJson = GetJsonUser(sender_id)
-        if target_json.permlvl >= senderJson.permlvl then
+        print(permlvl, senderJson.permlvl )
+        if target_json.permlvl >= senderJson.permlvl or permlvl >= senderJson.permlvl then
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to this user")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this")
                 return
             else
-                return "You cant do this to this user"
+                return "You cant do this"
             end
         end
     end
@@ -1227,10 +1259,22 @@ InitCMD("kick", function(sender_id, parameter)
 
 
     local player_id = GetPlayerId(parameter)
-    local is_staff = isStaff(player_id)
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
+        local senderJson = {permlvl = 0}
+        if sender_id ~= "console" then
+            senderJson = GetJsonUser(sender_id)
+        end
+
+        local jsonUser = {
+            permlvl = 0
+        }
+        
+        if not MP.IsPlayerGuest(player_id) then
+            jsonUser = getJsonUserByName(parameter)
+        end
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
             MP.DropPlayer(player_id, "Kicked")
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. parameter .. " kicked")
@@ -1240,10 +1284,10 @@ InitCMD("kick", function(sender_id, parameter)
             end
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant kick player " .. parameter .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to kick " .. parameter)
                 return
             else
-                return "You cant kick player " .. parameter .. " because is a staff"
+                return "You dont have enough permissions to kick " .. parameter
             end
         end
     else
@@ -1271,12 +1315,29 @@ InitCMD("ban", function(sender_id, name, reason)
         reason = "No reason"
     end
     local player_id = GetPlayerId(name)
-    local is_staff = isStaff(player_id)
+
+
+
+    local senderJson = {permlvl = 0}
+    if sender_id ~= "console" then
+        senderJson = GetJsonUser(sender_id)
+    end
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
-            local jsonUser = getJsonUserByName(name)
-            
+
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+
+        local jsonUser = getJsonUserByName(name)
+
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
 
             if jsonUser.banned.bool or jsonUser.tempbanned.bool then
                 if sender_id ~= "console" then
@@ -1297,10 +1358,10 @@ InitCMD("ban", function(sender_id, name, reason)
             end
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant ban player " .. name .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to ban " .. name)
                 return
             else
-                return "You cant ban player " .. name .. " because is a staff"
+                return "You dont have enough permissions to ban " .. name
             end
         end
     else
@@ -1309,30 +1370,32 @@ InitCMD("ban", function(sender_id, name, reason)
         local beamid = getBeamIDFromApi(name)
         if beamid ~= nil then
             InitUserWithBeamMPID(beamid, name)
+    
             local jsonUser = getJsonUserByName(name)
-            if isStaffWithJson(jsonUser) then
-                if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant ban player " .. name .. " because is a staff")
-                    return
-                else
-                    return "You cant ban player " .. name .. " because is a staff"
+            print(senderJson.permlvl, jsonUser.permlvl)
+            if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
+                if jsonUser.banned.bool or jsonUser.tempbanned.bool then
+                    if sender_id ~= "console" then
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already banned")
+                        return
+                    else
+                        return "Player " .. name .. " already banned"
+                    end
                 end
-            end
-
-            if jsonUser.banned.bool or jsonUser.tempbanned.bool then
+                updateComplexValueOfUserWithJson(jsonUser, "banned", "bool", true)
+                updateComplexValueOfUserWithJson(jsonUser, "banned", "reason", reason)
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already banned")
-                    return
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason)
                 else
-                    return "Player " .. name .. " already banned"
+                    return "Player " .. name .. " banned for " .. reason
                 end
-            end
-            updateComplexValueOfUserWithJson(jsonUser, "banned", "bool", true)
-            updateComplexValueOfUserWithJson(jsonUser, "banned", "reason", reason)
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason)
             else
-                return "Player " .. name .. " banned for " .. reason
+                if sender_id ~= "console" then
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to ban " .. name)
+                    return
+                else
+                    return "You dont have enough permissions to ban " .. name
+                end
             end
         else
             if sender_id ~= "console" then
@@ -1383,11 +1446,28 @@ InitCMD("banip", function(sender_id, name, reason)
         reason = "No reason"
     end
     local player_id = GetPlayerId(name)
-    local is_staff = isStaff(player_id)
+
+
+    local senderJson = {permlvl = 0}
+    if sender_id ~= "console" then
+        senderJson = GetJsonUser(sender_id)
+    end
+
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
-            local jsonUser = getJsonUserByName(name)
+
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+
+        local jsonUser = getJsonUserByName(name)
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
             if jsonUser.ipbanned.bool then
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already ip banned")
@@ -1409,10 +1489,10 @@ InitCMD("banip", function(sender_id, name, reason)
             end
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant ip ban player " .. name .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to banip " .. name)
                 return
             else
-                return "You cant ip ban player " .. name .. " because is a staff"
+                return "You dont have enough permissions to banip " .. name
             end
         end
     else
@@ -1443,10 +1523,25 @@ InitCMD("tempban", function(sender_id, name, time, reason)
         reason = "No reason"
     end
     local player_id = GetPlayerId(name)
-    local is_staff = isStaff(player_id)
+
+    local senderJson = {permlvl = 0}
+    if sender_id ~= "console" then
+        senderJson = GetJsonUser(sender_id)
+    end
+
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+        local jsonUser = getJsonUserByName(name)
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
             if time == nil then
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example")
@@ -1455,6 +1550,7 @@ InitCMD("tempban", function(sender_id, name, time, reason)
                     return "Invalid time format, time have to be like : 5s / 5m / 5h / 5d for example"
                 end
             end
+            --
             time = timeConverter(time)
             local endtime = os.time() + time
             local enddate = os.date("%d/%m/%Y %H:%M:%S", endtime)
@@ -1479,10 +1575,10 @@ InitCMD("tempban", function(sender_id, name, time, reason)
             end	
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant ban player " .. name .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to tempban " .. name)
                 return
             else
-                return "You cant ban player " .. name .. " because is a staff"
+                return "You dont have enough permissions to tempban " .. name
             end
         end
     else
@@ -1497,30 +1593,33 @@ InitCMD("tempban", function(sender_id, name, time, reason)
 
             InitUserWithBeamMPID(beamid, name)
             local jsonUser = getJsonUserByName(name)
-            if isStaffWithJson(jsonUser) then
-                if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant ban player " .. name .. " because is a staff")
-                    return
-                else
-                    return "You cant ban player " .. name .. " because is a staff"
+            if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
+                if jsonUser.banned.bool or jsonUser.tempbanned.bool then
+                    if sender_id ~= "console" then
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already banned")
+                        return
+                    else
+                        return "Player " .. name .. " already banned"
+                    end
                 end
-            end
-            if jsonUser.banned.bool or jsonUser.tempbanned.bool then
+                updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "bool", true)
+                updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "reason", reason)
+                updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "time", endtime)
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already banned")
-                    return
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason .. " until " .. enddate)
                 else
-                    return "Player " .. name .. " already banned"
+                    return "Player " .. name .. " banned for " .. reason .. " until " .. enddate
                 end
-            end
-            updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "bool", true)
-            updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "reason", reason)
-            updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "time", endtime)
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " banned for " .. reason .. " until " .. enddate)
+
             else
-                return "Player " .. name .. " banned for " .. reason .. " until " .. enddate
+                if sender_id ~= "console" then
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to tempban " .. name)
+                    return
+                else
+                    return "You dont have enough permissions to tempban " .. name
+                end
             end
+            
         else
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " not found")
@@ -1544,8 +1643,21 @@ InitCMD("unban", function(sender_id, name)
             return "Usage : unban [player]"
         end
     end
-    local json = getJsonUserByName(name)
-    if json ~= nil then
+    local player_id = GetPlayerId(name)
+
+    
+    if player_id ~= -1 then
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+
+        local json = getJsonUserByName(name)
+
         if json.banned.bool or json.tempbanned.bool then
 
             updateComplexValueOfUserWithJson(json, "tempbanned", "bool", false)
@@ -1633,10 +1745,25 @@ InitCMD("mute", function(sender_id, name, reason)
         reason = "No reason"
     end
     local player_id = GetPlayerId(name)
-    local is_staff = isStaff(player_id)
+
+    local senderJson = {permlvl = 0}
+    if sender_id ~= "console" then
+        senderJson = GetJsonUser(sender_id)
+    end
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
+
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+        local jsonUser = getJsonUserByName(name)
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
             local jsonUser = getJsonUserByName(name)
             if jsonUser.muted.bool or jsonUser.tempmuted.bool then
                 if sender_id ~= "console" then
@@ -1659,33 +1786,45 @@ InitCMD("mute", function(sender_id, name, reason)
 
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant mute player " .. name .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to mute " .. name)
                 return
             else
-                return "You cant mute player " .. name .. " because is a staff"
+                return "You dont have enough permissions to mute " .. name
             end
         end
     else
         --mute offline
+
         local beamid = getBeamIDFromApi(name)
         if beamid ~= nil then
             InitUserWithBeamMPID(beamid, name)
             local jsonUser = getJsonUserByName(name)
-            if jsonUser.muted.bool or jsonUser.tempmuted.bool then
+            if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
+
+                if jsonUser.muted.bool or jsonUser.tempmuted.bool then
+                    if sender_id ~= "console" then
+                        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already muted")
+                        return
+                    else
+                        return "Player " .. name .. " already muted"
+                    end
+                end
+                updateComplexValueOfUserWithJson(jsonUser, "muted", "bool", true)
+                updateComplexValueOfUserWithJson(jsonUser, "muted", "reason", reason)
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " already muted")
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " muted for " .. reason)
+                else
+                    return "Player " .. name .. " muted for " .. reason
+                end
+            else
+                if sender_id ~= "console" then
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to mute " .. name)
                     return
                 else
-                    return "Player " .. name .. " already muted"
+                    return "You dont have enough permissions to mute " .. name
                 end
             end
-            updateComplexValueOfUserWithJson(jsonUser, "muted", "bool", true)
-            updateComplexValueOfUserWithJson(jsonUser, "muted", "reason", reason)
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " muted for " .. reason)
-            else
-                return "Player " .. name .. " muted for " .. reason
-            end
+
         else
             if sender_id ~= "console" then
                 MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " not found")
@@ -1708,8 +1847,19 @@ InitCMD("unmute", function(sender_id, parameter)
             return "Usage : unmute [player]"
         end
     end
-    local json = getJsonUserByName(parameter)
-    if json ~= nil then
+    local player_id = GetPlayerId(name)
+
+
+    if player_id ~= -1 then
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+        local json = getJsonUserByName(parameter)
         if json.muted.bool or json.tempmuted.bool then
             updateComplexValueOfUserWithJson(json, "tempmuted", "bool", false)
             updateComplexValueOfUserWithJson(json, "muted", "bool", false)
@@ -1778,10 +1928,28 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
         reason = "No reason"
     end
     local player_id = GetPlayerId(name)
-    local is_staff = isStaff(player_id)
+
+    local senderJson = {permlvl = 0}
+    if sender_id ~= "console" then
+        senderJson = GetJsonUser(sender_id)
+    end
+
     -- check if player is online
     if player_id ~= -1 then
-        if not is_staff then
+
+        if MP.IsPlayerGuest(player_id) then
+            if sender_id ~= "console" then
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+                return
+            else
+                return "You cant do this to a guest"
+            end
+        end
+
+        local jsonUser = getJsonUserByName(name)
+
+
+        if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
             time = timeConverter(time)
             if time == nil then
                 if sender_id ~= "console" then
@@ -1816,10 +1984,10 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
             end
         else
             if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant mute player " .. name .. " because is a staff")
+                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to tempmute " .. name)
                 return
             else
-                return "You cant mute player " .. name .. " because is a staff"
+                return "You dont have enough permissions to tempmute " .. name
             end
         end
     else
@@ -1828,7 +1996,7 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
         if beamid ~= nil then
             InitUserWithBeamMPID(beamid, name)
             local jsonUser = getJsonUserByName(name)
-            if not isStaff(beamid) then
+            if senderJson.permlvl > jsonUser.permlvl or sender_id == "console" then
                 time = timeConverter(time)
                 if time == nil then
                     if sender_id ~= "console" then
@@ -1860,10 +2028,10 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
                 end
             else
                 if sender_id ~= "console" then
-                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant mute player " .. name .. " because is a staff")
+                    MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You dont have enough permissions to tempmute " .. name)
                     return
                 else
-                    return "You cant mute player " .. name .. " because is a staff"
+                    return "You dont have enough permissions to tempmute " .. name
                 end
             end
         else
@@ -1985,6 +2153,17 @@ InitCMD("whitelist", function(sender_id, parameter, name)
             return "Player " .. name .. " not found"
         end
     end
+
+
+    if MP.IsPlayerGuest(player_id) then
+        if sender_id ~= "console" then
+            MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+            return
+        else
+            return "You cant do this to a guest"
+        end
+    end
+
     local jsonUser = GetJsonUser(player_id)
 
     if parameter == "add" then
@@ -2171,14 +2350,23 @@ end
 
 function onPlayerConnecting(player_id)
     --init player
-    initUser(player_id)
-
+    if not MP.IsPlayerGuest(player_id) then
+        initUser(player_id)
+    end
 
 
     local player_name = MP.GetPlayerName(player_id)
     local status, player_identifiers = pcall(MP.GetPlayerIdentifiers, player_id)
     if status then
-        local user = GetJsonUser(player_id)
+        local user = {
+            whitelisted = false,
+            ipbanned = {bool = false, reason = ""},
+            tempbanned = {bool = false, time = 0},
+            banned = {bool = false}
+        }
+        if not MP.IsPlayerGuest(player_id) then
+            user = GetJsonUser(player_id)
+        end
         if user.banned.bool then
             MP.DropPlayer(player_id, "You are banned from this server for " .. user.banned.reason)
         
@@ -2361,17 +2549,25 @@ function sync()
             if playerVehiclesValue ~= nil then
                 playersVehicles = playerVehiclesValue
             end
-  
-            playersInfoTable[tostring(key)] = GetJsonUser(key)
             
- 
+            if not MP.IsPlayerGuest(key) then
 
-            for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
+                playersInfoTable[tostring(key)] = GetJsonUser(key)
                 
-                playersPermsTable[k] = HasPermission(key, k)
+    
 
+                for k, v in pairs(FUNCTIONSCOMMANDTABLE) do
+                    
+                    playersPermsTable[k] = HasPermission(key, k)
+
+                end
+            else
+                playersInfoTable[tostring(key)] = {
+                    name = MP.GetPlayerName(key),
+                    guest = true
+                }
             end
-        
+            
 
             local data2 = Util.JsonEncode(playersPermsTable)
             MP.TriggerClientEvent(key, "playersPermissions", data2)
