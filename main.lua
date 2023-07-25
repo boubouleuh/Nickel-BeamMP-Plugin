@@ -2249,7 +2249,7 @@ function checkForUpdates()
 
     local response = Util.JsonDecode(httpRequest("https://nickel.martadash.fr/version.txt"))
 
-    if response == "" then
+    if response == nil then
         nkprinterror("Get remote version failed to check update !")
         return
     end
