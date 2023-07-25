@@ -2444,18 +2444,20 @@ function CheckPing()
                 local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
                 if Raw ~= nil then
                     local Maxping = "0." .. getConfigValue("MAXPING")
-                    if Raw.ping > tonumber(Maxping) then
-                        if PINGARRAY[key] == nil then
-                            PINGARRAY[key] = 1
-                        else
-                            PINGARRAY[key] = PINGARRAY[key] + 1
-                        end
+                    if Raw.ping ~= nil then
+                        if Raw.ping > tonumber(Maxping) then
+                            if PINGARRAY[key] == nil then
+                                PINGARRAY[key] = 1
+                            else
+                                PINGARRAY[key] = PINGARRAY[key] + 1
+                            end
 
-                        if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
-                            MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                            if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                                MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                            end
+                        elseif Raw.ping <= tonumber(Maxping) / 2 then
+                            PINGARRAY[key] = 0
                         end
-                    elseif Raw.ping <= tonumber(Maxping) / 2 then
-                        PINGARRAY[key] = 0
                     end
                 end
             else
