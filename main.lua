@@ -2452,7 +2452,7 @@ function CheckPing()
                                 PINGARRAY[key] = PINGARRAY[key] + 1
                             end
 
-                            if PINGARRAY[key] > tonumber(getConfigValue("PINGTRESHOLD")) then
+                            if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
                                 MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
                             end
                         elseif Raw.ping <= tonumber(Maxping) / 2 then
