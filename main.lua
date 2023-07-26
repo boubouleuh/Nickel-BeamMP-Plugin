@@ -29,7 +29,8 @@ CONFIG = {
     WHITELIST = "false",
     MAXPING = "500",
     PINGTHRESHOLD = "20",
-    KICKPINGMSG = "Ping too high"
+    KICKPINGMSG = "Ping too high",
+    MAXVEHICLEAFKTIME = "300"
 }
 
 
@@ -2431,17 +2432,29 @@ end
 
 PINGARRAY = {}
 
-function CheckPing()
+local MAX_AFK_TIME = 300 
+
+local PREVIOUS_POSITION = {}
+local AFK_TIMER = {}
+
+
+function CheckPingAndAFK()
+    local function compareFloats(a, b, epsilon)
+        return math.abs(a - b) < epsilon
+    end
+
     local players = MP.GetPlayers()
 
     for key, value in pairs(players) do
-        local vehicleRaw = MP.GetPlayerVehicles(key)
 
+        local pingChecked = false
+
+        local vehicleRaw = MP.GetPlayerVehicles(key)
         if vehicleRaw ~= nil then
-            local vehicle = vehicleRaw[#vehicleRaw] -- Récupérer seulement le véhicule existant
-            if vehicle ~= nil then
-                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') -- Capture le nom d'utilisateur et les nombres
-                if username and num1 and num2 then
+            local vehicle = vehicleRaw[#vehicleRaw]
+            local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
+            if username and num1 and num2 then
+                if not pingChecked then
                     local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
                     if Raw ~= nil then
                         local Maxping = "0." .. getConfigValue("MAXPING")
@@ -2460,10 +2473,35 @@ function CheckPing()
                                 PINGARRAY[key] = 0
                             end
                         end
+                        pingChecked = true
                     end
-                else
-                    -- Gérer le cas où la correspondance de l'expression régulière n'a pas réussi
-                    -- Peut-être afficher un message d'erreur ou prendre une action appropriée
+                end
+            end
+            for k, v in pairs(vehicleRaw) do
+                local vehicle = vehicleRaw[k]
+                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
+                if username and num1 and num2 then
+                    local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+                    if Raw ~= nil then
+
+                        local previousPos = PREVIOUS_POSITION[num2]
+                        if previousPos ~= nil and
+                            compareFloats(previousPos[1], Raw.pos[1], 0.001) and
+                            compareFloats(previousPos[2], Raw.pos[2], 0.001) and
+                            compareFloats(previousPos[3], Raw.pos[3], 0.001) then
+                            local afkTime = (AFK_TIMER[num2] or 0) + 1
+                            if afkTime >= tonumber(getConfigValue("MAXVEHICLEAFKTIME")) then
+                                MP.RemoveVehicle(key, tonumber(num2))
+                                MP.SendChatMessage(key, "^l^7 Nickel |^r^o One of your vehicles has been deleted because it was not used.")
+
+                            else
+                                AFK_TIMER[num2] = afkTime
+                            end
+                        else
+                            AFK_TIMER[num2] = 0
+                            PREVIOUS_POSITION[num2] = {Raw.pos[1], Raw.pos[2], Raw.pos[3]}          
+                        end
+                    end
                 end
             end
         end
@@ -2473,18 +2511,21 @@ end
 
 
 
+
+
 ------------ END OF EVENTS ------------
 
-MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
-MP.CancelEventTimer("CheckPing")
-MP.CreateEventTimer("CheckPing", 1000)
+MP.RegisterEvent("CheckPingAndAFK", "CheckPingAndAFK") -- registering our event for the timer
+MP.CancelEventTimer("CheckPingAndAFK")
+MP.CancelEventTimer("CheckPing") -- Old event timer
+MP.CreateEventTimer("CheckPingAndAFK", 1000)
 
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.RegisterEvent("onChatMessage", "MyChatMessageHandler")
 MP.RegisterEvent("onPlayerJoin", "onPlayerJoin")
 MP.RegisterEvent("onPlayerAuth", "onPlayerAuth")
 MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
-MP.CancelEventTimer("EverySecond")
+MP.CancelEventTimer("EverySecond") -- Old event timer
 
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
 MP.CreateEventTimer("CheckUpdate", 1800000)
