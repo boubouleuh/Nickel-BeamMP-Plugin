@@ -2439,30 +2439,32 @@ function CheckPing()
 
         if vehicleRaw ~= nil then
             local vehicle = vehicleRaw[#vehicleRaw] -- Récupérer seulement le véhicule existant
-            local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') -- Capture le nom d'utilisateur et les nombres
-            if username and num1 and num2 then
-                local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
-                if Raw ~= nil then
-                    local Maxping = "0." .. getConfigValue("MAXPING")
-                    if Raw.ping ~= nil then
-                        if Raw.ping > tonumber(Maxping) then
-                            if PINGARRAY[key] == nil then
-                                PINGARRAY[key] = 1
-                            else
-                                PINGARRAY[key] = PINGARRAY[key] + 1
-                            end
+            if vehicle ~= nil then
+                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') -- Capture le nom d'utilisateur et les nombres
+                if username and num1 and num2 then
+                    local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+                    if Raw ~= nil then
+                        local Maxping = "0." .. getConfigValue("MAXPING")
+                        if Raw.ping ~= nil then
+                            if Raw.ping > tonumber(Maxping) then
+                                if PINGARRAY[key] == nil then
+                                    PINGARRAY[key] = 1
+                                else
+                                    PINGARRAY[key] = PINGARRAY[key] + 1
+                                end
 
-                            if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
-                                MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                                if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
+                                    MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                                end
+                            elseif Raw.ping <= tonumber(Maxping) / 2 then
+                                PINGARRAY[key] = 0
                             end
-                        elseif Raw.ping <= tonumber(Maxping) / 2 then
-                            PINGARRAY[key] = 0
                         end
                     end
+                else
+                    -- Gérer le cas où la correspondance de l'expression régulière n'a pas réussi
+                    -- Peut-être afficher un message d'erreur ou prendre une action appropriée
                 end
-            else
-                -- Gérer le cas où la correspondance de l'expression régulière n'a pas réussi
-                -- Peut-être afficher un message d'erreur ou prendre une action appropriée
             end
         end
     end
