@@ -14,6 +14,20 @@ function file_exists(name)
  end
 
 
+ function findFilesWithPrefix(directoryPath, prefix)
+    local matchingFiles = {}
+
+    local files = FS.ListFiles(directoryPath)
+    for _, file in ipairs(files) do
+        if file:sub(1, #prefix) == prefix then
+            table.insert(matchingFiles, file)
+        end
+    end
+
+    return matchingFiles
+end
+
+
 ------------ START OF CONFIG AND GLOBAL VARIABLE ------------
 --!! EDIT THE CONFIG IN THE .TOML FILE, NOT HERE  !!--
 
@@ -92,7 +106,7 @@ function GetJsonUser(player_id)
     if player_beammp_id == nil then
         return nil
     end
-    local file = io.open(USERPATH .. player_beammp_id .. ".json", "r")
+    local file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "r")
     if file == nil then
         return nil
     end
@@ -122,7 +136,7 @@ function updateSimpleValueOfUser(player_id, key, value)
     if player_beammp_id == nil then
         return nil
     end
-    local file = io.open(USERPATH .. player_beammp_id .. ".json", "r")
+    local file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "r")
     if file == nil then
         return nil
     end
@@ -131,7 +145,7 @@ function updateSimpleValueOfUser(player_id, key, value)
     local json = Util.JsonDecode(content)
     json[key] = value
     local newcontent = Util.JsonEncode(json)
-    file = io.open(USERPATH .. player_beammp_id .. ".json", "w")
+    file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "w")
     file:write(newcontent)
     file:close()
 
@@ -143,7 +157,7 @@ function updateComplexValueOfUser(player_id, key, subkey, value)
     if player_beammp_id == nil then
         return nil
     end
-    local file = io.open(USERPATH .. player_beammp_id .. ".json", "r")
+    local file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "r")
     if file == nil then
         return nil
     end
@@ -152,7 +166,7 @@ function updateComplexValueOfUser(player_id, key, subkey, value)
     local json = Util.JsonDecode(content)
     json[key][subkey] = value
     local newcontent = Util.JsonEncode(json)
-    file = io.open(USERPATH .. player_beammp_id .. ".json", "w")
+    file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "w")
     file:write(newcontent)
     file:close()
 
@@ -163,7 +177,7 @@ end
 function updateSimpleValueOfUserWithJson(json, key, value)
     json[key] = value
     local newcontent = Util.JsonEncode(json)
-    file = io.open(USERPATH .. json.beammpid .. ".json", "w")
+    file = io.open(USERPATH .. json.beammpid .. " " .. json.name .. ".json", "w")
     file:write(newcontent)
     file:close()
     nkprintwarning(json.beammpid .. " -> " .. json.name .. " : field " .. key .. " updated with " .. tostring(value))
@@ -173,7 +187,7 @@ end
 function updateComplexValueOfUserWithJson(json, key, subkey, value)
     json[key][subkey] = value
     local newcontent = Util.JsonEncode(json)
-    file = io.open(USERPATH .. json.beammpid .. ".json", "w")
+    file = io.open(USERPATH .. json.beammpid .. " " .. json.name .. ".json", "w")
     file:write(newcontent)
     file:close()
     nkprintwarning(json.beammpid .. " -> " .. json.name .. " : field " .. key .. "." .. subkey .. " updated with " .. tostring(value))
@@ -392,7 +406,7 @@ function isStaff(player_id)
     if player_beammp_id == -1 then
         return false
     end
-    local file = io.open(USERPATH .. player_beammp_id .. ".json", "r")
+    local file = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "r")
     local content = file:read("*all")
     local usertable = Util.JsonDecode(content)
     file:close()
@@ -434,7 +448,7 @@ function HasPermission(player_id, command)
     if player_beammp_id == nil then
         return false
     end
-    local user = io.open(USERPATH .. player_beammp_id .. ".json", "r")
+    local user = io.open(USERPATH .. player_beammp_id .. " " .. MP.GetPlayerName(player_id) .. ".json", "r")
     local permissions = io.open(PERMISSIONPATH, "r")
     local permcontent = permissions:read("*all")
     local permtable = Util.JsonDecode(permcontent)
@@ -561,7 +575,7 @@ function InitUserWithBeamMPID(beamid, name)
     user.ip = ""
     user.whitelisted = false
 
-    local file = USERPATH .. beamid .. ".json"
+    local file = USERPATH .. beamid .. " " .. user.name .. ".json"
     if not file_exists(file) then
     -- Util.JsonEncode in file
         local json = Util.JsonEncode(user)
@@ -597,6 +611,41 @@ end
 ------------ START OF INITIALIZATION ------------
 
 function onInit()
+
+
+
+    function isValidFileName(fileName)
+        -- Vérifie si le nom du fichier a le format attendu
+        return string.match(fileName, "^%d+%.json$") ~= nil
+    end
+    
+    function renameFilesWithUsername(directoryPath)
+        local files = FS.ListFiles(directoryPath, false, false)
+    
+        for _, file in ipairs(files) do
+            local filePath = directoryPath .. file
+    
+            if isValidFileName(file) then
+                -- Renomme le fichier avec le format attendu (ajoute "username" avant l'extension)
+                local jsonfile = io.open(directoryPath .. file, "r")
+                local jsonContent = jsonfile:read("*all")
+                local json = Util.JsonDecode(jsonContent)
+
+
+                local newFilePath = directoryPath .. json.beammpid .. " " .. json.name .. ".json"
+    
+                jsonfile:close()
+                -- Renomme le fichier en utilisant FS.moveFile()
+                FS.Rename(filePath, newFilePath)
+            else
+                -- Fichier avec un nom invalide, vous pouvez gérer ce cas ici si nécessaire
+            end
+        end
+    end
+    
+    -- Appelle la fonction pour renommer les fichiers du dossier
+    renameFilesWithUsername(USERPATH)
+
 
     InitPerm() --initialize perms
 
@@ -769,16 +818,22 @@ function initUser(id)
     user.ip = player_identifiers['ip']
     user.whitelisted = false
 
-    local file = USERPATH .. user.beammpid .. ".json"
-    if not file_exists(file) then
+
+    --TODO FIX NAME
+
+    local actualFile = findFilesWithPrefix(USERPATH, user.beammpid)
+
+
+
+    if actualFile[1] == nil then
     -- Util.JsonEncode in file
         local json = Util.JsonEncode(user)
-        local file = io.open(file, "w")
+        local file = io.open(USERPATH .. user.beamid .. " " .. user.name .. ".json", "w")
         file:write(json)
         file:close()
     else
         local edited = false
-        local json = io.open(file, "r")
+        local json = io.open(USERPATH .. actualFile[1], "r")
         local jsoncontent = json:read("*a")
         json:close()
         local decodedJson = Util.JsonDecode(jsoncontent)
@@ -811,9 +866,9 @@ function initUser(id)
             decodedJson.name = user.name
             edited = true
         end
-
-        if edited then
-            json = io.open(file, "w")
+        if edited or not string.find(actualFile[1], user.name) then
+            FS.Remove(USERPATH .. actualFile[1])
+            json = io.open(USERPATH .. user.beammpid .. " " .. user.name .. ".json", "w")
             json:write(Util.JsonEncode(decodedJson))
             json:close()
         end
@@ -2562,6 +2617,7 @@ end
 function hotReload()
     for playerId, _ in pairs(MP.GetPlayers()) do
         players_synced[playerId] = os.time()
+        initUser(playerId)
     end
 end             --- Player list sender for Nickel Interface
 hotReload()     
