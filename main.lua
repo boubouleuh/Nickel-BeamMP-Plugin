@@ -828,7 +828,7 @@ function initUser(id)
     if actualFile[1] == nil then
     -- Util.JsonEncode in file
         local json = Util.JsonEncode(user)
-        local file = io.open(USERPATH .. user.beamid .. " " .. user.name .. ".json", "w")
+        local file = io.open(USERPATH .. user.beammpid .. " " .. user.name .. ".json", "w")
         file:write(json)
         file:close()
     else
