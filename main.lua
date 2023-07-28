@@ -2507,54 +2507,58 @@ function CheckPingAndAFK()
         local vehicleRaw = MP.GetPlayerVehicles(key)
         if vehicleRaw ~= nil then
             local vehicle = vehicleRaw[#vehicleRaw]
-            local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
-            if username and num1 and num2 then
-                if not pingChecked then
-                    local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
-                    if Raw ~= nil then
-                        local Maxping = "0." .. getConfigValue("MAXPING")
-                        if Raw.ping ~= nil then
-                            if Raw.ping > tonumber(Maxping) then
-                                if PINGARRAY[key] == nil then
-                                    PINGARRAY[key] = 1
-                                else
-                                    PINGARRAY[key] = PINGARRAY[key] + 1
-                                end
+            if vehicle ~= nil then
+                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
+                if username and num1 and num2 then
+                    if not pingChecked then
+                        local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+                        if Raw ~= nil then
+                            local Maxping = "0." .. getConfigValue("MAXPING")
+                            if Raw.ping ~= nil then
+                                if Raw.ping > tonumber(Maxping) then
+                                    if PINGARRAY[key] == nil then
+                                        PINGARRAY[key] = 1
+                                    else
+                                        PINGARRAY[key] = PINGARRAY[key] + 1
+                                    end
 
-                                if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
-                                    MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                                    if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
+                                        MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+                                    end
+                                elseif Raw.ping <= tonumber(Maxping) / 2 then
+                                    PINGARRAY[key] = 0
                                 end
-                            elseif Raw.ping <= tonumber(Maxping) / 2 then
-                                PINGARRAY[key] = 0
                             end
+                            pingChecked = true
                         end
-                        pingChecked = true
                     end
                 end
             end
             for k, v in pairs(vehicleRaw) do
-                local vehicle = vehicleRaw[k]
-                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
-                if username and num1 and num2 then
-                    local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
-                    if Raw ~= nil then
+                local vehicle2 = vehicleRaw[k]
+                if vehicle2 ~= nil then
+                    local username, num1, num2 = string.match(vehicle2, '(%w+):(%d+)-(%d+)') 
+                    if username and num1 and num2 then
+                        local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+                        if Raw ~= nil then
 
-                        local previousPos = PREVIOUS_POSITION[num2]
-                        if previousPos ~= nil and
-                            compareFloats(previousPos[1], Raw.pos[1], 0.001) and
-                            compareFloats(previousPos[2], Raw.pos[2], 0.001) and
-                            compareFloats(previousPos[3], Raw.pos[3], 0.001) then
-                            local afkTime = (AFK_TIMER[num2] or 0) + 1
-                            if afkTime >= tonumber(getConfigValue("MAXVEHICLEAFKTIME")) then
-                                MP.RemoveVehicle(key, tonumber(num2))
-                                MP.SendChatMessage(key, "^l^7 Nickel |^r^o One of your vehicles has been deleted because it was not used.")
+                            local previousPos = PREVIOUS_POSITION[num2]
+                            if previousPos ~= nil and
+                                compareFloats(previousPos[1], Raw.pos[1], 0.001) and
+                                compareFloats(previousPos[2], Raw.pos[2], 0.001) and
+                                compareFloats(previousPos[3], Raw.pos[3], 0.001) then
+                                local afkTime = (AFK_TIMER[num2] or 0) + 1
+                                if afkTime >= tonumber(getConfigValue("MAXVEHICLEAFKTIME")) then
+                                    MP.RemoveVehicle(key, tonumber(num2))
+                                    MP.SendChatMessage(key, "^l^7 Nickel |^r^o One of your vehicles has been deleted because it was not used.")
 
+                                else
+                                    AFK_TIMER[num2] = afkTime
+                                end
                             else
-                                AFK_TIMER[num2] = afkTime
+                                AFK_TIMER[num2] = 0
+                                PREVIOUS_POSITION[num2] = {Raw.pos[1], Raw.pos[2], Raw.pos[3]}          
                             end
-                        else
-                            AFK_TIMER[num2] = 0
-                            PREVIOUS_POSITION[num2] = {Raw.pos[1], Raw.pos[2], Raw.pos[3]}          
                         end
                     end
                 end
