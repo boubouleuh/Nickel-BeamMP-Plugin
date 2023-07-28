@@ -633,7 +633,9 @@ end
 
 ------------ START OF INITIALIZATION ------------
 
+
 function onInit()
+    --Extension handler
 
     local extensions = {}
 
@@ -642,7 +644,7 @@ function onInit()
         if not file_exists(EXTENSIONPATH) then
             FS.CreateDirectory(EXTENSIONPATH)
         end
-    
+
         local files = FS.ListFiles(EXTENSIONPATH)
         for _, file in ipairs(files) do
             if FS.GetExtension(EXTENSIONPATH .. file) == ".lua" then
@@ -652,15 +654,22 @@ function onInit()
         end
     end
     loadExtensions()
-    
+
     -- Fonction pour vérifier périodiquement si les fichiers d'extension ont été modifiés
     function onFileChanged(path)
-
+            for commandName, commandData in pairs(FUNCTIONSCOMMANDTABLE) do
+                if commandData.source == "extension" then
+                    FUNCTIONSCOMMANDTABLE[commandName] = nil
+                end
+            end
             --Extensions
             if string.find(path, EXTENSIONPATH) then
-                    print("Extension " .. path .. " edited, Hot reloading ...")
+                    print("Extension " .. FS.GetFilename(path) .. " edited, Hot reloading ...")
+                    extensions[FS.GetFilename(path)] = FS.GetFilename(path)
                     triggerExtensionsHotReload()
             end
+
+ 
     end
 
     function checkDeletedExtension()
@@ -682,13 +691,15 @@ function onInit()
             end
         end
     end
-    
+
     MP.RegisterEvent("checkDeletedExtension", "checkDeletedExtension")
     MP.CancelEventTimer("checkDeletedExtension")
     MP.CreateEventTimer("checkDeletedExtension", 3000)
 
 
     MP.RegisterEvent("onFileChanged", "onFileChanged")
+
+
 
     function isValidFileName(fileName)
         -- Vérifie si le nom du fichier a le format attendu
@@ -1107,10 +1118,11 @@ end
 
 
 ------------ START OF COMMANDS ------------
-FUNCTIONSCOMMANDTABLE={}
-
+FUNCTIONSCOMMANDTABLE = {}
 -- Fonction pour créer une commande
-function InitCMD(command_name, command_func, command_desc)
+function InitCMD(command_name, command_func, command_desc, source)
+
+
     -- Créer la table pour la commande si elle n'existe pas encore
     if not FUNCTIONSCOMMANDTABLE[command_name] then
       FUNCTIONSCOMMANDTABLE[command_name] = {}
@@ -1122,10 +1134,16 @@ function InitCMD(command_name, command_func, command_desc)
     else
         FUNCTIONSCOMMANDTABLE[command_name].description = "No description available"
     end
+    if source then
+        FUNCTIONSCOMMANDTABLE[command_name].source = source
+      else
+          FUNCTIONSCOMMANDTABLE[command_name].source = "extension"
+      end
     
     -- Ajouter la fonction de commande à la table
     FUNCTIONSCOMMANDTABLE[command_name].command = command_func
 end
+
 
 --ip
 InitCMD("ip", function(sender_id)
@@ -1163,7 +1181,7 @@ InitCMD("ip", function(sender_id)
         end
   
     end
-, "Show players ip")
+,"Show players ip", "default")
 
 --setrole
 InitCMD("setrole",function(sender_id, name, rolename)
@@ -1276,7 +1294,7 @@ InitCMD("setrole",function(sender_id, name, rolename)
     end
         
 end
-, "Set the role of a player with a role name that exists in permissions.json")
+, "Set the role of a player with a role name that exists in permissions.json", "default")
 
 
 
@@ -1301,7 +1319,7 @@ InitCMD("help", function(sender_id)
         return "Command list : \n\n" .. table.concat(array, "\n")
     end
 end
-, "Show this menu")
+, "Show this menu", "default")
 
 InitCMD("reloadconf", function(sender_id)
     if sender_id ~= "console" then
@@ -1315,7 +1333,7 @@ InitCMD("reloadconf", function(sender_id)
     end
 
 end
-, "Reload the configurations")
+, "Reload the configurations", "default")
 
 
 --votekick command
@@ -1390,7 +1408,7 @@ InitCMD("votekick", function(sender_id, parameter)
         MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant votekick player " .. parameter .. " because votekick is disabled on this server")
     end
 end
-, "Start a vote to kick a troublesome player")
+, "Start a vote to kick a troublesome player", "default")
 
 -- kick command
 InitCMD("kick", function(sender_id, parameter)
@@ -1446,7 +1464,7 @@ InitCMD("kick", function(sender_id, parameter)
         end
     end
 end
-, "Kick a troublesome player")
+, "Kick a troublesome player", "default")
 
 --ban command
 InitCMD("ban", function(sender_id, name, reason)
@@ -1554,7 +1572,7 @@ InitCMD("ban", function(sender_id, name, reason)
         end
     end
 end
-, "Ban a very troublesome player")
+, "Ban a very troublesome player", "default")
 
 --private message
 InitCMD("dm", function(sender_id, target_name, message)
@@ -1576,7 +1594,7 @@ InitCMD("dm", function(sender_id, target_name, message)
         end
     end
 end
-, "Send a private message to another player")
+, "Send a private message to another player", "default")
 
 --banip command with username and reason parameter
 InitCMD("banip", function(sender_id, name, reason)
@@ -1651,7 +1669,7 @@ InitCMD("banip", function(sender_id, name, reason)
         end
     end
 end
-, "Ban ip a very troublesome player")
+, "Ban ip a very troublesome player", "default")
 
 
 
@@ -1777,7 +1795,7 @@ InitCMD("tempban", function(sender_id, name, time, reason)
         end
     end
 end
-, "Tempban a very troublesome player")
+, "Tempban a very troublesome player", "default")
 
 --unban command
 InitCMD("unban", function(sender_id, name)
@@ -1875,7 +1893,7 @@ InitCMD("unban", function(sender_id, name)
         end
     end
 end
-, "Undo a player's ban")
+, "Undo a player's ban", "default")
 
 --mute command
 InitCMD("mute", function(sender_id, name, reason)
@@ -1981,7 +1999,7 @@ InitCMD("mute", function(sender_id, name, reason)
         end
     end
 end
-, "Mute a troublesome player")
+, "Mute a troublesome player", "default")
 
 --unmute command
 InitCMD("unmute", function(sender_id, parameter)
@@ -2058,7 +2076,7 @@ InitCMD("unmute", function(sender_id, parameter)
         end
     end
 end
-, "Undo a player's mute")
+, "Undo a player's mute", "default")
 
 --tempmute
 InitCMD("tempmute", function(sender_id, name, time, reason)
@@ -2190,7 +2208,7 @@ InitCMD("tempmute", function(sender_id, name, time, reason)
         end
     end
 end
-, "Tempmute a troublesome player")
+, "Tempmute a troublesome player", "default")
 
 --countdown
 InitCMD("countdown", function(sender_id)
@@ -2205,7 +2223,7 @@ InitCMD("countdown", function(sender_id)
     end
     MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
 end
-, "Initiate a countdown timer")
+, "Initiate a countdown timer", "default")
 
 --say command
 InitCMD("say", function(sender_id, parameter)
@@ -2222,7 +2240,7 @@ InitCMD("say", function(sender_id, parameter)
         return parameter
     end
 end
-, "Broadcast a message to all players")
+, "Broadcast a message to all players", "default")
 
 --whitelist command
 InitCMD("whitelist", function(sender_id, parameter, name)
@@ -2358,14 +2376,14 @@ InitCMD("whitelist", function(sender_id, parameter, name)
         end
     end
 end
-, "Add or remove a player from the whitelist")
+, "Add or remove a player from the whitelist", "default")
 
 
 InitCMD("interface", function(sender_id)
     MP.TriggerClientEvent(sender_id, "window", "")
 
 end
-,"Show or hide the Nickel Interface if installed")
+, "Show or hide the Nickel Interface if installed", "default")
 
 
 
