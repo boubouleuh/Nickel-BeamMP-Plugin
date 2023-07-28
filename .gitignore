@@ -3,3 +3,5 @@ version.txt
 /data
 /.vscode
 /versionwithdatabaseID
+/extensions
+HotReload.txt

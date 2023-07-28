@@ -49,6 +49,7 @@ CONFIG = {
 
 
 VOTEKICKLIST = {}
+EXTENSIONPATH = script_path() .. "extensions/"
 PERMISSIONPATH = script_path() .. "data/permissions.json"
 VERSIONPATH = script_path() .. "version.txt"
 USERPATH = script_path() .. "data/users/"
@@ -608,6 +609,19 @@ function getBeamIDFromApi(name)
         return nil
     end
 end
+
+function triggerExtensionsHotReload()
+
+    if not FS.Exists(script_path() .. "HotReload.txt") then
+        nkprinterror("HotReload FAILED please restart the server one time to setup the Extensions HotReload correctly")
+    end
+    local file = io.open(script_path() .. "HotReload.txt", "w+")
+    file:write("local"  .. " " .. "Extensionsreload" .. " = " .. Util.Random())
+    file:close()
+end
+
+
+
 ------------ END OF UTILITY FUNCTIONS ------------
 
 
@@ -621,7 +635,60 @@ end
 
 function onInit()
 
+    local extensions = {}
 
+    -- Fonction pour charger les fichiers d'extension
+    function loadExtensions()
+        if not file_exists(EXTENSIONPATH) then
+            FS.CreateDirectory(EXTENSIONPATH)
+        end
+    
+        local files = FS.ListFiles(EXTENSIONPATH)
+        for _, file in ipairs(files) do
+            if FS.GetExtension(EXTENSIONPATH .. file) == ".lua" then
+                extensions[file] = file
+                dofile(EXTENSIONPATH .. file)
+            end
+        end
+    end
+    loadExtensions()
+    
+    -- Fonction pour vérifier périodiquement si les fichiers d'extension ont été modifiés
+    function onFileChanged(path)
+
+            --Extensions
+            if string.find(path, EXTENSIONPATH) then
+                    print("Extension " .. path .. " edited, Hot reloading ...")
+                    triggerExtensionsHotReload()
+            end
+    end
+
+    function checkDeletedExtension()
+        local files = FS.ListFiles(EXTENSIONPATH)
+        -- Vérifier les fichiers supprimés
+        for file, _ in pairs(extensions) do
+            local found = false
+            for _, f in ipairs(files) do
+                if file == f then
+                    found = true
+                    break
+                end
+            end
+
+            if not found then
+                print("Extension " .. file .. " deleted")
+                extensions[file] = nil
+                triggerExtensionsHotReload()
+            end
+        end
+    end
+    
+    MP.RegisterEvent("checkDeletedExtension", "checkDeletedExtension")
+    MP.CancelEventTimer("checkDeletedExtension")
+    MP.CreateEventTimer("checkDeletedExtension", 3000)
+
+
+    MP.RegisterEvent("onFileChanged", "onFileChanged")
 
     function isValidFileName(fileName)
         -- Vérifie si le nom du fichier a le format attendu
