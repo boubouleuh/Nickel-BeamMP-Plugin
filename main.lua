@@ -641,6 +641,11 @@ function onInit()
 
     -- Fonction pour charger les fichiers d'extension
     function loadExtensions()
+        for commandName, commandData in pairs(FUNCTIONSCOMMANDTABLE) do
+            if commandData.source == "extension" then
+                FUNCTIONSCOMMANDTABLE[commandName] = nil
+            end
+        end
         if not file_exists(EXTENSIONPATH) then
             FS.CreateDirectory(EXTENSIONPATH)
         end
@@ -657,11 +662,6 @@ function onInit()
 
     -- Fonction pour vérifier périodiquement si les fichiers d'extension ont été modifiés
     function onFileChanged(path)
-            for commandName, commandData in pairs(FUNCTIONSCOMMANDTABLE) do
-                if commandData.source == "extension" then
-                    FUNCTIONSCOMMANDTABLE[commandName] = nil
-                end
-            end
             --Extensions
             if string.find(path, EXTENSIONPATH) then
                     print("Extension " .. FS.GetFilename(path) .. " edited, Hot reloading ...")
