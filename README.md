@@ -32,6 +32,8 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
 ``;help``: Show a list of all available commands on the server.
 
+``;reloadconf``: Reload the configurations file
+
 ``;whitelist <add/remove> <name>``: Add or remove a player from the server's whitelist.
 
 ``;interface``: Show or hide Nickel interface if installed.
@@ -47,7 +49,8 @@ The plugin includes an auto-update feature that can be enabled or disabled.
 - #### Ping kick 
     automatically kicks a player when their ping (latency) exceeds a certain threshold for a given time. This helps maintain a smooth gaming experience for all players by limiting the presence of players with unstable connections.
 
-
+- #### Anti vehicle afk
+    The Anti Vehicle AFK feature automatically removes a vehicle from the game when it remains inactive for a certain period of time. This helps keep the game world tidy and ensures active players have a smoother gaming experience.
 
 # Installation
 To install the plugin, you can download the latest version from the link below:
