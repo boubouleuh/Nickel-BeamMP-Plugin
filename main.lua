@@ -284,7 +284,6 @@ function getConfigValue(config_name)
         local value = string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
         configCache[config_name] = value
     end
-    print("config : ", configCache[config_name])
     return configCache[config_name]
 end
 
