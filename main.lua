@@ -271,19 +271,29 @@ function nkprintwarning(message)
 end
 
 
---function getConfigValue
+local configCache = {}  -- Tableau pour mettre en cache les valeurs de configuration
+
+-- Function to get the value of a configuration variable
 function getConfigValue(config_name)
-    local file = io.open(CONFIGPATH, "r")
-    local content = file:read("*all")
-    file:close()
+    if not configCache[config_name] then
+        local file = io.open(CONFIGPATH, "r")
+        local content = file:read("*all")
+        file:close()
 
-    --string match for value like : VARIABLE = "value" (work for every variable and value)
-
-    return string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
-    
+        -- string.match for value like: VARIABLE = "value" (works for every variable and value)
+        local value = string.match(content, config_name .. "%s*=%s*\"(.-)\"%s*\n")
+        configCache[config_name] = value
+    end
+    print("config : ", configCache[config_name])
+    return configCache[config_name]
 end
 
 
+-- Function to reload the entire configuration from the file
+function reloadConfig()
+    configCache = {}  -- Réinitialiser le cache pour forcer le rechargement complet
+    print("Configuration reloaded.")
+end
 
 
 --function editConfigValue
@@ -905,7 +915,7 @@ function InitPerm()
                 level = 2,
                 name = "administrator",
                 commands = {
-                    "ip","banip","setrole"
+                    "ip","banip","setrole","reloadconf"
                 }
             },
             }
@@ -1226,6 +1236,21 @@ InitCMD("help", function(sender_id)
     end
 end
 , "Show this menu")
+
+InitCMD("reloadconf", function(sender_id)
+    if sender_id ~= "console" then
+        reloadConfig()
+        MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Configurations successfully reloaded !")
+        
+    else
+        reloadConfig()
+        return "Configurations successfully reloaded !"
+        
+    end
+
+end
+, "Reload the configurations")
+
 
 --votekick command
 InitCMD("votekick", function(sender_id, parameter)
