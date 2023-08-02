@@ -2744,7 +2744,7 @@ MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
 MP.CancelEventTimer("EverySecond") -- Old event timer
 MP.CancelEventTimer("CountSeconds")
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
-MP.CreateEventTimer("CheckUpdate", 1000)
+MP.CreateEventTimer("CheckUpdate", 180000)
 
 
 
@@ -2858,4 +2858,4 @@ MP.RegisterEvent("onPlayerJoin","SyncJoining")
 MP.RegisterEvent("onPlayerDisconnect","SyncDisconnect")
 MP.RegisterEvent("playerCheck", "playerCheck")
 MP.CancelEventTimer("playerCheck")
-MP.CreateEventTimer("playerCheck", 180000)
+MP.CreateEventTimer("playerCheck", 1000)
