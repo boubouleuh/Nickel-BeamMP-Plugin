@@ -199,19 +199,15 @@ end
 
 function httpRequest(url)
     --check os
+    local success = false
     if MP.GetOSName() == "Windows" then
-        local response = os.execute("curl -s " .. url .. " --output temp.txt")
-        -- response:close()
-        if response then
-            local file = io.open("temp.txt", "r")
-            local content = file:read("*all")
-            file:close()
-            os.remove("temp.txt")
-            return content
-        else
-            return ""
-        end
+        local exitCode = os.execute("bitsadmin /transfer NickelVersionDownload /download /priority normal " .. '"' .. url .. '"' .. ' "' .. "%cd%\\temp.txt" .. '" > NUL')
+        success = (exitCode == 0)
     else
+        local exitCode = os.execute("wget -q -O temp.txt " .. url)
+        success = (exitCode == 0)
+    end
+    if success then
         --dont use curl
         local response = os.execute("wget -q -O temp.txt " .. url)
         -- response:close()
@@ -2749,7 +2745,7 @@ MP.RegisterEvent("onPlayerJoin", "onPlayerJoin")
 MP.RegisterEvent("onPlayerAuth", "onPlayerAuth")
 MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
 MP.CancelEventTimer("EverySecond") -- Old event timer
-
+MP.CancelEventTimer("CountSeconds")
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
 MP.CreateEventTimer("CheckUpdate", 1800000)
 
