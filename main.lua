@@ -196,18 +196,23 @@ function updateComplexValueOfUserWithJson(json, key, subkey, value)
 end
 
 
-
 function httpRequest(url)
-    --check os
-    local success = false
     if MP.GetOSName() == "Windows" then
-        local exitCode = os.execute("bitsadmin /transfer NickelVersionDownload /download /priority normal " .. '"' .. url .. '"' .. ' "' .. "%cd%\\temp.txt" .. '" > NUL')
-        success = (exitCode == 0)
-    end
-    if success or MP.GetOSName() ~= "Windows" then
-        --dont use curl
+        local cmd = 'powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"'
+        local response = os.execute(cmd)
+
+        if response then
+            local file = io.open("temp.txt", "r")
+            local content = file:read("*all")
+            file:close()
+            os.remove("temp.txt")
+            return content
+        else
+            return ""
+        end
+    else
+        -- Utiliser une méthode non-Windows (par exemple, wget)
         local response = os.execute("wget -q -O temp.txt " .. url)
-        -- response:close()
         if response then
             local file = io.open("temp.txt", "r")
             local content = file:read("*all")
@@ -2744,7 +2749,7 @@ MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
 MP.CancelEventTimer("EverySecond") -- Old event timer
 MP.CancelEventTimer("CountSeconds")
 MP.RegisterEvent("CheckUpdate", "checkForUpdates")
-MP.CreateEventTimer("CheckUpdate", 180000)
+MP.CreateEventTimer("CheckUpdate", 1800000)
 
 
 
