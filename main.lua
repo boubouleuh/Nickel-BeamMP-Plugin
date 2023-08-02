@@ -44,7 +44,8 @@ CONFIG = {
     MAXPING = "500",
     PINGTHRESHOLD = "20",
     KICKPINGMSG = "Ping too high",
-    MAXVEHICLEAFKTIME = "300"
+    MAXVEHICLEAFKTIME = "300",
+    CHATHANDLER = "true"
 }
 
 
@@ -501,7 +502,42 @@ function getAllPermLvl()
 end
 
 
+-- Fonction pour extraire la valeur d'une clé à partir d'une ligne
+local function extractValue(line, key)
+    local _, _, value = string.find(line, key .. "%s*=%s*(.*)")
+    return value
+end
 
+-- Fonction pour récupérer une valeur à partir du fichier de configuration
+local function GetBeamMPConfigValue(section, key)
+    local file = io.open("ServerConfig.toml", "r")
+
+    if file then
+        local inTargetSection = false
+        for line in file:lines() do
+            -- Vérifie si nous sommes dans la section cible
+            if line:match("^%s*%[" .. section .. "%]") then
+                inTargetSection = true
+            elseif inTargetSection then
+                -- Sort de la boucle si nous quittons la section cible
+                if line:match("^%s*%[.-%]") then
+                    break
+                end
+
+                -- Vérifie si la ligne correspond à la clé recherchée
+                if line:match("^%s*" .. key .. "%s*=") then
+                    file:close()
+                    return extractValue(line, key)
+                end
+            end
+        end
+        file:close()
+    end
+
+    return nil
+end
+
+-- Charge le fichier de configuration
 
 --getMaxPermLvl
 function getMaxPermLvl()
@@ -635,6 +671,13 @@ end
 
 
 function onInit()
+
+    if GetBeamMPConfigValue("General", "LogChat") == "true" and getConfigValue("CHATHANDLER") == "true" then
+        nkprintwarning("Enabling 'LogChat' in the 'ServerConfig.toml' file AND having the Nickel chat handler activated in the 'NickelConfig.toml' file may lead to duplicate chat messages appearing in the console. Please disable one")
+    end
+
+
+
     --Extension handler
 
     local extensions = {}
@@ -672,6 +715,8 @@ function onInit()
  
     end
 
+
+    --Rename it checkExtension and check if a new file is created too
     function checkDeletedExtension()
         local files = FS.ListFiles(EXTENSIONPATH)
         -- Vérifier les fichiers supprimés
@@ -2565,7 +2610,7 @@ function onPlayerConnecting(player_id)
 end
     
 
-function MyChatMessageHandler(sender_id, sender_name, message)
+function MainChatHandler(sender_id, sender_name, message)
     local senderJson = GetJsonUser(sender_id)
     if senderJson ~= nil then
 
@@ -2593,6 +2638,16 @@ function MyChatMessageHandler(sender_id, sender_name, message)
         return -1
     end
 end
+--
+function ChatInConsoleHandler(sender_id, sender_name, message)
+    if getConfigValue('CHATHANDLER') == "true" then
+        nkprint(print_color("[CHAT] ",  "green") .. print_color("[" .. sender_id .. "|" .. sender_name .. "] : ",  "yellow") .. message)
+    end
+end
+
+
+
+
 
 PINGARRAY = {}
 
@@ -2660,7 +2715,7 @@ function CheckPingAndAFK()
                                 if afkTime >= tonumber(getConfigValue("MAXVEHICLEAFKTIME")) then
                                     MP.RemoveVehicle(key, tonumber(num2))
                                     MP.SendChatMessage(key, "^l^7 Nickel |^r^o One of your vehicles has been deleted because it was not used.")
-
+                                    AFK_TIMER[num2] = nil
                                 else
                                     AFK_TIMER[num2] = afkTime
                                 end
@@ -2679,8 +2734,6 @@ end
 
 
 
-
-
 ------------ END OF EVENTS ------------
 
 MP.RegisterEvent("CheckPingAndAFK", "CheckPingAndAFK") -- registering our event for the timer
@@ -2688,8 +2741,10 @@ MP.CancelEventTimer("CheckPingAndAFK")
 MP.CancelEventTimer("CheckPing") -- Old event timer
 MP.CreateEventTimer("CheckPingAndAFK", 1000)
 
+
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
-MP.RegisterEvent("onChatMessage", "MyChatMessageHandler")
+MP.RegisterEvent("onChatMessage", "MainChatHandler")
+MP.RegisterEvent('onChatMessage', "ChatInConsoleHandler")
 MP.RegisterEvent("onPlayerJoin", "onPlayerJoin")
 MP.RegisterEvent("onPlayerAuth", "onPlayerAuth")
 MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
@@ -2796,6 +2851,9 @@ function sync()
     local data = Util.JsonEncode(playersInfoTable)
     MP.TriggerClientEvent(-1, "getPlayers", data)
 end
+
+
+
 
 
 
