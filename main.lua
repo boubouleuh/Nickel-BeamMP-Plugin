@@ -948,14 +948,13 @@ function initUser(id)
     user.ip = player_identifiers['ip']
     user.whitelisted = false
 
-
+    local fileName = USERPATH .. user.beammpid .. " " .. user.name .. ".json"
     --TODO FIX NAME
 
-    local actualFile = findFilesWithPrefix(USERPATH, user.beammpid)
+    -- local actualFile = findFilesWithPrefix(USERPATH, user.beammpid)
 
 
-
-    if actualFile[1] == nil then
+    if not file_exists(fileName) then
     -- Util.JsonEncode in file
         local json = Util.JsonEncode(user)
         local file = io.open(USERPATH .. user.beammpid .. " " .. user.name .. ".json", "w")
@@ -963,7 +962,7 @@ function initUser(id)
         file:close()
     else
         local edited = false
-        local json = io.open(USERPATH .. actualFile[1], "r")
+        local json = io.open(fileName, "r")
         local jsoncontent = json:read("*a")
         json:close()
         local decodedJson = Util.JsonDecode(jsoncontent)
@@ -996,9 +995,9 @@ function initUser(id)
             decodedJson.name = user.name
             edited = true
         end
-        if edited or not string.find(actualFile[1], user.name) then
-            FS.Remove(USERPATH .. actualFile[1])
-            json = io.open(USERPATH .. user.beammpid .. " " .. user.name .. ".json", "w")
+        if edited or not string.find(fileName, user.name) then
+            FS.Remove(fileName)
+            json = io.open(fileName, "w")
             json:write(Util.JsonEncode(decodedJson))
             json:close()
         end
@@ -2424,7 +2423,6 @@ end
 
 InitCMD("interface", function(sender_id)
     MP.TriggerClientEvent(sender_id, "window", "")
-
 end
 , "Show or hide the Nickel Interface if installed", "default")
 
@@ -2434,8 +2432,6 @@ end
 
 
 ------------ END OF COMMANDS ------------
-
-
 
 
 ------------ START OF EVENTS ------------
