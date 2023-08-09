@@ -790,25 +790,26 @@ function onInit()
     
     function renameFilesWithUsername(directoryPath)
         local files = FS.ListFiles(directoryPath, false, false)
-    
-        for _, file in ipairs(files) do
-            local filePath = directoryPath .. file
-    
-            if isValidFileName(file) then
-                -- Renomme le fichier avec le format attendu (ajoute "username" avant l'extension)
-                local jsonfile = io.open(directoryPath .. file, "r")
-                local jsonContent = jsonfile:read("*all")
-                jsonfile:close()
-                local json = Util.JsonDecode(jsonContent)
+        if files ~= nil then
+            for _, file in ipairs(files) do
+                local filePath = directoryPath .. file
+        
+                if isValidFileName(file) then
+                    -- Renomme le fichier avec le format attendu (ajoute "username" avant l'extension)
+                    local jsonfile = io.open(directoryPath .. file, "r")
+                    local jsonContent = jsonfile:read("*all")
+                    jsonfile:close()
+                    local json = Util.JsonDecode(jsonContent)
 
 
-                local newFilePath = directoryPath .. json.beammpid .. " " .. json.name .. ".json"
-    
+                    local newFilePath = directoryPath .. json.beammpid .. " " .. json.name .. ".json"
+        
 
-                -- Renomme le fichier en utilisant FS.moveFile()
-                FS.Rename(filePath, newFilePath)
-            else
-                -- Fichier avec un nom invalide, vous pouvez gérer ce cas ici si nécessaire
+                    -- Renomme le fichier en utilisant FS.moveFile()
+                    FS.Rename(filePath, newFilePath)
+                else
+                    -- Fichier avec un nom invalide, vous pouvez gérer ce cas ici si nécessaire
+                end
             end
         end
     end
