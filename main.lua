@@ -128,7 +128,6 @@ function getAllIpBanned()
 
     local fileList = FS.ListFiles(USERPATH)
     for key, file in pairs(fileList) do
-        print(file)
         local filePath  = io.open(USERPATH .. file, "r")
         local content = filePath:read("*all")
         filePath:close()
@@ -363,6 +362,38 @@ function getLowestPermLevel()
     end
     return lowest
 
+end
+
+function AreTablesEqual(table1, table2)
+    local function RecursiveTableComparison(tbl1, tbl2)
+        if type(tbl1) ~= "table" or type(tbl2) ~= "table" then
+            return tbl1 == tbl2
+        end
+
+        for k, v in pairs(tbl1) do
+            if type(v) == "table" then
+                if not RecursiveTableComparison(v, tbl2[k]) then
+                    return false
+                end
+            elseif v ~= tbl2[k] then
+                return false
+            end
+        end
+
+        for k, v in pairs(tbl2) do
+            if type(v) == "table" then
+                if not RecursiveTableComparison(tbl1[k], v) then
+                    return false
+                end
+            elseif v ~= tbl1[k] then
+                return false
+            end
+        end
+
+        return true
+    end
+
+    return RecursiveTableComparison(table1, table2)
 end
 
 
@@ -684,12 +715,6 @@ end
 
 function onInit()
 
-    if GetBeamMPConfigValue("General", "LogChat") == "true" and getConfigValue("CHATHANDLER") == "true" then
-        nkprintwarning("Enabling 'LogChat' in the 'ServerConfig.toml' file AND having the Nickel chat handler activated in the 'NickelConfig.toml' file may lead to duplicate chat messages appearing in the console. Please disable one")
-    end
-
-
-
     --Extension handler
 
     local extensions = {}
@@ -787,12 +812,13 @@ function onInit()
             end
         end
     end
-    
+
     -- Appelle la fonction pour renommer les fichiers du dossier
     renameFilesWithUsername(USERPATH)
 
 
-    InitPerm() --initialize perms
+
+    
 
 
 
@@ -864,6 +890,7 @@ else
         print("Failed to create config.toml file.")
     end
 end
+InitPerm() --initialize perms
 
 if configFileLines then
     local updatedConfigFileLines = {}
@@ -908,6 +935,12 @@ if configFileLines then
     if edited then
         writeUpdatedConfigFile(updatedConfigFileLines)
     end
+
+
+    if GetBeamMPConfigValue("General", "LogChat") == "true" and getConfigValue("CHATHANDLER") == "true" then
+        nkprintwarning("Enabling 'LogChat' in the 'ServerConfig.toml' file AND having the Nickel chat handler activated in the 'NickelConfig.toml' file may lead to duplicate chat messages appearing in the console. Please disable one")
+    end
+   
 end
 
 
@@ -2459,12 +2492,13 @@ function checkForUpdates()
     -- Récupérer la version actuelle de votre script local à partir de version.txt
     local oldversion = io.open(VERSIONPATH, "r")
     local localVersion = oldversion:read()
+    oldversion:close()
+
 
 
     --retire les deux premier caractères de localVersion (--)
     localVersion = string.sub(localVersion, 3)
 
-    oldversion:close()
     
 
     --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
@@ -2578,8 +2612,8 @@ function onPlayerConnecting(player_id)
 
 
     local player_name = MP.GetPlayerName(player_id)
-    local status, player_identifiers = pcall(MP.GetPlayerIdentifiers, player_id)
-    if status then
+    local player_identifiers = MP.GetPlayerIdentifiers(player_id)
+    if player_identifiers then
         local user = {
             whitelisted = false,
             ipbanned = {bool = false, reason = ""},
@@ -2607,7 +2641,8 @@ function onPlayerConnecting(player_id)
                     MP.DropPlayer(player_id, "Whitelist enabled : You are not whitelisted on this server")
                 end
         else
-            for key, value in pairs(getAllIpBanned()) do
+            local getips = getAllIpBanned()
+            for key, value in pairs(getips) do
                 if value == player_identifiers["ip"] then
                     MP.DropPlayer(player_id, "You are ip banned from this server for " .. user.ipbanned.reason)
                     updateComplexValueOfUser(player_id, "ipbanned", "bool", true)
@@ -2867,17 +2902,18 @@ function interfaceCommand(senderId, data)
 
 end
 
+
+local playerPermsTableCache = {}
+local playersInfoTableCache = {}
 function sync()
     local playersInfoTable = {}
+
     for playerId, data in pairs(players_synced) do
         if data[2] then
             local playerInfo = {
                 name = MP.GetPlayerName(playerId),
                 guest = MP.IsPlayerGuest(playerId)
             }
-            if not playerInfo.guest then
-                playerInfo = GetJsonUser(playerId)
-            end
 
             local playersPermsTable = {}
             if not playerInfo.guest then
@@ -2886,20 +2922,30 @@ function sync()
                 end
             end
 
-            local data2 = Util.JsonEncode(playersPermsTable)
-            MP.TriggerClientEvent(playerId, "playersPermissions", data2)
+            if playerPermsTableCache[playerId] == nil then
+                playerPermsTableCache[playerId] = {}
+            end
 
+
+            if not AreTablesEqual(playersPermsTable, playerPermsTableCache[playerId]) then
+                local data2 = Util.JsonEncode(playersPermsTable)
+                MP.TriggerClientEvent(playerId, "playersPermissions", data2)
+                playerPermsTableCache[playerId] = playersPermsTable
+            end
 
             playersInfoTable[tostring(playerId)] = playerInfo
-
         end
-
     end
-    if next(playersInfoTable) ~= nil then
+
+    if not AreTablesEqual(playersInfoTable, playersInfoTableCache) then
         local data = Util.JsonEncode(playersInfoTable)
         MP.TriggerClientEvent(-1, "getPlayers", data)
+        playersInfoTableCache = playersInfoTable
     end
+
 end
+
+
 
 
 
