@@ -57,7 +57,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.0.6"
+VERSION = "2.1.0"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -2326,18 +2326,18 @@ end
 
 --countdown
 InitCMD("countdown", function(sender_id)
-    local i = 0
+    local i = 5
     function countdownWork()
-        if i == 0 then
+        if i == 5 then
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Countdown started")
         end
-        i = i + 1
-        if i <= 5 then
+        if i >= 1 then
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. i)
         else
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
             MP.CancelEventTimer("countdown")
         end
+        i = i - 1
     end
     MP.RegisterEvent("countdown", "countdownWork")
     MP.CreateEventTimer("countdown", 1000)
