@@ -873,6 +873,26 @@ end
 -- Obtenir le contenu actuel du fichier config.toml et les lignes individuelles
 local configFileLines, configFileContent = readConfigFile()
 
+
+if configFileLines then
+    -- Le fichier existe, nous pouvons procéder à la vérification des clés et à la mise à jour si nécessaire
+    -- ...
+
+else
+    -- Le fichier n'existe pas, nous devons le créer et écrire les valeurs par défaut du tableau CONFIG
+    local file = io.open(CONFIGPATH, "w")
+    if file then
+        -- Écrire les valeurs par défaut du tableau CONFIG dans le fichier config.toml
+        for key, value in pairs(CONFIG) do
+            file:write(key .. " = " .. '"' .. value .. '"' .. "\n")
+        end
+        file:close()
+    else
+        -- Afficher un message d'erreur si le fichier ne peut pas être créé
+        print("Failed to create config.toml file.")
+    end
+end
+    
 if configFileLines then
     -- Le fichier existe, nous pouvons procéder à la vérification des clés et à la mise à jour si nécessaire
     -- ...
@@ -2306,18 +2326,18 @@ end
 
 --countdown
 InitCMD("countdown", function(sender_id)
-    local i = 0
+    local i = 5
     function countdownWork()
-        if i == 0 then
+        if i == 5 then
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Countdown started")
         end
-        i = i + 1
-        if i <= 5 then
+        if i >= 1 then
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. i)
         else
             MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
             MP.CancelEventTimer("countdown")
         end
+        i = i - 1
     end
     MP.RegisterEvent("countdown", "countdownWork")
     MP.CreateEventTimer("countdown", 1000)
