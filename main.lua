@@ -2306,18 +2306,24 @@ end
 
 --countdown
 InitCMD("countdown", function(sender_id)
-    if sender_id == "console" then
-        return "You can't use this command from console"
+    local i = 0
+    function countdownWork()
+        if i == 0 then
+            MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Countdown started")
+        end
+        i = i + 1
+        if i <= 5 then
+            MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. i)
+        else
+            MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
+            MP.CancelEventTimer("countdown")
+        end
     end
-    local time = 5
-    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o Countdown started")
-    for i = time, 1, -1 do
-        MP.SendChatMessage(-1, "^l^7 Nickel |^r^o " .. i)
-        MP.Sleep(1000)
-    end
-    MP.SendChatMessage(-1, "^l^7 Nickel |^r^o GOOO !")
-end
-, "Initiate a countdown timer", "default")
+    MP.RegisterEvent("countdown", "countdownWork")
+    MP.CreateEventTimer("countdown", 1000)
+
+
+end, "Initiate a countdown timer", "default")
 
 --say command
 InitCMD("say", function(sender_id, parameter)
