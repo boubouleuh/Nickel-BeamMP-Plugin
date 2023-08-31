@@ -1,5 +1,95 @@
 
 
+--| Profiler module.
+--b "Pedro Miller Rabinovitch" <miller@inf.puc-rio.br>
+--$Id: prof.lua,v 1.4 2003/10/17 00:17:21 miller Exp $
+--TODO  add function call profiling. Some of the skeleton is already in
+---     place, but call profiling behaves different, so a couple of new
+---     functionalities must be added.
+--TODO  add methods for proper result retrieval
+--TODO  use optional clock() function for millisecond precision, if it's
+---     available
+
+
+
+local E, I = {}, {}
+--& Profiler module.
+Profiler = E
+
+--. Keeps track of the hit counts of each item
+E.counts = {
+  line = {}
+}
+--. These should be inside the _line_ table above.
+E.last_line = nil
+E.last_time = os.time()
+E.started, E.ended = nil, nil
+
+--% Activates the profiling system.
+--@ [kind] (string) Optional hook kind. For now, only 'line' works,
+--- so just avoid it. >: )
+function E:activate( kind )
+  kind = kind or 'line'
+
+  local function hook_counter( hk_name, param,... )
+    local t = self.counts[hk_name][param]
+    if t == nil then
+      t = { count=0, time = 0 }
+      self.counts[hk_name][param] = t
+    end
+    self.counts[hk_name][param].count =
+     self.counts[hk_name][param].count + 1
+
+    if self.last_line then
+      local delta = os.time() - self.last_time
+      if delta > 0 then
+        self.counts[hk_name][self.last_line].time =
+         self.counts[hk_name][self.last_line].time + delta
+        self.last_time = os.time()
+      end
+    end
+
+    self.last_line = param
+  end
+
+  self.started = os.time()
+  debug.sethook( hook_counter, kind )
+end
+
+--% Deactivates the profiling system.
+--@ [kind] (string) Optional hook kind. For now, only 'line' works,
+--- so just avoid it.
+function E:deactivate( kind )
+  kind = kind or 'line'
+  self.ended = os.time()
+  debug.sethook( nil, kind )
+end
+
+--% Prints the results.
+--@ [kind] (string) Optional hook... Aah, you got it by now.
+--TODO add print output formatting and sorting
+function E:print_results( kind )
+  kind = kind or 'line'
+  print( kind, 'count', 'approx. time (s)' )
+  print( '----', '-----', '----------------' )
+  for i,v in pairs( self.counts[kind] ) do
+    print( i, v.count, v.time )
+  end
+  print( self.ended - self.started,
+    ' second(s) total (approximately).' )
+end
+Profiler:activate()
+function onShutdown()
+    Profiler:deactivate()
+    Profiler:print_results()
+end
+
+
+MP.RegisterEvent("onShutdown", " onShutdown")
+
+
+
+
 --IF YOU NEED HELP OR YOU WANT TO HELP THE NICKEL PROJECT PLEASE COME ON THE DISCORD ! : https://discord.gg/h5P84FFw7B
 
 ------------ START OF UTILITY FUNCTIONS ------------
@@ -524,6 +614,14 @@ function HasPermission(player_id, command)
     end
     return false
 end
+
+-- À adapter en fonction de vos structures de données et de vos besoins
+
+
+
+
+
+
 --getAllPermLvl function
 
 function getAllPermLvl()
@@ -602,19 +700,24 @@ end
 --getUserFileWithName (the player cant be connected)
 
 function getJsonUserByName(player_name)
-    --for in users
+    local foundedFile = nil
+    
     for key, file in ipairs(FS.ListFiles(USERPATH)) do
-        local user = io.open(USERPATH .. file, "r")
+        local filename = USERPATH .. file
+        local user = io.open(filename, "r")
         local content = user:read("*all")
         user:close()
-        local usertable = Util.JsonDecode(content)
-
-        if usertable.name == player_name then
-            return usertable
-        end
+        local userContentTable = Util.JsonDecode(content)
         
+        if userContentTable.name == player_name then
+            foundedFile = userContentTable
+            break
+        end
     end
+    
+    return foundedFile
 end
+
 
 --time converter
 function timeConverter(time)
@@ -1920,56 +2023,56 @@ InitCMD("unban", function(sender_id, name)
             return "Usage : unban [player]"
         end
     end
-    local player_id = GetPlayerId(name)
 
-    
-    if player_id ~= -1 then
-        if MP.IsPlayerGuest(player_id) then
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
-                return
-            else
-                return "You cant do this to a guest"
-            end
-        end
+    -- if player_id ~= -1 then
+    --     if MP.IsPlayerGuest(player_id) then
+    --         if sender_id ~= "console" then
+    --             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You cant do this to a guest")
+    --             return
+    --         else
+    --             return "You cant do this to a guest"
+    --         end
+    --     end
 
-        local json = getJsonUserByName(name)
+    --     local json = getJsonUserByName(name)
 
-        if json.banned.bool or json.tempbanned.bool then
+    --     if json.banned.bool or json.tempbanned.bool then
 
-            updateComplexValueOfUserWithJson(json, "tempbanned", "bool", false)
-            updateComplexValueOfUserWithJson(json, "tempbanned", "time", 0)
-            updateComplexValueOfUserWithJson(json, "banned", "bool", false)
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unbanned")
-                return
-            else
-                return "Player " .. name .. " unbanned"
-            end
-        elseif json.ipbanned.bool then
-            updateComplexValueOfUserWithJson(json, "ipbanned", "bool", false)
-            ipCache = {}
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip unbanned")
-                return
-            else
-                return "Player " .. name .. " ip unbanned"
-            end
-        else
-            if sender_id ~= "console" then
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " not banned")
-                return
-            else
-                return "Player " .. name .. " not banned"
-            end
-        end
+    --         updateComplexValueOfUserWithJson(json, "tempbanned", "bool", false)
+    --         updateComplexValueOfUserWithJson(json, "tempbanned", "time", 0)
+    --         updateComplexValueOfUserWithJson(json, "banned", "bool", false)
+    --         if sender_id ~= "console" then
+    --             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " unbanned")
+    --             return
+    --         else
+    --             return "Player " .. name .. " unbanned"
+    --         end
+    --     elseif json.ipbanned.bool then
+    --         updateComplexValueOfUserWithJson(json, "ipbanned", "bool", false)
+    --         ipCache = {}
+    --         if sender_id ~= "console" then
+    --             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip unbanned")
+    --             return
+    --         else
+    --             return "Player " .. name .. " ip unbanned"
+    --         end
+    --     else
+    --         if sender_id ~= "console" then
+    --             MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " not banned")
+    --             return
+    --         else
+    --             return "Player " .. name .. " not banned"
+    --         end
+    --     end
 
-    else
+    -- else
         --unban offline
-        local beamid = getBeamIDFromApi(name)
-        if beamid ~= nil then
-            InitUserWithBeamMPID(beamid, name)
-            local jsonUser = getJsonUserByName(name)
+        local jsonUser = getJsonUserByName(name)
+
+        if jsonUser ~= nil then
+            local beamid = jsonUser.beammpid
+            -- InitUserWithBeamMPID(beamid, name)
+            
             if jsonUser.banned.bool or jsonUser.tempbanned.bool then
                 updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "bool", false)
                 updateComplexValueOfUserWithJson(jsonUser, "tempbanned", "time", 0)
@@ -2006,7 +2109,7 @@ InitCMD("unban", function(sender_id, name)
             end
         end
     end
-end
+-- end
 , "Undo a player's ban", "default")
 
 --mute command
@@ -2848,7 +2951,19 @@ function CheckPing()
     end
 end
 
+function RefreshIpCache()
+    ipCache = {}
+    local players = MP.GetPlayers()
 
+    for key, value in pairs(players) do
+        if not MP.IsPlayerGuest(key) then
+            local jsonUser = GetJsonUser(key)
+            if jsonUser.ipbanned.bool then
+                MP.DropPlayer(key, jsonUser.ipbanned.reason)
+            end
+        end
+    end
+end
 
 ------------ END OF EVENTS ------------
 
@@ -2861,6 +2976,8 @@ MP.CancelEventTimer("CheckAFK")
 -- MP.CreateEventTimer("CheckAFK", 1000)
 
 
+MP.RegisterEvent("RefreshIpCache", "RefreshIpCache")
+MP.CreateEventTimer("RefreshIpCache", 60000)
 
 MP.RegisterEvent("onConsoleInput", "handleConsoleInput")
 MP.RegisterEvent("onChatMessage", "MainChatHandler")
@@ -2988,3 +3105,6 @@ MP.RegisterEvent("onPlayerDisconnect","SyncDisconnect")
 MP.RegisterEvent("playerCheck", "playerCheck")
 MP.CancelEventTimer("playerCheck")
 MP.CreateEventTimer("playerCheck", 1000)
+
+
+
