@@ -1,93 +1,5 @@
 
 
---| Profiler module.
---b "Pedro Miller Rabinovitch" <miller@inf.puc-rio.br>
---$Id: prof.lua,v 1.4 2003/10/17 00:17:21 miller Exp $
---TODO  add function call profiling. Some of the skeleton is already in
----     place, but call profiling behaves different, so a couple of new
----     functionalities must be added.
---TODO  add methods for proper result retrieval
---TODO  use optional clock() function for millisecond precision, if it's
----     available
-
-
-
-local E, I = {}, {}
---& Profiler module.
-Profiler = E
-
---. Keeps track of the hit counts of each item
-E.counts = {
-  line = {}
-}
---. These should be inside the _line_ table above.
-E.last_line = nil
-E.last_time = os.time()
-E.started, E.ended = nil, nil
-
---% Activates the profiling system.
---@ [kind] (string) Optional hook kind. For now, only 'line' works,
---- so just avoid it. >: )
-function E:activate( kind )
-  kind = kind or 'line'
-
-  local function hook_counter( hk_name, param,... )
-    local t = self.counts[hk_name][param]
-    if t == nil then
-      t = { count=0, time = 0 }
-      self.counts[hk_name][param] = t
-    end
-    self.counts[hk_name][param].count =
-     self.counts[hk_name][param].count + 1
-
-    if self.last_line then
-      local delta = os.time() - self.last_time
-      if delta > 0 then
-        self.counts[hk_name][self.last_line].time =
-         self.counts[hk_name][self.last_line].time + delta
-        self.last_time = os.time()
-      end
-    end
-
-    self.last_line = param
-  end
-
-  self.started = os.time()
-  debug.sethook( hook_counter, kind )
-end
-
---% Deactivates the profiling system.
---@ [kind] (string) Optional hook kind. For now, only 'line' works,
---- so just avoid it.
-function E:deactivate( kind )
-  kind = kind or 'line'
-  self.ended = os.time()
-  debug.sethook( nil, kind )
-end
-
---% Prints the results.
---@ [kind] (string) Optional hook... Aah, you got it by now.
---TODO add print output formatting and sorting
-function E:print_results( kind )
-  kind = kind or 'line'
-  print( kind, 'count', 'approx. time (s)' )
-  print( '----', '-----', '----------------' )
-  for i,v in pairs( self.counts[kind] ) do
-    print( i, v.count, v.time )
-  end
-  print( self.ended - self.started,
-    ' second(s) total (approximately).' )
-end
-Profiler:activate()
-function onShutdown()
-    Profiler:deactivate()
-    Profiler:print_results()
-end
-
-
-MP.RegisterEvent("onShutdown", " onShutdown")
-
-
 
 
 --IF YOU NEED HELP OR YOU WANT TO HELP THE NICKEL PROJECT PLEASE COME ON THE DISCORD ! : https://discord.gg/h5P84FFw7B
@@ -99,8 +11,7 @@ function script_path()
 end
 
 function file_exists(name)
-    local f = io.open(name, "r")
-    return f ~= nil and io.close(f)
+    return FS.Exists(name)
  end
 
 
@@ -208,25 +119,33 @@ function GetJsonUser(player_id)
     return Util.JsonDecode(content)
 end
 local ipCache = {}
---GetAllIpBanned
+local fileListCache = nil
+
 function getAllIpBanned()
     if next(ipCache) ~= nil then
         return ipCache
     end
 
     local ips = {}
+    local fileList = fileListCache or FS.ListFiles(USERPATH)
+    fileListCache = fileList
 
-    local fileList = FS.ListFiles(USERPATH)
-    for key, file in pairs(fileList) do
-        local filePath  = io.open(USERPATH .. file, "r")
-        local content = filePath:read("*all")
-        filePath:close()
-        local json = Util.JsonDecode(content)
-        if json.ipbanned.bool == true then
-            table.insert(ips, json.ip)
+    for _, file in ipairs(fileList) do
+        local filePath = USERPATH .. file
+        local fileExists = io.open(filePath, "r")
+        
+        if fileExists then
+            local content = fileExists:read("*all")
+            fileExists:close()
+            local json = Util.JsonDecode(content)
+            
+            if json and json.ipbanned and json.ipbanned.bool then
+                table.insert(ips, json.ip)
+            end
         end
     end
-    ipCache = ips -- Mettre en cache les adresses IP bannies
+    
+    ipCache = ips
     return ips
 end
 
@@ -295,33 +214,25 @@ end
 
 
 function httpRequest(url)
+    local response = ""
+    
     if MP.GetOSName() == "Windows" then
-        local cmd = 'powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"'
-        local response = os.execute(cmd)
-
-        if response then
-            local file = io.open("temp.txt", "r")
-            local content = file:read("*all")
-            file:close()
-            os.remove("temp.txt")
-            return content
-        else
-            return ""
-        end
+        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
     else
-        -- Utiliser une méthode non-Windows (par exemple, wget)
-        local response = os.execute("wget -q -O temp.txt " .. url)
-        if response then
-            local file = io.open("temp.txt", "r")
-            local content = file:read("*all")
-            file:close()
-            os.remove("temp.txt")
-            return content
-        else
-            return ""
-        end
+        response = os.execute("wget -q -O temp.txt " .. url)
+    end
+    
+    if response then
+        local file = io.open("temp.txt", "r")
+        local content = file:read("*all")
+        file:close()
+        os.remove("temp.txt")
+        return content
+    else
+        return ""
     end
 end
+
 
 --get permlevel of name
 function getPermLevelOfName(name)
@@ -1100,7 +1011,8 @@ function initUser(id)
     if not file_exists(USERPATH) then
         FS.CreateDirectory(USERPATH)
     end
-    if getPlayerBeamMPID(id) == -1 then
+    local beammpid = getPlayerBeamMPID(id)
+    if beammpid == -1 then
         if getConfigValue("NOGUEST") == "true" then
             MP.DropPlayer(id, getConfigValue("NOGUESTMSG"))
         end
@@ -1110,7 +1022,7 @@ function initUser(id)
     local player_identifiers = MP.GetPlayerIdentifiers(id)
 
     user.name = MP.GetPlayerName(id)
-    user.beammpid = getPlayerBeamMPID(id)
+    user.beammpid = beammpid
     user.permlvl = getLowestPermLevel()
     user.banned = {bool= false, reason = ""}
     user.ipbanned = {bool = false, reason = ""}
@@ -1859,6 +1771,7 @@ InitCMD("banip", function(sender_id, name, reason)
             updateComplexValueOfUser(player_id, "ipbanned", "bool", true)
             updateComplexValueOfUser(player_id, "ipbanned", "reason", reason)
             ipCache = {}
+            fileListCache = {}
             MP.DropPlayer(player_id, "Ip banned" .. " for " .. reason)
           
             if sender_id ~= "console" then
@@ -2086,6 +1999,7 @@ InitCMD("unban", function(sender_id, name)
             elseif jsonUser.ipbanned.bool then
                 updateComplexValueOfUserWithJson(jsonUser, "ipbanned", "bool", false)
                 ipCache = {}
+                fileListCache = {}
                 if sender_id ~= "console" then
                     MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o Player " .. name .. " ip unbanned")
                     return
@@ -2953,8 +2867,8 @@ end
 
 function RefreshIpCache()
     ipCache = {}
+    fileListCache = FS.ListFiles(USERPATH)
     local players = MP.GetPlayers()
-
     for key, value in pairs(players) do
         if not MP.IsPlayerGuest(key) then
             local jsonUser = GetJsonUser(key)
