@@ -5,3 +5,4 @@ version.txt
 /versionwithdatabaseID
 /extensions
 HotReload.txt
+/database/db.sqlite
