@@ -1,6 +1,5 @@
 local sqlite3 = require("lsqlite3complete")
 
-
 local new = require("objects.New")
 
 local utils = require("utils.misc")
@@ -19,19 +18,26 @@ function DatabaseManager:createTableIfNotExists(tableName, columns)
   self.db:exec(query)
 end
 
+
 function DatabaseManager:insertOrUpdateObject(tableName, object)
   local columns = {}
   local values = {}
-  local modifications = {}
+  local updateColumns = {}
 
   for key, value in pairs(object) do
     table.insert(columns, key)
+
+    if type(value) == "table" then
+      -- Convert table to a string representation
+      value = utils.table_to_string(value)
+      print(value)
+    end
+
     table.insert(values, tostring(value))
-    table.insert(modifications, string.format("%s = '%s'", key, tostring(value))
-    )
+    table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
 
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, table.concat(modifications, " AND "))
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, " beammpid = " .. object.beammpid)
 
   local count = 0
   for row in self.db:nrows(selectQuery) do
@@ -39,13 +45,17 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
   end
 
   if count > 0 then
-    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(modifications, ", "), table.concat(modifications, " AND "))
+    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), " beammpid = " .. object.beammpid)
     self.db:exec(updateQuery)
   else
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
     self.db:exec(insertQuery)
   end
 end
+
+
+
+
 
 function DatabaseManager:save(class)
   local tableName = class.tableName
@@ -82,7 +92,6 @@ function DatabaseManager:createTableForClass(class)
 
         if columnsFinal[key] == nil then
           local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
-          print(alterQuery)
           self.db:exec(alterQuery)
         end
       end
@@ -97,6 +106,33 @@ function DatabaseManager:createTableForClass(class)
     end
   end
 end
+
+
+function DatabaseManager:getClassByBeammpId(class, beammpid)
+  local tableName = class.tableName
+  local query = string.format("SELECT * FROM %s WHERE beammpid = %s LIMIT 1", tableName, tostring(beammpid))
+  local result = nil
+
+  for row in self.db:nrows(query) do
+    result = class.new()
+
+    for key, value in pairs(row) do
+      if type(value) == "string" and value:find("{") and value:find("}") then
+        local parsedList = utils.string_to_table(value)
+        result:setKey(key, parsedList)
+      else
+        -- Utilisez une méthode set ou affectez directement les valeurs aux propriétés de la classe
+        result:setKey(key, value)  -- Assurez-vous que votre classe a une méthode set appropriée
+      end
+    end
+
+    break -- Assuming beammpid is unique, so we break after finding the first match
+  end
+
+  return result
+end
+
+
 
 
 

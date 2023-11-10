@@ -6,9 +6,8 @@ local User = {tableName="Users"}
 
 function User.new(beammpid, name)
   local self = {}
-
-  self.beammpid = beammpid
-  self.name = name
+  self.beammpid = beammpid or 0
+  self.name = name or ""
   self.permlvl = 0
   self.whitelisted = false
 
@@ -16,22 +15,12 @@ function User.new(beammpid, name)
 end
 
 
-function User:getBeammpid()
-  return self.beammpid
+function User:getKey(key)
+  return self[key]
 end
 
-
-function User:getName()
-  return self.name
-end
-
-function User:getPermlvl()
-  return self.permlvl
-end
-
-
-function User:getWhitelisted()
-  return self.whitelisted
+function User:setKey(key, value)
+  self[key] = value
 end
 
 -- Dans la classe User
