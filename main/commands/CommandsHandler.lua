@@ -1,9 +1,11 @@
 
 
+
+
 CommandsHandler = {}
 
 
-function CommandsHandler.CreateCommand(sender_id, message, command, allowSpaceOnLastArg, callback)
+function CommandsHandler.CreateCommand(sender_id, message, command, allowSpaceOnLastArg, callback, msgManager)
     --if callback function exist
     if callback == nil then
         return  "Command " .. command .. " not found"
@@ -11,12 +13,7 @@ function CommandsHandler.CreateCommand(sender_id, message, command, allowSpaceOn
 
 
     local prefixcommand = PREFIX .. command
-    local sender_name = nil
-    if sender_id ~= "console" then
-        sender_name = MP.GetPlayerName(sender_id)
-    else
-        sender_name = "console"
-    end
+ 
     --command test to check if the command is equal to the prefixcommand (the command is the first word of the string)
 
     local commandtest = string.match(message, "%S+")
@@ -25,7 +22,6 @@ function CommandsHandler.CreateCommand(sender_id, message, command, allowSpaceOn
     local argstring = string.sub(message, #prefixcommand+1)
     -- check if message is command 
     if commandtest and commandtest == prefixcommand then
-        nkprint(sender_name .. " issued command : " .. prefixcommand)
         
         --get number of args of callback function
         local info = debug.getinfo(callback, "u")
@@ -61,11 +57,13 @@ function CommandsHandler.CreateCommand(sender_id, message, command, allowSpaceOn
         end
         
         -- appel du callback avec les arguments
+
+
         if sender_id ~= "console" then
             if HasPermission(sender_id, command) then
                 callback(sender_id, table.unpack(args))
             else
-                MP.SendChatMessage(sender_id, "^l^7 Nickel |^r^o You don't have permission to use this command")
+                msgManager:sendMessage(sender_id, "commands.permissions.insufficient") 
             end
         else
             return callback(sender_id, table.unpack(args))

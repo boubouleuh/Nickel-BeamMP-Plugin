@@ -20,7 +20,6 @@ function MessagesHandler:sendMessage(sender_id, messageKey)
 
 
     local formattedMessage = color .. style .. self:GetMessage(sender_id, messageKey) .. "^r"
-    print("test")
     if sender_id == nil then
         return formattedMessage  -- Afficher dans la console
     else
