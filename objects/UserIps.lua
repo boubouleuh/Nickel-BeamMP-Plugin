@@ -21,7 +21,7 @@ function UserIps:setKey(key, value)
 end
 
 function UserIps:addIp(ip)
-    if not utils:element_exist_in_table(ip, self.ips) then
+    if not utils.element_exist_in_table(ip, self.ips) then
       
         table.insert(self.ips, ip)
     end

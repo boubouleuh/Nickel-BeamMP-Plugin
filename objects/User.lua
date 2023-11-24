@@ -10,7 +10,7 @@ function User.new(beammpid, name)
   self.name = name or ""
   self.permlvl = 0
   self.whitelisted = false
-
+  self.language = ""
   return new._object(User, self)
 end
 
@@ -29,7 +29,8 @@ function User:getColumns()
       "beammpid INT PRIMARY KEY",
       "name TEXT NOT NULL",
       "permlvl INT NOT NULL",
-      "whitelisted BOOLEAN NOT NULL"
+      "whitelisted BOOLEAN NOT NULL",
+      "language TEXT"
       -- Ajoutez d'autres colonnes si nécessaire
     }
   end
