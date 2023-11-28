@@ -22,13 +22,16 @@ end
 
 function Misc.element_exist_in_table(element, list)
   -- Check if the element exists in the list
-  for _, value in ipairs(list) do
-    if value == element then
-      return true  -- Element already exists
+  if type(list) == "table" then
+    for key, value in next, list do
+      if value == element then
+        return true  -- Element already exists
+      end
     end
   end
-  return false  -- Element does not exist
+  return false  -- Element does not exist or invalid input
 end
+
 
 function Misc.table_to_string( tbl )
   local result, done = {}, {}
@@ -69,5 +72,16 @@ function Misc.getPlayerBeamMPID(player_id)
   end
   return player_beammp_id
 end
+
+function Misc.GetPlayerId(player_name)
+  local players = MP.GetPlayers()
+  for key, value in pairs(players) do
+      if value == player_name then
+          return key
+      end
+  end
+  return -1
+end
+
 
 return Misc;

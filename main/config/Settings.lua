@@ -1,5 +1,4 @@
 local toml = require("toml")
-local utils = require("utils.misc")
 local new = require("objects.New")
 
 local Settings = {}
@@ -34,6 +33,9 @@ function Settings.init()
             server_language = "en_us",
             force_server_language = false
         },
+        commands = {
+            prefix = "/"
+        }
     }
 
     -- Fusionne les configurations existantes avec les valeurs par défaut

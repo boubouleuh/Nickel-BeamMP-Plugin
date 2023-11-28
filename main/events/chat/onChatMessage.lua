@@ -1,9 +1,13 @@
 
 local onChatMessage = {}
-function onChatMessage.new(msgManager) 
+function onChatMessage.new(cmdManager)
+    
+    
+
     function onMessage(player_id, player_name, message)
-        msgManager:sendMessage(player_id, "commands.permissions.insufficient") -- for test only
+            cmdManager:CreateCommand(player_id, message, true, cmdManager.msgManager)
     end
+
     MP.RegisterEvent("onChatMessage", "onMessage")
 
 end

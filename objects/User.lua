@@ -28,7 +28,6 @@ function User:getColumns()
     return {
       "beammpid INT PRIMARY KEY",
       "name TEXT NOT NULL",
-      "permlvl INT NOT NULL",
       "whitelisted BOOLEAN NOT NULL",
       "language TEXT"
       -- Ajoutez d'autres colonnes si nécessaire

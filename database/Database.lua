@@ -24,6 +24,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
   local values = {}
   local updateColumns = {}
 
+
   for key, value in pairs(object) do
     table.insert(columns, key)
 
@@ -37,25 +38,31 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
 
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, " beammpid = " .. object.beammpid)
-
+  
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, columns[1] .. " = '" .. object[columns[1]] .. "'")
+  print(selectQuery)
   local count = 0
   for row in self.db:nrows(selectQuery) do
     count = tonumber(row["COUNT(*)"])
   end
 
   if count > 0 then
-    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), " beammpid = " .. object.beammpid)
+    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), columns[1] .. " = " .. object[columns[1]])
     self.db:exec(updateQuery)
   else
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
+    print(insertQuery)
     self.db:exec(insertQuery)
   end
 end
 
 
 
-
+function DatabaseManager:deleteObject(class, columnName, columnValue)
+  local tableName = class.tableName
+  local deleteQuery = string.format("DELETE FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
+  self.db:exec(deleteQuery)
+end
 
 function DatabaseManager:save(class)
   local tableName = class.tableName
@@ -101,12 +108,35 @@ function DatabaseManager:createTableForClass(class)
       local colName = column:match("^(%S+)")
       if not existingColumns[colName] then
         local alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, column)
+        print(alterQuery)
         self.db:exec(alterQuery)
       end
     end
   end
 end
 
+function DatabaseManager:getAllEntry(class)
+  local tableName = class.tableName
+  local query = string.format("SELECT * FROM %s", tableName)
+  local results = {}
+
+  for row in self.db:nrows(query) do
+    local result = class.new()
+
+    for key, value in pairs(row) do
+      if type(value) == "string" and value:find("{") and value:find("}") then
+        local parsedList = utils.string_to_table(value)
+        result:setKey(key, parsedList)
+      else
+        result:setKey(key, value)
+      end
+    end
+
+    table.insert(results, result)
+  end
+
+  return results
+end
 
 function DatabaseManager:getClassByBeammpId(class, beammpid)
   local tableName = class.tableName
