@@ -38,8 +38,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
 
-  
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, columns[1] .. " = '" .. object[columns[1]] .. "'")
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, columns[1] .. " = '" .. tostring(object[columns[1]]) .. "'")
   print(selectQuery)
   local count = 0
   for row in self.db:nrows(selectQuery) do
@@ -47,7 +46,8 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
   end
 
   if count > 0 then
-    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), columns[1] .. " = " .. object[columns[1]])
+    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), columns[1] .. " = '" .. tostring(object[columns[1]]) .. "'")
+    print(updateQuery)
     self.db:exec(updateQuery)
   else
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
@@ -56,7 +56,18 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
   end
 end
 
+function DatabaseManager:getEntry(class, columnName, columnValue)
+  local tableName = class.tableName
+  local query = string.format("SELECT * FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
+  local results = {}
 
+  for row in self.db:nrows(query) do
+    table.insert(results, row)    
+    break
+  end
+
+  return results[1]
+end
 
 function DatabaseManager:deleteObject(class, columnName, columnValue)
   local tableName = class.tableName

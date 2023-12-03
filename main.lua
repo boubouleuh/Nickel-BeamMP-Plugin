@@ -31,6 +31,8 @@ local cfgManager = config.init()
 
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 
+local permManager = PermissionsHandler.new(dbManager)
+
 -- Creating tables / updating
 dbManager:createTableForClass(User)
 dbManager:createTableForClass(UserIps)
@@ -41,14 +43,18 @@ dbManager:createTableForClass(Command)
 dbManager:createTableForClass(UserRole)
 dbManager:createTableForClass(RoleCommand)
 
-defaultRoles.init(dbManager)
+
+
+
+defaultRoles.init(permManager)
+
 
 local cmdManager = commandHandler.init(msgManager)
 
 
 
 -- Init Events
-onPlayerAuth.new(dbManager)
+onPlayerAuth.new(permManager)
 
 onChatMessage.new(cmdManager)
 

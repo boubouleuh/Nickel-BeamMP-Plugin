@@ -33,7 +33,7 @@ function MessagesHandler:GetMessage(sender_id, key)
     local userLang = self.dbManager:getClassByBeammpId(user, beamId)
     local langCode = self.configManager.config.langs.server_language
     local langForce = self.configManager.config.langs.force_server_language
-    if userLang.language ~= "" and langForce == false then
+    if userLang.language ~= nil and langForce == false then
         langCode = userLang.language
     end
     local jsonFile = io.open(utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")

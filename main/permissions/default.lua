@@ -2,9 +2,8 @@ local PermissionsHandler = require("main.permissions.PermissionsHandler")
 
 local default = {}
 
-function default.init(dbManager)
+function default.init(PermissionsManager)
 
-    PermissionsManager = PermissionsHandler.new(dbManager)
 
     PermissionsManager:addRole("Member", 0, true)
 

@@ -8,9 +8,8 @@ function User.new(beammpid, name)
   local self = {}
   self.beammpid = beammpid or 0
   self.name = name or ""
-  self.permlvl = 0
   self.whitelisted = false
-  self.language = ""
+  self.language = nil
   return new._object(User, self)
 end
 
