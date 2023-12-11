@@ -7,6 +7,13 @@
     "language.code": "en_us",
 
 
-    "commands.permissions.insufficient" : "You dont have enough permissions"
+    "commands.permissions.insufficient" : "You dont have enough permissions",
+
+    "commands.dm.cant_dm_yourself" : "You cant dm yourself",
+    "commands.dm.missing_args" : "Usage : {Prefix}dm <targetname> <message>",
+    "commands.dm.from" : "{Player} - me : {Message}",
+    "commands.dm.to" : "me - {Player} : {Message}",
+
+    "player.not_found" : "Player {Player} not found"
     
 }

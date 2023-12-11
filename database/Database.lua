@@ -9,7 +9,8 @@ local DatabaseManager = {}
 
 function DatabaseManager.new(databaseName)
   local self = {}
-  self.db = sqlite3.open(databaseName)
+  -- self.db = sqlite3.open(databaseName)
+  self.dbname = databaseName
   return new._object(DatabaseManager, self)
 end
 
@@ -20,6 +21,8 @@ end
 
 
 function DatabaseManager:insertOrUpdateObject(tableName, object)
+
+
   local columns = {}
   local values = {}
   local updateColumns = {}
@@ -54,9 +57,13 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
     print(insertQuery)
     self.db:exec(insertQuery)
   end
+
+  -- TODO Do that for every databases that need to be synced
+
 end
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
+
   local tableName = class.tableName
   local query = string.format("SELECT * FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
   local results = {}
@@ -69,19 +76,27 @@ function DatabaseManager:getEntry(class, columnName, columnValue)
   return results[1]
 end
 
+-- TODO IMPORTANT ! WHEN TRYING TO SYNC WE NEED TO MAKE SURE THE VERSION OF EVERY NICKEL IS THE SAME ! IF ITS NOT THE SAME AN ERROR OCCURS AND ASK TO UPDATE EVERY NICKEL AND THEN RESTART ! (AT THE RESTART IT WILL COMPARE EVERY DATABASE TO SYNC IF THERE IS PROBLEM)
+-- TODO THE FUTUR AUTO UPDATE VAR IN THE CONFIG NEED TO BE THE SAME TO ACTIVATE THE SYNC
 function DatabaseManager:deleteObject(class, columnName, columnValue)
+
   local tableName = class.tableName
   local deleteQuery = string.format("DELETE FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
   self.db:exec(deleteQuery)
+
+  -- TODO Do that for every databases that need to be synced
 end
 
 function DatabaseManager:save(class)
+  self:openConnection()
   local tableName = class.tableName
   self:insertOrUpdateObject(tableName, class)
+  self:closeConnection()
 end
 
 -- Dans la classe DatabaseManager
 function DatabaseManager:createTableForClass(class)
+
   local tableName = class.tableName
   local columns = class:getColumns()
   local existingColumns = self:getTableColumns(tableName)
@@ -124,9 +139,11 @@ function DatabaseManager:createTableForClass(class)
       end
     end
   end
+
 end
 
 function DatabaseManager:getAllEntry(class)
+
   local tableName = class.tableName
   local query = string.format("SELECT * FROM %s", tableName)
   local results = {}
@@ -145,7 +162,6 @@ function DatabaseManager:getAllEntry(class)
 
     table.insert(results, result)
   end
-
   return results
 end
 
@@ -170,6 +186,7 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
     break -- Assuming beammpid is unique, so we break after finding the first match
   end
 
+
   return result
 end
 
@@ -179,6 +196,8 @@ end
 
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)
+
+
   local existingColumns = {}
   local query = string.format("PRAGMA table_info(%s)", tableName)
 
@@ -193,9 +212,14 @@ end
 
 
 
-
-function DatabaseManager:closeConnection()
-  self.db:close()
+function DatabaseManager:openConnection()
+  self.db = sqlite3.open(self.dbname)
 end
 
+function DatabaseManager:closeConnection()
+  if self.db then
+    self.db:close()
+    self.db = nil
+  end
+end
 return DatabaseManager

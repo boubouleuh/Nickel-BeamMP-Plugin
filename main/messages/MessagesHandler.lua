@@ -13,36 +13,61 @@ function MessagesHandler.new(dbManager, configManager)
     return new._object(MessagesHandler, self)
   end
 
-function MessagesHandler:sendMessage(sender_id, messageKey)
+function MessagesHandler:SendMessage(sender_id, messageKey, ...)
 
-    local color = "^l^7"  -- Couleur
-    local style = "^r^o"  -- Style
+    local chatcolor = "^l^7"  -- Couleur
+    local chatstyle = "^r^o"  -- Style
+
+    local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
 
 
-    local formattedMessage = color .. style .. self:GetMessage(sender_id, messageKey) .. "^r"
-    if sender_id == nil then
-        return formattedMessage  -- Afficher dans la console
+
+    local formattedMessage = chatcolor .. chatstyle .. self:GetMessage(sender_id, messageKey, ...) .. "^r"
+
+    local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, ...) .. "\x1b[39m\x1b[49m\x1b[0m"
+
+    if sender_id == -1 then
+        print(consoleFormattedMessage)  -- Afficher dans la console
     else
         MP.SendChatMessage(sender_id, formattedMessage)  -- Envoyer au joueur
     end
 end
 
-function MessagesHandler:GetMessage(sender_id, key)
+function MessagesHandler:GetMessage(sender_id, key, ...)
     local beamId = utils.getPlayerBeamMPID(sender_id)
 
+    self.dbManager:openConnection()
     local userLang = self.dbManager:getClassByBeammpId(user, beamId)
+    self.dbManager:closeConnection()
     local langCode = self.configManager.config.langs.server_language
     local langForce = self.configManager.config.langs.force_server_language
-    if userLang.language ~= nil and langForce == false then
+
+    if userLang ~= nil and userLang.language ~= nil and not langForce then
         langCode = userLang.language
     end
+
     local jsonFile = io.open(utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")
     local jsonFileContent = jsonFile:read("a")
     jsonFile:close()
+
     local json = Util.JsonDecode(jsonFileContent)
 
-    return json[key]
+    if json[key] ~= nil then
+        local message = json[key]
 
+        local args = {...}
+
+        for i, var in ipairs(args) do
+            local placeholder = "{(.-)}"
+            message = message:gsub(placeholder, var, 1)
+        end
+
+        return message
+    else
+        return key
+    end
 end
+
+
 
 return MessagesHandler

@@ -16,8 +16,10 @@ function CommandsHandler.init(msgManager)
     local files = FS.ListFiles(utils.script_path() .. "main/commands/all")
 
     local function checkCommands()
-        local commands = self.dbManager:getAllEntry(Command)
 
+        self.dbManager:openConnection()
+
+        local commands = self.dbManager:getAllEntry(Command)
 
         if next(self.commands) ~= nil then
         
@@ -32,6 +34,7 @@ function CommandsHandler.init(msgManager)
             end
 
         end
+        self.dbManager:closeConnection()
     end
 
     local function addCommand(commandName)
@@ -61,7 +64,8 @@ end
 function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, msgManager)
     --if callback function exist
 
-    if not string.sub(message, 1, string.len("/")) == "/" then
+    local prefix = self.configManager.config.commands.prefix
+    if not string.sub(message, 1, string.len(prefix)) == prefix then
         return
     end
 
@@ -117,9 +121,8 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, 
         for arg in string.gmatch(argstring, "%S+") do
             table.insert(args, arg)
         end
-        table.insert(args, msgManager)
     end
-    
+        
     -- appel du callback avec les arguments
 
 
@@ -133,7 +136,20 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, 
     --     return callback(sender_id, table.unpack(args))
     -- end
 
-    return callback(sender_id, table.unpack(args)) -- for test, need permissions check
+    local playername = MP.GetPlayerName(sender_id)
+    if playername == "" then
+        playername = "console"
+    end
+    
+    local bool = callback(sender_id, playername, msgManager, table.unpack(args)) -- for test, need permissions check
+
+    if bool then
+        return "Nickel command '" .. command .. "' successfully runned"
+    else
+        return "Nickel command '" .. command .. "' failed to run"
+    end
+    
+    
 end
 
 

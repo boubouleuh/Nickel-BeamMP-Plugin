@@ -7,6 +7,7 @@ local UserRole = require("objects.UserRole")
 local Role = require("objects.Role")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
+local onConsoleInput = require("main.events.console.onConsoleInput")
 
 
 -- Events / Database / Events handler
@@ -27,6 +28,8 @@ local utils = require("utils.misc")
 
 local dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
 
+dbManager:openConnection()
+
 local cfgManager = config.init()
 
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
@@ -43,8 +46,7 @@ dbManager:createTableForClass(Command)
 dbManager:createTableForClass(UserRole)
 dbManager:createTableForClass(RoleCommand)
 
-
-
+dbManager:closeConnection()
 
 defaultRoles.init(permManager)
 
@@ -52,9 +54,8 @@ defaultRoles.init(permManager)
 local cmdManager = commandHandler.init(msgManager)
 
 
-
 -- Init Events
 onPlayerAuth.new(permManager)
 
 onChatMessage.new(cmdManager)
-
+onConsoleInput.new(cmdManager)

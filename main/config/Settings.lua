@@ -35,8 +35,13 @@ function Settings.init()
         },
         commands = {
             prefix = "/"
+        },
+        sync = {
+           database_file = ""
         }
     }
+
+    --TODO IN THE DEFAULT CONFIG THINK ABOUT THE OTHER SERVERS VAR WHO WILL CONTAINS EVERY SERVERS DIRECTORY
 
     -- Fusionne les configurations existantes avec les valeurs par défaut
     mergeTables(self.config, defaultConfig)
