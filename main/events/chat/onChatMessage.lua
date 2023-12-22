@@ -5,7 +5,7 @@ function onChatMessage.new(cmdManager)
     
 
     function onMessage(player_id, player_name, message)
-            cmdManager:CreateCommand(player_id, message, true, cmdManager.msgManager)
+            return cmdManager:CreateCommand(player_id, message, true, cmdManager.msgManager)
     end
 
     MP.RegisterEvent("onChatMessage", "onMessage")

@@ -51,7 +51,15 @@ dbManager:closeConnection()
 defaultRoles.init(permManager)
 
 
-local cmdManager = commandHandler.init(msgManager)
+
+local managers = {
+    dbManager = dbManager,
+    cfgManager = cfgManager,
+    msgManager = msgManager,
+    permManager = permManager
+}
+
+local cmdManager = commandHandler.init(managers)
 
 
 -- Init Events
@@ -59,3 +67,5 @@ onPlayerAuth.new(permManager)
 
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
+
+

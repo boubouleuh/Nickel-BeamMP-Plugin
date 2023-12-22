@@ -7,11 +7,12 @@ local utils = require("utils.misc")
 CommandsHandler = {}
 
 
-function CommandsHandler.init(msgManager)
+function CommandsHandler.init(managers)
     local self = {}
-    self.msgManager = msgManager
-    self.dbManager = msgManager.dbManager
-    self.configManager = msgManager.configManager
+    self.msgManager = managers.msgManager
+    self.dbManager = managers.dbManager
+    self.cfgManager = managers.cfgManager
+    self.permManager = managers.permManager
     self.commands = {}
     local files = FS.ListFiles(utils.script_path() .. "main/commands/all")
 
@@ -25,12 +26,20 @@ function CommandsHandler.init(msgManager)
         
             for key, _ in pairs(self.commands) do
                 if not utils.element_exist_in_table(key, commands[1]) then
-                    self.dbManager:deleteObject(Command, "commandName", key)
+
+                    local conditions = {
+                        {"commandName", key},
+                    }
+
+                    self.dbManager:deleteObject(Command, conditions)
                 end
             end
         else
             for _, command in pairs(commands) do
-                self.dbManager:deleteObject(Command, "commandName", command.commandName)
+                local conditions = {
+                    {"commandName", command.commandName},
+                }
+                self.dbManager:deleteObject(Command, conditions)
             end
 
         end
@@ -61,10 +70,10 @@ end
 
 
 
-function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, msgManager)
+function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
 
-    local prefix = self.configManager.config.commands.prefix
+    local prefix = self.cfgManager.config.commands.prefix
     if not string.sub(message, 1, string.len(prefix)) == prefix then
         return
     end
@@ -80,7 +89,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, 
     end
 
 
-    local prefixcommand = self.configManager.config.commands.prefix .. command
+    local prefixcommand = self.cfgManager.config.commands.prefix .. command
  
     --command test to check if the command is equal to the prefixcommand (the command is the first word of the string)
 
@@ -141,12 +150,15 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg, 
         playername = "console"
     end
     
-    local bool = callback(sender_id, playername, msgManager, table.unpack(args)) -- for test, need permissions check
+    local bool = callback(sender_id, playername, self, table.unpack(args)) -- for test, need permissions check
 
-    if bool then
-        return "Nickel command '" .. command .. "' successfully runned"
+    if sender_id == -1 then
+        local resultMessage = bool and "successfully" or "failed to"
+        return "Nickel command '" .. command .. "' " .. resultMessage .. " run"
     else
-        return "Nickel command '" .. command .. "' failed to run"
+        if bool then
+            return 1
+        end
     end
     
     

@@ -3,7 +3,7 @@
 local onConsoleInput = {}
 function onConsoleInput.new(cmdManager) 
     function onInput(cmd)
-        return cmdManager:CreateCommand(-1, cmd, true, cmdManager.msgManager)
+        return cmdManager:CreateCommand(-1, cmd, true, cmdManager)
     end
     MP.RegisterEvent("onConsoleInput", "onInput")
 

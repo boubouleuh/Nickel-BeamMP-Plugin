@@ -20,8 +20,6 @@ function MessagesHandler:SendMessage(sender_id, messageKey, ...)
 
     local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
 
-
-
     local formattedMessage = chatcolor .. chatstyle .. self:GetMessage(sender_id, messageKey, ...) .. "^r"
 
     local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, ...) .. "\x1b[39m\x1b[49m\x1b[0m"
@@ -51,7 +49,7 @@ function MessagesHandler:GetMessage(sender_id, key, ...)
     jsonFile:close()
 
     local json = Util.JsonDecode(jsonFileContent)
-
+    
     if json[key] ~= nil then
         local message = json[key]
 

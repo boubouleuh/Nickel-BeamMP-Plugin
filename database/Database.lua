@@ -20,13 +20,19 @@ function DatabaseManager:createTableIfNotExists(tableName, columns)
 end
 
 
-function DatabaseManager:insertOrUpdateObject(tableName, object)
+function DatabaseManager:returnQuery(query)
+  local msg = self.db:exec(query)
+  if self.db:changes() == 0 then
+    return "nickel.nochange"
+  end
+  return msg
+end
 
+function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   local columns = {}
   local values = {}
   local updateColumns = {}
-
 
   for key, value in pairs(object) do
     table.insert(columns, key)
@@ -34,7 +40,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
     if type(value) == "table" then
       -- Convert table to a string representation
       value = utils.table_to_string(value)
-      print(value)
     end
 
     table.insert(values, tostring(value))
@@ -48,19 +53,20 @@ function DatabaseManager:insertOrUpdateObject(tableName, object)
     count = tonumber(row["COUNT(*)"])
   end
 
-  if count > 0 then
-    local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), columns[1] .. " = '" .. tostring(object[columns[1]]) .. "'")
-    print(updateQuery)
-    self.db:exec(updateQuery)
+  print(canupdate)
+  if count > 0 and canupdate then
+    
+      -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), columns[1], tostring(object[columns[1]]))
+      print(updateQuery)
+      return self:returnQuery(updateQuery)
   else
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
     print(insertQuery)
-    self.db:exec(insertQuery)
+    return self:returnQuery(insertQuery)
   end
-
-  -- TODO Do that for every databases that need to be synced
-
 end
+
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
 
@@ -78,20 +84,39 @@ end
 
 -- TODO IMPORTANT ! WHEN TRYING TO SYNC WE NEED TO MAKE SURE THE VERSION OF EVERY NICKEL IS THE SAME ! IF ITS NOT THE SAME AN ERROR OCCURS AND ASK TO UPDATE EVERY NICKEL AND THEN RESTART ! (AT THE RESTART IT WILL COMPARE EVERY DATABASE TO SYNC IF THERE IS PROBLEM)
 -- TODO THE FUTUR AUTO UPDATE VAR IN THE CONFIG NEED TO BE THE SAME TO ACTIVATE THE SYNC
-function DatabaseManager:deleteObject(class, columnName, columnValue)
-
+function DatabaseManager:deleteObject(class, conditions)
   local tableName = class.tableName
-  local deleteQuery = string.format("DELETE FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
-  self.db:exec(deleteQuery)
 
-  -- TODO Do that for every databases that need to be synced
+  if not conditions or #conditions == 0 then
+      print("No conditions provided for deletion.")
+      return
+  end
+
+  local whereClauses = {}
+  for i, condition in ipairs(conditions) do
+      local columnName, columnValue = condition[1], condition[2]
+      local whereClause = string.format("%s = '%s'", columnName, tostring(columnValue))
+      table.insert(whereClauses, whereClause)
+  end
+
+  local whereClauseString = table.concat(whereClauses, " AND ")
+  local deleteQuery = string.format("DELETE FROM %s WHERE %s", tableName, whereClauseString)
+  
+  return self:returnQuery(deleteQuery)
+
+  -- TODO: Do that for every databases that need to be synced
 end
 
-function DatabaseManager:save(class)
+
+function DatabaseManager:save(class, canupdate)
+  if canupdate == nil then
+    canupdate = true
+  end
   self:openConnection()
   local tableName = class.tableName
-  self:insertOrUpdateObject(tableName, class)
+  local result = self:insertOrUpdateObject(tableName, class, canupdate)
   self:closeConnection()
+  return result
 end
 
 -- Dans la classe DatabaseManager
@@ -213,11 +238,13 @@ end
 
 
 function DatabaseManager:openConnection()
+  print("DB OPENED")
   self.db = sqlite3.open(self.dbname)
 end
 
 function DatabaseManager:closeConnection()
   if self.db then
+    print("DB CLOSED")
     self.db:close()
     self.db = nil
   end

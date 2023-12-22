@@ -4,10 +4,13 @@ local utils = require("utils.misc")
 
 local command = {}
 
-function command.init(sender_id, sender_name, msgManager, target_name, message)
+function command.init(sender_id, sender_name, managers, target_name, message)
+
+    local cfgManager = managers.cfgManager
+    local msgManager = managers.msgManager
 
     if target_name == nil or message == nil then
-        msgManager:SendMessage(sender_id, "commands.dm.missing_args")
+        msgManager:SendMessage(sender_id, "commands.dm.missing_args", cfgManager.config.commands.prefix)
         return false
     end
 

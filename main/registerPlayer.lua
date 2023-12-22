@@ -6,21 +6,23 @@ local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip)
 
-    local dbManager = permManager.dbManager
+    print("Problem can happen here in the register function : ", beammpid, name, ip)
+    
     -- Insérer ou mettre à jour un utilisateur
     local newUser = user.new(beammpid, name)
+    permManager.dbManager:openConnection()
+    local ipClass = permManager.dbManager:getClassByBeammpId(userIps, beammpid)
 
-    local ipClass = dbManager:getClassByBeammpId(userIps, beammpid)
-
-    local userStatusClass = dbManager:getClassByBeammpId(userStatus, beammpid)
+    local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)
+    permManager.dbManager:closeConnection()
 
     if userStatusClass == nil then
         local newUserStatus = userStatus.new(beammpid)
-        dbManager:save(newUserStatus)
+        permManager.dbManager:save(newUserStatus)
     end
-    local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
-
-    print(userRoleClass)
+    permManager.dbManager:openConnection()
+    local userRoleClass = permManager.dbManager:getClassByBeammpId(userRole, beammpid)
+    permManager.dbManager:closeConnection()
 
     local tab1 = {}
 
@@ -31,13 +33,14 @@ function registerPlayer.register(beammpid, name, permManager, ip)
     end
 
     local default = false
-    for role in pairs(userRoleClass) do
-        if tab1[role.roleID] == nil then
-            default = true
+    if userRoleClass ~= nil then
+        for role in pairs(userRoleClass) do
+            if tab1[role.roleID] == nil then
+                default = true
+            end
         end
     end
-
-    if default then
+    if default or userRoleClass == nil then
 
         for _, role in pairs(roles) do
             print(role.roleName)
@@ -49,14 +52,15 @@ function registerPlayer.register(beammpid, name, permManager, ip)
     if ipClass ~= nil then
 
         ipClass:addIp(ip)
-        dbManager:save(ipClass)
+        permManager.dbManager:save(ipClass)
   
     else 
         local newUserIp = userIps.new(beammpid, ip)
-        dbManager:save(newUserIp)
+        permManager.dbManager:save(newUserIp)
     end
     print(newUser)
-    dbManager:save(newUser)
+
+    permManager.dbManager:save(newUser)
 
 end
 
