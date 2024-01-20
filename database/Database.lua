@@ -4,6 +4,8 @@ local new = require("objects.New")
 
 local utils = require("utils.misc")
 
+
+
 -- Database Management Class
 local DatabaseManager = {}
 
@@ -120,6 +122,7 @@ function DatabaseManager:save(class, canupdate)
 end
 
 -- Dans la classe DatabaseManager
+
 function DatabaseManager:createTableForClass(class)
 
   local tableName = class.tableName
@@ -189,6 +192,8 @@ function DatabaseManager:getAllEntry(class)
   end
   return results
 end
+
+
 
 function DatabaseManager:getClassByBeammpId(class, beammpid)
   local tableName = class.tableName

@@ -1,5 +1,8 @@
---Objects used to make the tables
+local utils = require("utils.misc")
 
+-- Démarrer la traversée à partir du répertoire racine de votre projet
+local rootDirectory = utils.script_path()
+--Objects used to make the tables
 local UserIps = require("objects.UserIps")
 local UserStatus = require("objects.UserStatus")
 local User = require("objects.User")
@@ -8,7 +11,7 @@ local Role = require("objects.Role")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
 local onConsoleInput = require("main.events.console.onConsoleInput")
-
+--
 
 -- Events / Database / Events handler
 local onPlayerAuth = require("main.events.register.onPlayerAuth")
@@ -21,9 +24,8 @@ local defaultRoles = require("main.permissions.default")
 
 -- Miscellanous
 local config = require("main.config.Settings")
-local utils = require("utils.misc")
 
-
+-- coucou
 -- Instances
 
 local dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
@@ -49,6 +51,7 @@ dbManager:createTableForClass(RoleCommand)
 dbManager:closeConnection()
 
 defaultRoles.init(permManager)
+
 
 
 

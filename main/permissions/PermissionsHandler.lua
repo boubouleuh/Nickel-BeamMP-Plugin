@@ -1,9 +1,9 @@
 local userRole = require("objects.UserRole")
 local new = require("objects.New")
 local Role = require("objects.Role")
-
+local Command = require("objects.Command")
 local sqlcodes = require("database.sqlresultcode")
-
+local RoleCommand = require("objects.RoleCommand")
 PermissionsHandler = {}
 
 function PermissionsHandler.new(dbManager)
@@ -40,6 +40,7 @@ function PermissionsHandler:assignRole(rolename, beammpid)
 
     return result
 end
+
 function PermissionsHandler:unassignRole(rolename, beammpid)
     self.dbManager:openConnection()
    
@@ -53,7 +54,8 @@ function PermissionsHandler:unassignRole(rolename, beammpid)
     local result = self.dbManager:deleteObject(userRole, conditions)
     self.dbManager:closeConnection()
     return result
-  end
+end
+
 function PermissionsHandler:getDefaultsRoles()
     self.dbManager:openConnection()
     local roles = self.dbManager:getAllEntry(Role)
@@ -67,4 +69,34 @@ function PermissionsHandler:getDefaultsRoles()
     return defaultroles
 end
 
+
+
+
+function PermissionsHandler:assignCommand(commandname, rolename)
+    self.dbManager:openConnection()
+    local commandid = self.dbManager:getEntry(Command, "commandName", commandname).commandID
+    local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+    self.dbManager:closeConnection()
+
+    local newRoleCommand = RoleCommand.new(roleid, commandid)
+    local result = self.dbManager:save(newRoleCommand, false)
+
+    return result
+end
+
+function PermissionsHandler:unassignCommand(commandname, rolename)
+    self.dbManager:openConnection()
+    local commandid = self.dbManager:getEntry(Command, "commandName", commandname).commandID
+    local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+
+    local conditions = {
+        {"roleID", roleid},
+        {"commandID", commandid}
+    }
+
+    local result = self.dbManager:deleteObject(RoleCommand, conditions)
+    self.dbManager:closeConnection()
+
+    return result
+end
 return PermissionsHandler

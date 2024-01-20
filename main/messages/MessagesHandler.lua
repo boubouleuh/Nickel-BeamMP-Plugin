@@ -8,13 +8,13 @@ MessagesHandler = {}
 
 function MessagesHandler.new(dbManager, configManager)
     local self = {}
+
     self.dbManager = dbManager
     self.configManager = configManager
     return new._object(MessagesHandler, self)
   end
 
 function MessagesHandler:SendMessage(sender_id, messageKey, ...)
-
     local chatcolor = "^l^7"  -- Couleur
     local chatstyle = "^r^o"  -- Style
 

@@ -16,35 +16,28 @@ function CommandsHandler.init(managers)
     self.commands = {}
     local files = FS.ListFiles(utils.script_path() .. "main/commands/all")
 
-    local function checkCommands()
-
+    local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
+        print("test")
         self.dbManager:openConnection()
 
-        local commands = self.dbManager:getAllEntry(Command)
+        local commandsFromDB = self.dbManager:getAllEntry(Command)
 
-        if next(self.commands) ~= nil then
-        
-            for key, _ in pairs(self.commands) do
-                if not utils.element_exist_in_table(key, commands[1]) then
-
-                    local conditions = {
-                        {"commandName", key},
-                    }
-
-                    self.dbManager:deleteObject(Command, conditions)
-                end
-            end
-        else
-            for _, command in pairs(commands) do
+        -- Remove commands not present in memory from the database
+        for _, command in pairs(commandsFromDB) do
+            if not self.commands[command.commandName] then
                 local conditions = {
                     {"commandName", command.commandName},
                 }
+
                 self.dbManager:deleteObject(Command, conditions)
             end
-
         end
+
+
         self.dbManager:closeConnection()
     end
+
+
 
     local function addCommand(commandName)
 
@@ -56,6 +49,7 @@ function CommandsHandler.init(managers)
 
     for _, file in pairs(files) do
         local string = string.gsub(file, ".lua", "")
+        print(string)
         addCommand(string)
     end
 
@@ -73,21 +67,26 @@ end
 function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
 
+    print("TEST")
     local prefix = self.cfgManager.config.commands.prefix
     if not string.sub(message, 1, string.len(prefix)) == prefix then
         return
     end
 
     local command = string.match(message, "%S+")
+    print(command)
     local commandWithoutPrefix = string.sub(command, 2)
 
-    local callback = self.commands[commandWithoutPrefix].init
+
+    local commandObject = self.commands[commandWithoutPrefix]
 
 
-    if callback == nil then
-        return  "Command " .. command .. " not found"
+    if commandObject == nil then
+        self.msgManager:SendMessage("commands.not_found", commandWithoutPrefix)
+        return
     end
 
+    local callback = commandObject.init
 
     local prefixcommand = self.cfgManager.config.commands.prefix .. command
  
@@ -150,7 +149,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
         playername = "console"
     end
     
-    local bool = callback(sender_id, playername, self, table.unpack(args)) -- for test, need permissions check
+    local bool = callback(sender_id, playername, self, table.unpack(args)) -- TODO PERMISSION CHECK AND A WAY TO PREVENT TWO USER WITH THE SAME HIERARCHY TO MANAGE EACH OTHER
 
     if sender_id == -1 then
         local resultMessage = bool and "successfully" or "failed to"

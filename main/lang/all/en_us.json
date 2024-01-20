@@ -13,7 +13,7 @@
     "commands.dm.missing_args" : "Usage : {Prefix}dm <targetname> <message>",
     "commands.dm.from" : "{Player} - me : {Message}",
     "commands.dm.to" : "me - {Player} : {Message}",
-
+    "commands.not_found" : "Command {Command} not found",
     "player.not_found" : "Player {Player} not found",
 
     "database.code.nickel.nochange" : "Nothing changed",
