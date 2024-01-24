@@ -7,6 +7,13 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
 
     local permManager = managers.permManager
     local msgManager = managers.msgManager
+    local cfgManager = managers.cfgManager
+
+    if rolename == nil or playername == nil then
+        msgManager:SendMessage(sender_id, "commands.grantrole.missing_args", cfgManager.config.commands.prefix)
+        return false
+    end
+
     local playerid = utils.GetPlayerId(playername)
 
     local beammpid = utils.getPlayerBeamMPID(playerid) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender

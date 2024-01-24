@@ -67,22 +67,21 @@ end
 function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
 
-    print("TEST")
     local prefix = self.cfgManager.config.commands.prefix
-    if not string.sub(message, 1, string.len(prefix)) == prefix then
+
+
+    if string.sub(message, 1, string.len(prefix)) ~= prefix then
         return
     end
 
     local command = string.match(message, "%S+")
-    print(command)
     local commandWithoutPrefix = string.sub(command, 2)
 
 
     local commandObject = self.commands[commandWithoutPrefix]
 
-
     if commandObject == nil then
-        self.msgManager:SendMessage("commands.not_found", commandWithoutPrefix)
+        self.msgManager:SendMessage(sender_id, "commands.not_found", commandWithoutPrefix)
         return
     end
 
@@ -148,18 +147,25 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     if playername == "" then
         playername = "console"
     end
-    
-    local bool = callback(sender_id, playername, self, table.unpack(args)) -- TODO PERMISSION CHECK AND A WAY TO PREVENT TWO USER WITH THE SAME HIERARCHY TO MANAGE EACH OTHER
 
-    if sender_id == -1 then
-        local resultMessage = bool and "successfully" or "failed to"
-        return "Nickel command '" .. command .. "' " .. resultMessage .. " run"
-    else
-        if bool then
+    local beammpid
+    if sender_id ~= nil then
+        beammpid = utils.getPlayerBeamMPID(sender_id)
+    end
+
+    if self.permManager:hasPermission(beammpid, commandWithoutPrefix) then
+        local bool = callback(sender_id, playername, self, table.unpack(args)) -- TODO WAY TO PREVENT TWO USER WITH THE SAME HIERARCHY TO MANAGE EACH OTHER
+
+        if sender_id == -2 then
+            local resultMessage = bool and "successfully" or "failed to"
+            return "Nickel command '" .. command .. "' " .. resultMessage .. " run"
+        else
             return 1
         end
+    else
+        self.msgManager:SendMessage(sender_id, "commands.permissions.insufficient")
+        return 1
     end
-    
     
 end
 

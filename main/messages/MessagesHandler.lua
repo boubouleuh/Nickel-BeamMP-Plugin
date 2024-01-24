@@ -24,7 +24,7 @@ function MessagesHandler:SendMessage(sender_id, messageKey, ...)
 
     local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, ...) .. "\x1b[39m\x1b[49m\x1b[0m"
 
-    if sender_id == -1 then
+    if sender_id == -2 then
         print(consoleFormattedMessage)  -- Afficher dans la console
     else
         MP.SendChatMessage(sender_id, formattedMessage)  -- Envoyer au joueur
@@ -33,7 +33,6 @@ end
 
 function MessagesHandler:GetMessage(sender_id, key, ...)
     local beamId = utils.getPlayerBeamMPID(sender_id)
-
     self.dbManager:openConnection()
     local userLang = self.dbManager:getClassByBeammpId(user, beamId)
     self.dbManager:closeConnection()

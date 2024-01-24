@@ -1,4 +1,4 @@
-local userRole = require("objects.UserRole")
+local UserRole = require("objects.UserRole")
 local new = require("objects.New")
 local Role = require("objects.Role")
 local Command = require("objects.Command")
@@ -35,7 +35,7 @@ function PermissionsHandler:assignRole(rolename, beammpid)
     local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
     self.dbManager:closeConnection()
 
-    local newUserRole = userRole.new(beammpid,roleid)
+    local newUserRole = UserRole.new(beammpid,roleid)
     local result = self.dbManager:save(newUserRole, false)
 
     return result
@@ -51,7 +51,7 @@ function PermissionsHandler:unassignRole(rolename, beammpid)
         {"beammpid", beammpid}
     }
 
-    local result = self.dbManager:deleteObject(userRole, conditions)
+    local result = self.dbManager:deleteObject(UserRole, conditions)
     self.dbManager:closeConnection()
     return result
 end
@@ -99,4 +99,80 @@ function PermissionsHandler:unassignCommand(commandname, rolename)
 
     return result
 end
+
+function PermissionsHandler:hasPermission(beammpid, commandname)
+    self.dbManager:openConnection()
+
+    -- Obtenir l'ID du rôle de l'utilisateur
+    local userRole = self.dbManager:getEntry(UserRole, "beammpid", beammpid)
+    local roleId = userRole and userRole.roleID or nil
+
+    -- Obtenir l'ID de la commande
+    local commandId = self.dbManager:getEntry(Command, "commandName", commandname).commandID
+
+    -- Vérifier si le rôle de l'utilisateur a la permission pour la commande
+    local conditions = {
+        {"roleID", roleId},
+        {"commandID", commandId}
+    }
+
+    local roleCommandEntries = self.dbManager:getAllEntry(RoleCommand)
+
+    for _, entry in ipairs(roleCommandEntries) do
+        local match = true
+        for _, condition in ipairs(conditions) do
+            if entry[condition[1]] ~= condition[2] then
+                match = false
+                break
+            end
+        end
+
+        if match then
+            self.dbManager:closeConnection()
+            return true
+        end
+    end
+
+    -- Si l'utilisateur n'a pas la permission, vérifier les niveaux de permission inférieurs
+    if roleId then
+        local role = self.dbManager:getEntry(Role, "roleID", roleId)
+        local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
+
+        while lowerPermissions >= 0 do
+            local lowerRole = self.dbManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
+            if lowerRole then
+                local lowerConditions = {
+                    {"roleID", lowerRole.roleID},
+                    {"commandID", commandId}
+                }
+
+                local lowerRoleCommandEntries = self.dbManager:getAllEntry(RoleCommand)
+
+                for _, entry in ipairs(lowerRoleCommandEntries) do
+                    local match = true
+                    for _, condition in ipairs(lowerConditions) do
+                        if entry[condition[1]] ~= condition[2] then
+                            match = false
+                            break
+                        end
+                    end
+
+                    if match then
+                        self.dbManager:closeConnection()
+                        return true
+                    end
+                end
+            end
+            lowerPermissions = lowerPermissions - 1
+        end
+    end
+
+    self.dbManager:closeConnection()
+    return false
+end
+
+
+
+
+
 return PermissionsHandler
