@@ -14,9 +14,8 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         return false
     end
 
-    local playerid = utils.GetPlayerId(playername)
 
-    local beammpid = utils.getPlayerBeamMPID(playerid) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
+    local beammpid = utils.getPlayerBeamMPID(playername) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
     if beammpid ~= nil then
 
         local result = permManager:unassignRole(rolename, beammpid)

@@ -144,18 +144,22 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     -- end
 
     local playername = MP.GetPlayerName(sender_id)
-    if playername == "" then
+    if sender_id == -2 then
         playername = "console"
     end
 
     local beammpid
     if sender_id ~= nil then
-        beammpid = utils.getPlayerBeamMPID(sender_id)
+        if sender_id ~= -2 then
+            beammpid = utils.getPlayerBeamMPID(playername)
+        else
+            beammpid = -2
+        end
     end
+
 
     if self.permManager:hasPermission(beammpid, commandWithoutPrefix) then
         local bool = callback(sender_id, playername, self, table.unpack(args)) -- TODO WAY TO PREVENT TWO USER WITH THE SAME HIERARCHY TO MANAGE EACH OTHER
-
         if sender_id == -2 then
             local resultMessage = bool and "successfully" or "failed to"
             return "Nickel command '" .. command .. "' " .. resultMessage .. " run"

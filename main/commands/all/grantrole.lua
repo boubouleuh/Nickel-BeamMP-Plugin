@@ -14,10 +14,23 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         return false
     end
 
-    local playerid = utils.GetPlayerId(playername)
 
-    local beammpid = utils.getPlayerBeamMPID(playerid) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
+
+
+    local beammpid = utils.getPlayerBeamMPID(playername) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
+
     if beammpid ~= nil then
+
+
+        print("PERMISSION : ", permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)))
+        if not permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)) then
+            msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", playername)
+            return false
+        end
+        if not permManager:canAddRole(utils.getPlayerBeamMPID(sender_name), rolename) then
+            msgManager:SendMessage(sender_id, "commands.permissions.insufficient.addrole", rolename)
+            return false
+        end
 
         local result = permManager:assignRole(rolename, beammpid)
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))

@@ -8,6 +8,7 @@ function command.init(sender_id, sender_name, managers, commandName, rolename)
     local msgManager = managers.msgManager
     local cfgManager = managers.cfgManager
 
+
     if commandName == nil or rolename == nil then
         msgManager:SendMessage(sender_id, "commands.grantcommand.missing_args", cfgManager.config.commands.prefix)
         return false

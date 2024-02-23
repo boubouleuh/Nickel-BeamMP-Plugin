@@ -72,6 +72,8 @@ end
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
 
+  print(class,columnName, columnValue)
+
   local tableName = class.tableName
   local query = string.format("SELECT * FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
   local results = {}
@@ -170,10 +172,22 @@ function DatabaseManager:createTableForClass(class)
 
 end
 
-function DatabaseManager:getAllEntry(class)
-
+function DatabaseManager:getAllEntry(class, conditions)
   local tableName = class.tableName
-  local query = string.format("SELECT * FROM %s", tableName)
+  local query = "SELECT * FROM " .. tableName
+
+  -- Ajouter des conditions à la requête si elles sont fournies
+  if conditions and #conditions > 0 then
+    local whereClauses = {}
+    for i, condition in ipairs(conditions) do
+      local columnName, columnValue = condition[1], condition[2]
+      local whereClause = string.format("%s = '%s'", columnName, tostring(columnValue))
+      table.insert(whereClauses, whereClause)
+    end
+    local whereClauseString = table.concat(whereClauses, " AND ")
+    query = query .. " WHERE " .. whereClauseString
+  end
+
   local results = {}
 
   for row in self.db:nrows(query) do
@@ -190,8 +204,10 @@ function DatabaseManager:getAllEntry(class)
 
     table.insert(results, result)
   end
+
   return results
 end
+
 
 
 

@@ -62,14 +62,12 @@ function Misc.string_to_table(text)
 end
 
 
-function Misc.getPlayerBeamMPID(player_id, player_name) --Playername only used when using the web api
+function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+  local player_id = Misc.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
-  if identifiers == nil then
-      if player_name ~= nil then
+  if player_id == -1 then
         local beamid = online.getPlayerJson(player_name).user.id
         return beamid
-      end
-      return -1
   end
   local player_beammp_id = identifiers['beammp']
   if player_beammp_id == nil then
