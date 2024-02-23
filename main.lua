@@ -19,7 +19,7 @@ local onChatMessage = require("main.events.chat.onChatMessage")
 local databaseManager = require("database.Database")
 local messageHandlerManager = require("main.messages.MessagesHandler")
 local commandHandler = require("main.commands.CommandsHandler")
-local defaultRoles = require("main.permissions.default")
+local default = require("main.permissions.default")
 
 
 -- Miscellanous
@@ -50,10 +50,6 @@ dbManager:createTableForClass(RoleCommand)
 
 dbManager:closeConnection()
 
-defaultRoles.init(permManager)
-
-
-
 
 local managers = {
     dbManager = dbManager,
@@ -64,6 +60,7 @@ local managers = {
 
 local cmdManager = commandHandler.init(managers)
 
+default.init(permManager)
 
 -- Init Events
 onPlayerAuth.new(permManager)

@@ -14,6 +14,14 @@ function default.init(PermissionsManager)
     PermissionsManager:addRole("Owner", 3, false)
 
 
+    PermissionsManager:assignCommand("dm", "Member")
+
+    PermissionsManager:assignCommand("grantcommand", "Administrator")
+    PermissionsManager:assignCommand("grantrole", "Administrator")
+    PermissionsManager:assignCommand("revokerole", "Administrator")
+    PermissionsManager:assignCommand("revokecommand", "Administrator")
+
+
 
 end
 
