@@ -9,7 +9,7 @@
 
     "commands.permissions.insufficient" : "You dont have enough permissions",
     "commands.permissions.insufficient.manage" : "You dont have enough permissions to manage {Player}",
-    "commands.permissions.insufficient.addrole" : "You dont have enough permissions to add the role {Rolename}",
+    "commands.permissions.insufficient.addrole" : "You dont have enough permissions to manage the role {Rolename}",
 
     "commands.dm.cant_dm_yourself" : "You cant dm yourself",
     "commands.dm.missing_args" : "Usage : {Prefix}dm <targetname> <message>",

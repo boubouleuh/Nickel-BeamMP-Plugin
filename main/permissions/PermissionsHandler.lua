@@ -118,7 +118,7 @@ function PermissionsHandler:getRoles(beammpid)
 end
 
 
-function PermissionsHandler:canAddRole(manager_beammpid, rolename)
+function PermissionsHandler:canManageRole(manager_beammpid, rolename)
     self.dbManager:openConnection()
 
     -- Obtenir tous les rôles du gestionnaire

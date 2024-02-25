@@ -14,6 +14,7 @@ function command.init(sender_id, sender_name, managers, commandName, rolename)
         return false
     end
 
+
     local result = permManager:assignCommand(commandName, rolename)
     msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
     return true

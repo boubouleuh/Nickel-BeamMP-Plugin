@@ -21,17 +21,16 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
 
     if beammpid ~= nil then
 
-
-        print("PERMISSION : ", permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)))
-        if not permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)) then
-            msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", playername)
-            return false
+        if sender_id ~= -2 then
+            if not permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)) then
+                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", playername)
+                return false
+            end
+            if not permManager:canManageRole(utils.getPlayerBeamMPID(sender_name), rolename) then
+                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.addrole", rolename)
+                return false
+            end
         end
-        if not permManager:canAddRole(utils.getPlayerBeamMPID(sender_name), rolename) then
-            msgManager:SendMessage(sender_id, "commands.permissions.insufficient.addrole", rolename)
-            return false
-        end
-
         local result = permManager:assignRole(rolename, beammpid)
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
         return true
