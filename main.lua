@@ -1,7 +1,11 @@
+
 local utils = require("utils.misc")
+local rootDirectory = utils.script_path()
+
+print(package.path .. ";" .. rootDirectory  .. "?.lua")
+package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
-local rootDirectory = utils.script_path()
 --Objects used to make the tables
 local UserIps = require("objects.UserIps")
 local UserStatus = require("objects.UserStatus")
