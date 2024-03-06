@@ -1,4 +1,4 @@
-local sqlite3 = require("lsqlite3complete")
+local sqlite3 = require("lsqlite3")
 
 local new = require("objects.New")
 

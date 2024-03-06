@@ -1,9 +1,18 @@
 
+
+
+local initializeModules = require("main.initializeModules")
+
+initializeModules.initialize()
+
+
+
 local utils = require("utils.misc")
 local rootDirectory = utils.script_path()
 
-print(package.path .. ";" .. rootDirectory  .. "?.lua")
 package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
+package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.so"
+package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.so"
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables

@@ -1,5 +1,3 @@
-local online = require "main.online"
-
 
 
 -- Database Management Class
@@ -63,6 +61,7 @@ end
 
 
 function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+  local online = require "main.online"
   local player_id = Misc.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
