@@ -9,10 +9,17 @@ initializeModules.initialize()
 
 local utils = require("utils.misc")
 local rootDirectory = utils.script_path()
-
+package.path = rootDirectory .. "objects/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
 package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.so"
 package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.so"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/?.lua"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/?.lua"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/socket/?.lua"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
+package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
+
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables

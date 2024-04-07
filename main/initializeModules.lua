@@ -21,7 +21,7 @@ function init.initialize()
     -- Check if LuaRocks is installed
     if not isLuaRocksInstalled() then
         print("HEY ! Nickel will install Luarocks automatically and will probably need your permissions ! In order to use Nickel you will need to type 'Y' to accept if its asking you. Otherwise, run this command yourself : \n sudo apt install build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install) \n STOP THE SERVER BEFORE IF YOU WANT TO RUN IT MANUALLY")
-        os.execute("sudo apt install sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)")
+        os.execute("sudo apt install -y libssl-dev cmake sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)")
         print("----DONE----")
     end
 
