@@ -12,10 +12,11 @@ function init.initialize()
         local success, module = pcall(require, moduleName)
         return success
     end
+
     local function installModules()
         utils.nkprint("Checking Nickel modules", "info")
 
-        os.execute("luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec")
+        os.execute("luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install toml && luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install luasec")
         utils.nkprint("If an error occur type this command instead : " .. "luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec", "warn")
     end
 
@@ -28,7 +29,7 @@ function init.initialize()
         print("----DONE----")
     end
 
-    if not isModuleInstalled("lsqlite3") and not isModuleInstalled("ssl.https") and not isModuleInstalled("toml") then
+    if not isModuleInstalled("lsqlite3") or not isModuleInstalled("ssl.https") or not isModuleInstalled("toml") then
         installModules()
         utils.nkprint("If it didn't work, you may need to uninstall LuaRocks yourself and try again if you already have it installed (sudo apt remove luarocks)", "warn")
     end

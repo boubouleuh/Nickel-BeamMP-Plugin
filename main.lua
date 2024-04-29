@@ -3,7 +3,7 @@
 
 local initializeModules = require("main.initializeModules")
 
-initializeModules.initialize()
+
 
 
 
@@ -19,7 +19,7 @@ package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/socket/?.
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
-
+initializeModules.initialize()
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables
