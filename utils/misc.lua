@@ -1,5 +1,3 @@
-local online = require "main.online"
-
 
 
 -- Database Management Class
@@ -12,6 +10,12 @@ function Misc.script_path()
   return scriptDir
 end
 
+function Misc.getLinuxVersion()
+    local handle = io.popen("lsb_release -ds")
+    local result = handle:read("*a")
+    handle:close()
+    return result
+end
 
 function Misc.get_key_for_value( t, value )
     for k,v in pairs(t) do
@@ -19,7 +23,7 @@ function Misc.get_key_for_value( t, value )
     end
     return nil
 end
-  
+
 
 function Misc.element_exist_in_table(element, list)
   -- Check if the element exists in the list
@@ -63,6 +67,7 @@ end
 
 
 function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+  local online = require "main.online"
   local player_id = Misc.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
@@ -85,5 +90,44 @@ function Misc.GetPlayerId(player_name)
   end
   return -1
 end
+
+function Misc.print_color(message, color)
+    -- Les codes de couleur ANSI pour différentes couleurs
+    local colors = {
+        black = "\27[30m",
+        red = "\27[31m",
+        green = "\27[32m",
+        yellow = "\27[33m",
+        blue = "\27[34m",
+        magenta = "\27[35m",
+        cyan = "\27[36m",
+        white = "\27[37m",
+        gray = "\27[90m",
+    }
+
+    -- Vérifie si la couleur spécifiée est valide
+    if not colors[color] then
+        color = "white"
+    end
+
+    -- Affiche le message dans la couleur spécifiée
+    return colors[color] .. message .. "\27[0m"
+end
+
+---nkprint
+---@param message string
+---@param type string Can be "warn", "error", or "info"
+function Misc.nkprint(message, type)
+    if type == "warn" then
+        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[WARN] " .. message, "yellow"))
+    elseif type == "error" then
+        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[ERROR] " .. message, "red"))
+    elseif type == "info" then
+        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[INFO] " .. message, "blue"))
+    end
+end
+
+
+
 
 return Misc;
