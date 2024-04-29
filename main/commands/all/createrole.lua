@@ -3,12 +3,19 @@ local utils = require("utils.misc")
 
 local command = {}
 
-function command.init(sender_id, sender_name, managers, rolename1, beforeOrAfter, rolename2)
+function command.init(sender_id, sender_name, managers, rolename, permlvl)
     local permManager = managers.permManager
     local msgManager = managers.msgManager
     local cfgManager = managers.cfgManager
-    --TODO ;createrole NewRole before Owner
-    --TODO ;createrole NewRole after Owner
+
+    if permlvl == nil or rolename == nil then
+        msgManager:SendMessage(sender_id, "commands.createrole.missing_args", cfgManager.config.commands.prefix)
+        return false
+    end
+
+    local result = permManager:addRole(rolename, permlvl, false)
+    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    return true
 end
 
 return command

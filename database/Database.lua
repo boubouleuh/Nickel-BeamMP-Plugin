@@ -24,6 +24,7 @@ end
 
 function DatabaseManager:returnQuery(query)
   local msg = self.db:exec(query)
+  print("Changes = ", self.db:changes())
   if self.db:changes() == 0 then
     return "nickel.nochange"
   end

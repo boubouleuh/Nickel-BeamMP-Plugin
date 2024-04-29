@@ -15,7 +15,7 @@ end
 
 function PermissionsHandler:addRole(rolename, permlvl, default)
     local newRole = Role.new(rolename, permlvl, default)
-    local result = self.dbManager:save(newRole)
+    local result = self.dbManager:save(newRole, false)
     return result
 end
 
