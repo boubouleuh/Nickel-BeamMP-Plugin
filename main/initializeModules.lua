@@ -13,20 +13,24 @@ function init.initialize()
         return success
     end
     local function installModules()
-        print("Nickel modules check")
+        utils.nkprint("Checking Nickel modules", "info")
 
         os.execute("luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec")
+        utils.nkprint("If an error occur type this command instead : " .. "luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec", "warn")
     end
 
     -- Check if LuaRocks is installed
+    local installCmd = "sudo apt install -y libssl-dev cmake sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)"
+
     if not isLuaRocksInstalled() then
-        print("HEY ! Nickel will install Luarocks automatically and will probably need your permissions ! In order to use Nickel you will need to type 'Y' to accept if its asking you. Otherwise, run this command yourself : \n sudo apt install build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install) \n STOP THE SERVER BEFORE IF YOU WANT TO RUN IT MANUALLY")
-        os.execute("sudo apt install -y libssl-dev cmake sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)")
+        utils.nkprint("Nickel will attempt to install LuaRocks and/or its dependencies automatically and may require your permissions. IT IS RECOMMENDED TO RUN A SUDO COMMAND BEFORE INSTALLING TO PREVENT PROBLEMS! If you encounter issues, run this command manually: \n" .. installCmd ..  " \n STOP THE SERVER BEFORE RUNNING IT MANUALLY", "warn")
+        os.execute(installCmd)
         print("----DONE----")
     end
 
     if not isModuleInstalled("lsqlite3") and not isModuleInstalled("ssl.https") and not isModuleInstalled("toml") then
         installModules()
+        utils.nkprint("If it didn't work, you may need to uninstall LuaRocks yourself and try again if you already have it installed (sudo apt remove luarocks)", "warn")
     end
 end
 
