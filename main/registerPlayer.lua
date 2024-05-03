@@ -2,6 +2,8 @@ local user = require("objects.User")
 local userIps = require("objects.UserIps")
 local userStatus = require("objects.UserStatus")
 local userRole = require("objects.UserRole")
+local utils = require("utils.misc")
+
 local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip)
@@ -51,8 +53,9 @@ function registerPlayer.register(beammpid, name, permManager, ip)
 
     if ipClass ~= nil then
 
-        ipClass:addIp(ip)
-        permManager.dbManager:save(ipClass)
+        ipClass.ip = ip
+        ipClass.ip_id = nil
+        permManager.dbManager:save(ipClass, false)
   
     else 
         local newUserIp = userIps.new(beammpid, ip)
@@ -61,6 +64,33 @@ function registerPlayer.register(beammpid, name, permManager, ip)
     print(newUser)
 
     permManager.dbManager:save(newUser)
+
+    --Check status
+    if userStatusClass ~= nil then
+        if userStatusClass.status_type == "isbanned" and userStatusClass.status_value then
+            local id = utils.GetPlayerId(name)
+            MP.DropPlayer(id, userStatusClass.reason)
+        elseif userStatusClass.status_type == "istempbanned" and userStatusClass.status_value then
+            if userStatusClass.time <= os.time() then
+                local id = utils.GetPlayerId(name)
+                MP.DropPlayer(id, userStatusClass.reason)
+            else
+                userStatusClass.status_type = ""
+                userStatusClass.status_value = false
+                permManager.dbManager:save(userStatusClass)
+            end
+        end
+    end
+
+    permManager.dbManager:openConnection()
+    local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
+    permManager.dbManager:closeConnection()
+    for _, entry in pairs(entries) do
+        if entry.banned then
+            MP.DropPlayer(id, "REASON") --TODO ADD REASON ?
+        end
+    end
+
 
 end
 

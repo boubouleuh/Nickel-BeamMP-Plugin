@@ -4,11 +4,12 @@ local utils = require("utils.misc")
 -- Classe UserIps
 local UserIps = { tableName = "UsersIps" }
 
-function UserIps.new(beammpid, ips)
+function UserIps.new(beammpid, ip)
   local self = {}
-  self.id = nil  -- You can set this to a specific value if needed
-  self.beammpid = beammpid or 0
-  self.ips = {ips} or {}  -- Default to an empty table if no IPs are provided
+  self.ip_id = nil  -- You can set this to a specific value if needed
+  self.beammpid = beammpid
+  self.ip = ip
+  self.banned = false
   return new._object(UserIps, self)
 end
 
@@ -20,19 +21,14 @@ function UserIps:setKey(key, value)
     self[key] = value
 end
 
-function UserIps:addIp(ip)
-    if not utils.element_exist_in_table(ip, self.ips) then
-      
-        table.insert(self.ips, ip)
-    end
-end
 
 -- Dans la classe UserIps
 function UserIps:getColumns()
   return {
-    "id INTEGER PRIMARY KEY AUTOINCREMENT",
+    "ip_id INTEGER PRIMARY KEY AUTOINCREMENT",
     "beammpid INTEGER",
-    "ips TEXT",
+    "ip TEXT UNIQUE",
+    "banned BOOLEAN",
     "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
     -- Ajoutez d'autres colonnes si nécessaire
   }
