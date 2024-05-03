@@ -31,6 +31,19 @@ function DatabaseManager:returnQuery(query)
   return msg
 end
 
+
+-- Function to fetch the primary key column name from the table schema
+function DatabaseManager:getPrimaryKeyColumn(tableName)
+  local query = string.format("PRAGMA table_info('%s')", tableName)
+  for row in self.db:nrows(query) do
+    if row.pk == 1 then
+      return row.name
+    end
+  end
+  -- If no primary key found, return nil or handle the error accordingly
+  return nil
+end
+
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   local columns = {}
@@ -48,11 +61,12 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(values, tostring(value))
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
-
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, columns[1] .. " = '" .. tostring(object[columns[1]]) .. "'")
+  local primaryColumn = self:getPrimaryKeyColumn(tableName)
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, primaryColumn .. " = '" .. tostring(object[primaryColumn]) .. "'") --watch out, problems can happen maybe (black magic)
   print(selectQuery)
   local count = 0
   for row in self.db:nrows(selectQuery) do
+    print("ROW IS : ", row)
     count = tonumber(row["COUNT(*)"])
   end
 
