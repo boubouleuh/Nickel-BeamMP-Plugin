@@ -25,11 +25,11 @@ function command.init(sender_id, sender_name, managers, playername)
             userStatusClass.status_type = ""
             userStatusClass.is_status_value = false
             local result = dbManager:save(userStatusClass)
-            msgManager:SendMessage(sender_id, string.format("commands.unban.success", playername))
+            msgManager:SendMessage(sender_id, "commands.unban.success", playername)
             msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
 
         else
-            msgManager:SendMessage(sender_id, string.format("commands.unban.not_banned", playername))
+            msgManager:SendMessage(sender_id, "commands.unban.not_banned", playername)
         end
     end
 

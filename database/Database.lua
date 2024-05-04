@@ -83,7 +83,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   if count > 0 and canupdate then
 
       -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), columns[1], tostring(object[columns[1]]))
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), firstColumn, tostring(object[firstColumn]))
       print(updateQuery)
       return self:returnQuery(updateQuery)
   else

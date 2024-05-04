@@ -132,7 +132,31 @@ function Misc.nkprint(message, type)
     end
 end
 
+function Misc.timeConverter(time)
+    local oldtime = time
 
+    local time = time:lower()
+    local time = time:gsub(" ", "")
+    local time = time:gsub("s", "")
+    local time = time:gsub("m", "")
+    local time = time:gsub("h", "")
+    local time = time:gsub("d", "")
+    local time = tonumber(time)
+    if time == nil then
+        return nil
+    end
+    if oldtime:lower():find("s") then
+        return time
+    elseif oldtime:lower():find("m") then
+        return time * 60
+    elseif oldtime:lower():find("h") then
+        return time * 60 * 60
+    elseif oldtime:lower():find("d") then
+        return time * 60 * 60 * 24
+    else
+        return nil
+    end
+end
 
 
 return Misc;

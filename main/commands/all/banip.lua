@@ -33,9 +33,9 @@ function command.init(sender_id, sender_name, managers, playername)
         end
     end
     if count > 0 then
-        msgManager:SendMessage(sender_id, string.format("commands.banip.success", playername, count))
+        msgManager:SendMessage(sender_id, "commands.banip.success", playername, count)
     else
-        msgManager:SendMessage(sender_id, string.format("commands.banip.no_registered", playername))
+        msgManager:SendMessage(sender_id, "commands.banip.no_registered", playername)
         return false
     end
 
