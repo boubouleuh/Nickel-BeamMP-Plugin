@@ -23,7 +23,7 @@ function init.initialize()
     --todo install a specific version of lsqlite3
 
     -- Check if LuaRocks is installed
-    local installCmd = "sudo apt install -y libssl-dev cmake sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)"
+    local installCmd = "sudo apt install -y libssl-dev cmake libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install) && curl -R -O https://www.sqlite.org/2024/sqlite-autoconf-3450300.tar.gz && tar -zxf sqlite-autoconf-3450300.tar.gz && (cd sqlite-autoconf-3450300 && ./configure) && (cd sqlite-autoconf-3450300 && make) && (cd sqlite-autoconf-3450300 && sudo make install)"
 
     if not isLuaRocksInstalled() then
         utils.nkprint("Nickel will attempt to install LuaRocks and/or its dependencies automatically and may require your permissions. IT IS RECOMMENDED TO RUN A SUDO COMMAND BEFORE INSTALLING TO PREVENT PROBLEMS! If you encounter issues, run this command manually: \n" .. installCmd ..  " \n STOP THE SERVER BEFORE RUNNING IT MANUALLY", "warn")
