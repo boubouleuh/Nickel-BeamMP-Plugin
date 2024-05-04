@@ -62,7 +62,7 @@ function PermissionsHandler:getDefaultsRoles()
     self.dbManager:closeConnection()
     local defaultroles = {}
     for _, role in pairs(roles) do
-        if role.is_default == "true" then
+        if role.is_default == 1 then
           table.insert(defaultroles, role)
         end
     end

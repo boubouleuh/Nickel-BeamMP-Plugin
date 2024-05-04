@@ -32,37 +32,46 @@ function DatabaseManager:returnQuery(query)
 end
 
 
--- Function to fetch the primary key column name from the table schema
-function DatabaseManager:getPrimaryKeyColumn(tableName)
-  local query = string.format("PRAGMA table_info('%s')", tableName)
-  for row in self.db:nrows(query) do
-    if row.pk == 1 then
-      return row.name
-    end
-  end
-  -- If no primary key found, return nil or handle the error accordingly
-  return nil
-end
+
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   local columns = {}
   local values = {}
   local updateColumns = {}
+  local columnsOrder = self:getTableColumnsName(tableName)
+  local firstColumn
+
+  -- Recherchez la première colonne non nulle et non vide
+  for _, columnName in ipairs(columnsOrder) do
+    if object[columnName] ~= nil and object[columnName] ~= "" then
+      firstColumn = columnName
+      break
+    end
+  end
+  print("first column is", firstColumn)
 
   for key, value in pairs(object) do
     table.insert(columns, key)
-
     if type(value) == "table" then
       -- Convert table to a string representation
       value = utils.table_to_string(value)
+    elseif type(value) == "boolean" then
+      if value then
+        value = 1
+      else
+        value = 0
+      end
     end
 
     table.insert(values, tostring(value))
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
-  local primaryColumn = self:getPrimaryKeyColumn(tableName)
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, primaryColumn .. " = '" .. tostring(object[primaryColumn]) .. "'") --watch out, problems can happen maybe (black magic)
+
+  print("DEBUG IMPORTANT :", firstColumn)
+
+
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, firstColumn .. " = '" .. tostring(object[firstColumn]) .. "'") --watch out, problems can happen maybe (black magic)
   print(selectQuery)
   local count = 0
   for row in self.db:nrows(selectQuery) do
@@ -72,7 +81,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   print(canupdate)
   if count > 0 and canupdate then
-    
+
       -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
       local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), columns[1], tostring(object[columns[1]]))
       print(updateQuery)
@@ -94,7 +103,7 @@ function DatabaseManager:getEntry(class, columnName, columnValue)
   local results = {}
 
   for row in self.db:nrows(query) do
-    table.insert(results, row)    
+    table.insert(results, row)
     break
   end
 
@@ -213,7 +222,7 @@ function DatabaseManager:getAllEntry(class, conditions)
         local parsedList = utils.string_to_table(value)
         result:setKey(key, parsedList)
       else
-        result:setKey(key, value)
+          result:setKey(key, value)
       end
     end
 
@@ -255,6 +264,7 @@ end
 
 
 
+
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)
 
@@ -269,8 +279,15 @@ function DatabaseManager:getTableColumns(tableName)
   return existingColumns
 end
 
+-- Méthode pour obtenir les colonnes existantes de la table
+function DatabaseManager:getTableColumnsName(tableName)
 
-
+  local columns = {}
+  for row in self.db:nrows("PRAGMA table_info(" .. tableName .. ")") do
+    table.insert(columns, row.name)
+  end
+  return columns
+end
 
 
 function DatabaseManager:openConnection()

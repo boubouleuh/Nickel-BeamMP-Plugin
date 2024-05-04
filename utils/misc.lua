@@ -67,11 +67,16 @@ end
 
 
 function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+
   local online = require "main.online"
   local player_id = Misc.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
-        local beamid = online.getPlayerJson(player_name).user.id
+        local playerJson = online.getPlayerJson(player_name)
+        local beamid
+        if playerJson ~= nil then
+            beamid = playerJson.user.id
+        end
         return beamid
   end
   local player_beammp_id = identifiers['beammp']

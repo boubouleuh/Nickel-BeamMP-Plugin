@@ -20,6 +20,8 @@ function init.initialize()
         utils.nkprint("If an error occur type this command instead : " .. "luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec", "warn")
     end
 
+    --todo install a specific version of lsqlite3
+
     -- Check if LuaRocks is installed
     local installCmd = "sudo apt install -y libssl-dev cmake sqlite3 libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install)"
 

@@ -68,13 +68,12 @@ function registerPlayer.register(beammpid, name, permManager, ip)
     --Check status
     if userStatusClass ~= nil then
         print("STATUS = ", userStatusClass)
-        if userStatusClass.status_type == "isbanned" and userStatusClass.status_value == "true" then
+        if userStatusClass.status_type == "isbanned" and userStatusClass.is_status_value == 1 then
             print("IT GO IN BRO")
             return userStatusClass.reason
 
-        elseif userStatusClass.status_type == "istempbanned" and userStatusClass.status_value == "true" then
+        elseif userStatusClass.status_type == "istempbanned" and userStatusClass.is_status_value == 1 then
             if userStatusClass.time <= os.time() then
-                local id = utils.GetPlayerId(name)
                 return userStatusClass.reason
             else
                 userStatusClass.status_type = ""
@@ -88,7 +87,8 @@ function registerPlayer.register(beammpid, name, permManager, ip)
     local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
     permManager.dbManager:closeConnection()
     for _, entry in pairs(entries) do
-        if entry.banned == "true" then
+        print("ENTRY=", entry)
+        if entry.is_banned == 1 then
             return "REASON" --TODO ADD REASON ?
         end
     end

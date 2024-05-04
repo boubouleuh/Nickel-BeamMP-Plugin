@@ -9,7 +9,7 @@ function UserStatus.new(beammpid, status_type, status_value, reason, time)
 
   self.beammpid = beammpid or 0
   self.status_type = status_type or ""
-  self.status_value = status_value or false
+  self.is_status_value = status_value or false
   self.reason = reason or ""
   self.time = time or os.time()
   return new._object(UserStatus, self)
@@ -30,7 +30,7 @@ function UserStatus:getColumns()
     return {
         "beammpid INT PRIMARY KEY",
         "status_type TEXT",
-        "status_value BOOLEAN",
+        "is_status_value BOOLEAN NOT NULL",
         "reason TEXT",
         "time DATETIME",
         "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"

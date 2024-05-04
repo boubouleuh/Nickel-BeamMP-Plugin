@@ -147,7 +147,6 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     if sender_id == -2 then
         playername = "console"
     end
-
     local beammpid
     if sender_id ~= nil then
         if sender_id ~= -2 then

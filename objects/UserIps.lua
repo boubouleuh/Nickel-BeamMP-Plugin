@@ -9,7 +9,7 @@ function UserIps.new(beammpid, ip)
   self.ip_id = nil  -- You can set this to a specific value if needed
   self.beammpid = beammpid
   self.ip = ip
-  self.banned = false
+  self.is_banned = false
   return new._object(UserIps, self)
 end
 
@@ -28,7 +28,7 @@ function UserIps:getColumns()
     "ip_id INTEGER PRIMARY KEY AUTOINCREMENT",
     "beammpid INTEGER",
     "ip TEXT UNIQUE",
-    "banned BOOLEAN",
+    "is_banned BOOLEAN NOT NULL",
     "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
     -- Ajoutez d'autres colonnes si nécessaire
   }

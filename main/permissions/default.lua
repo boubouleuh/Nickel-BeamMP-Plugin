@@ -4,7 +4,7 @@ local default = {}
 
 function default.init(PermissionsManager)
 
-
+    print("INITIALIZING ROLE DEFAULT")
     PermissionsManager:addRole("Member", 0, true)
 
     PermissionsManager:addRole("Moderator", 1, false) -- TODO need to run that only the first time but idk how for the moment
