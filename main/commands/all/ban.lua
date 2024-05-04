@@ -26,7 +26,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
     permManager.dbManager:closeConnection()
     if userStatusClass ~= nil then
         if userStatusClass.status_type == "isbanned" and userStatusClass.is_status_value == 1 or userStatusClass.status_type == "istempbanned" and userStatusClass.is_status_value == 1 then
-            msgManager:SendMessage(sender_id, "commands.ban.alreadybanned", playername)
+            msgManager:SendMessage(sender_id, "moderation.alreadybanned", playername)
 
         else
             userStatusClass.status_type = "isbanned"

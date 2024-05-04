@@ -11,7 +11,7 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
     local dbManager = managers.dbManager
 
     if playername == nil or time == nil then
-        msgManager:SendMessage(sender_id, "commands.tempban.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.tempmute.missing_args", cfgManager.config.commands.prefix)
         return false
     elseif reason == nil then
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
@@ -25,11 +25,11 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
     local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)
     permManager.dbManager:closeConnection()
     if userStatusClass ~= nil then
-        if userStatusClass.status_type == "isbanned" and userStatusClass.is_status_value == 1 or userStatusClass.status_type == "istempbanned" and userStatusClass.is_status_value == 1 then
-            msgManager:SendMessage(sender_id, "moderation.alreadybanned", playername)
+        if userStatusClass.status_type == "ismuted" and userStatusClass.is_status_value == 1 or userStatusClass.status_type == "istempmuted" and userStatusClass.is_status_value == 1 then
+            msgManager:SendMessage(sender_id, "moderation.alreadymuted", playername)
 
         else
-            userStatusClass.status_type = "istempbanned"
+            userStatusClass.status_type = "istempmuted"
             userStatusClass.is_status_value = true
             userStatusClass.reason = reason
             userStatusClass.time = timestamp
@@ -37,9 +37,9 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
             local target_id = utils.GetPlayerId(playername)
 
             if target_id ~= -1 then
-                MP.DropPlayer(target_id, reason .. " " .. msgManager:GetMessage(sender_id, "moderation.tempbanned", end_date))
+                msgManager:SendMessage(target_id, "moderation.tempmuted", playername, reason, end_date)
             end
-            msgManager:SendMessage(sender_id, "commands.ban.success", playername, reason)
+            msgManager:SendMessage(sender_id, "commands.tempmute.success", playername, reason)
             msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
 
         end
