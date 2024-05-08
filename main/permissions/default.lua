@@ -21,6 +21,13 @@ function default.init(PermissionsManager)
     PermissionsManager:assignCommand("revokerole", "Administrator")
     PermissionsManager:assignCommand("revokecommand", "Administrator")
 
+    PermissionsManager:assignCommand("ban", "Moderator")
+    PermissionsManager:assignCommand("tempban", "Moderator")
+    PermissionsManager:assignCommand("banip", "Moderator")
+    PermissionsManager:assignCommand("unban", "Moderator")
+    PermissionsManager:assignCommand("mute", "Moderator")
+    PermissionsManager:assignCommand("unmute", "Moderator")
+    PermissionsManager:assignCommand("tempmute", "Moderator")
 
 
 end

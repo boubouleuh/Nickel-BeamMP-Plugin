@@ -44,8 +44,8 @@ function MessagesHandler:GetMessage(sender_id, key, ...)
         userLang = self.dbManager:getClassByBeammpId(user, beamId)
     end
     self.dbManager:closeConnection()
-    local langCode = self.configManager.config.langs.server_language
-    local langForce = self.configManager.config.langs.force_server_language
+    local langCode = self.configManager:GetSetting("langs").server_language
+    local langForce = self.configManager:GetSetting("langs").force_server_language
 
     if userLang ~= nil and userLang.language ~= nil and not langForce then
         langCode = userLang.language

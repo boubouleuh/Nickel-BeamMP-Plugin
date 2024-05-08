@@ -47,12 +47,20 @@ local config = require("main.config.Settings")
 
 -- coucou
 -- Instances
+local cfgManager = config.init()
 
-local dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
+local dbManager
+local configDatabaseFile = cfgManager:GetSetting("sync").database_file
+if configDatabaseFile ~= "" or configDatabaseFile ~= nil then
+    dbManager = databaseManager.new(configDatabaseFile) --Keep the connection
+else
+    dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
+end
+
 
 dbManager:openConnection()
 
-local cfgManager = config.init()
+
 
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 
