@@ -38,6 +38,9 @@ function Settings.init()
         },
         sync = {
            database_file = ""
+        },
+        conditions = {
+            guest = false
         }
     }
 

@@ -51,9 +51,11 @@ local cfgManager = config.init()
 
 local dbManager
 local configDatabaseFile = cfgManager:GetSetting("sync").database_file
-if configDatabaseFile ~= "" or configDatabaseFile ~= nil then
+print("config", configDatabaseFile)
+if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
     dbManager = databaseManager.new(configDatabaseFile) --Keep the connection
 else
+    print("No db in config")
     dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
 end
 
@@ -91,7 +93,7 @@ local cmdManager = commandHandler.init(managers)
 default.init(permManager)
 
 -- Init Events
-onPlayerAuth.new(permManager)
+onPlayerAuth.new(permManager, msgManager)
 
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)

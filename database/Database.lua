@@ -36,12 +36,14 @@ end
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
+  print("TABLENAME = ", tableName, object)
+
   local columns = {}
   local values = {}
   local updateColumns = {}
   local columnsOrder = self:getTableColumnsName(tableName)
   local firstColumn
-
+  print("columnsOrder : ", columnsOrder)
   -- Recherchez la première colonne non nulle et non vide
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
