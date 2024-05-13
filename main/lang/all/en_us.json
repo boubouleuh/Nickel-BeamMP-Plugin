@@ -15,11 +15,50 @@
     "commands.dm.missing_args" : "Usage : {Prefix}dm <targetname> <message>",
     "commands.dm.from" : "{Player} - me : {Message}",
     "commands.dm.to" : "me - {Player} : {Message}",
+
+    "commands.ban.missing_args" : "Usage : {Prefix}ban <targetname> <reason>",
+    "commands.ban.success" : "{Player} successfully banned for {Reason}",
+
+    "commands.tempban.missing_args" : "Usage : {Prefix}tempban <targetname> <time(example : 1s,1m,1h,1d)>, <reason>",
+    "commands.tempban.success" : "{Player} successfully tempbanned for {Reason} until {Date}",
+
+    "commands.banip.missing_args" : "Usage : {Prefix}banip <targetname>",
+    "commands.banip.success" : "{Count} ip of {Player} has been banned",
+    "commands.banip.no_registered" : "{Player} does not have any ip registered so he cant be banned",
+
+    "commands.unban.missing_args" : "Usage : {Prefix}unban <targetname>",
+    "commands.unban.success" : "{Player} successfully unbanned",
+
+    "commands.mute.missing_args" : "Usage : {Prefix}mute <targetname> <reason>",
+    "commands.mute.success" : "{Player} successfully muted for {Reason}",
+
+    "commands.tempmute.missing_args" : "Usage : {Prefix}tempmute <targetname> <time(example : 1s,1m,1h,1d)>, <reason>",
+    "commands.tempmute.success" : "{Player} successfully tempmuted for {Reason} until {Date}",
+
+    "commands.unmute.missing_args" : "Usage : {Prefix}unmute <targetname>",
+    "commands.unmute.success" : "{Player} successfully unmuted",
+
+    "commands.kick.missing_args" : "Usage : {Prefix}kick <targetname> <reason>",
+    "commands.kick.success" : "{Player} successfully kicked for {Reason}",
+
     "commands.not_found" : "Command {Command} not found",
+
     "player.not_found" : "Player {Player} not found",
 
-    "database.code.nickel.nochange" : "Nothing changed",
+    "moderation.not_banned" : "{Player} is not banned",
+    "moderation.tempmuted" : "You have been tempmuted for {Reason} until {Date}",
+    "moderation.tempbanned": "You have been tempbanned for {Reason} until {Date}",
+    "moderation.ipbanned" : "You have been ip banned",
+    "moderation.banned" : "You have been banned for {Reason}",
+    "moderation.muted" : "You have been muted for {Reason}",
+    "moderation.alreadymuted" : "{Player} is already muted",
+    "moderation.alreadybanned" : "{Player} is already banned",
+    "moderation.default_reason" : "Unknown reason",
 
+
+    "_COMMENT": "Below this point its actually not needed to translate ! Don't forget to do a pull request of the translate file you make on the Github :D",
+
+    "database.code.nickel.nochange" : "Nothing changed",
     "database.code.0" : "Successfully executed",
     "database.code.1" : "SQL error or missing database",
     "database.code.2" : "Internal logic error in SQLite",

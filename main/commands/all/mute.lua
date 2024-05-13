@@ -33,7 +33,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
             local target_id = utils.GetPlayerId(playername)
 
             if target_id ~= -1 then
-                msgManager:SendMessage(target_id, "moderation.muted", playername, reason)
+                msgManager:SendMessage(target_id, "moderation.muted", reason)
             end
             msgManager:SendMessage(sender_id, "commands.mute.success", playername, reason)
             msgManager:SendMessage(sender_id, string.format("database.code.%s", result))

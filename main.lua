@@ -63,7 +63,6 @@ end
 dbManager:openConnection()
 
 
-
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 
 local permManager = PermissionsHandler.new(dbManager)

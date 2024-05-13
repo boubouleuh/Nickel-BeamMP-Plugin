@@ -36,7 +36,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
             local target_id = utils.GetPlayerId(playername)
 
             if target_id ~= -1 then
-                MP.DropPlayer(target_id, reason)
+                MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.banned", reason))
             end
             msgManager:SendMessage(sender_id, "commands.ban.success", playername, reason)
             msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
