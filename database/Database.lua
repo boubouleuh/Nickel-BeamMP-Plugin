@@ -24,7 +24,8 @@ end
 
 function DatabaseManager:returnQuery(query)
   local msg = self.db:exec(query)
-  print("Changes = ", self.db:changes())
+  utils.nkprint(query, "debug")
+  utils.nkprint("Changes = " .. self.db:changes(), "debug")
   if self.db:changes() == 0 then
     return "nickel.nochange"
   end
@@ -36,14 +37,13 @@ end
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
-  print("TABLENAME = ", tableName, object)
+  utils.nkprint("TABLENAME = " .. tableName, "debug")
 
   local columns = {}
   local values = {}
   local updateColumns = {}
   local columnsOrder = self:getTableColumnsName(tableName)
   local firstColumn
-  print("columnsOrder : ", columnsOrder)
   -- Recherchez la première colonne non nulle et non vide
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
@@ -51,8 +51,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
       break
     end
   end
-  print("first column is", firstColumn)
-
   for key, value in pairs(object) do
     table.insert(columns, key)
     if type(value) == "table" then
@@ -70,35 +68,28 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
 
-  print("DEBUG IMPORTANT :", firstColumn)
-
 
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, firstColumn .. " = '" .. tostring(object[firstColumn]) .. "'") --watch out, problems can happen maybe (black magic)
-  print(selectQuery)
+  utils.nkprint(selectQuery, "debug")
   local count = 0
   for row in self.db:nrows(selectQuery) do
-    print("ROW IS : ", row)
     count = tonumber(row["COUNT(*)"])
   end
 
-  print(canupdate)
   if count > 0 and canupdate then
 
       -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
       local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), firstColumn, tostring(object[firstColumn]))
-      print(updateQuery)
+      utils.nkprint(updateQuery, "debug")
       return self:returnQuery(updateQuery)
   else
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
-    print(insertQuery)
     return self:returnQuery(insertQuery)
   end
 end
 
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
-
-  print(class,columnName, columnValue)
 
   local tableName = class.tableName
   local query = string.format("SELECT * FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
@@ -118,7 +109,7 @@ function DatabaseManager:deleteObject(class, conditions)
   local tableName = class.tableName
 
   if not conditions or #conditions == 0 then
-      print("No conditions provided for deletion.")
+      utils.nkprint("No conditions provided for deletion.", "error")
       return
   end
 
@@ -180,8 +171,11 @@ function DatabaseManager:createTableForClass(class)
       for key, column in ipairs(existingColumnsFinal) do
 
         if columnsFinal[key] == nil then
+         
           local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
-          self.db:exec(alterQuery)
+          
+          self:returnQuery(alterQuery)
+          -- self.db:exec(alterQuery)
         end
       end
 
@@ -189,9 +183,27 @@ function DatabaseManager:createTableForClass(class)
     for _, column in ipairs(columns) do
       local colName = column:match("^(%S+)")
       if not existingColumns[colName] then
-        local alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, column)
-        print(alterQuery)
-        self.db:exec(alterQuery)
+
+
+        local alterQuery
+
+        local isUnique = false
+        if column:find("UNIQUE") ~= nil then
+          column = column:gsub(" UNIQUE", "")
+          isUnique = true
+        end
+        if column:find("NOT NULL") ~= nil then
+          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s %s", tableName, column, "DEFAULT " .. class:getKey(column:match("^(%S+)%s")))
+        else  
+          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, column)
+        end
+        self:returnQuery(alterQuery)
+        if isUnique then
+          local query = string.format("CREATE UNIQUE INDEX idx_unique_%s ON %s(%s)", column:match("^(%S+)%s"), tableName, column:match("^(%S+)%s"))
+          self:returnQuery(query)
+
+        end
+        -- self.db:exec(alterQuery)
       end
     end
   end
@@ -293,13 +305,13 @@ end
 
 
 function DatabaseManager:openConnection()
-  print("DB OPENED")
+  utils.nkprint("Database opened", "debug")
   self.db = sqlite3.open(self.dbname)
 end
 
 function DatabaseManager:closeConnection()
   if self.db then
-    print("DB CLOSED")
+    utils.nkprint("Database closed", "debug")
     self.db:close()
     self.db = nil
   end

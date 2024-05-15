@@ -45,7 +45,6 @@ local default = require("main.permissions.default")
 
 -- Miscellanous
 local config = require("main.config.Settings")
-local utils = require("utils.misc")
 
 
 -- Instances
@@ -53,11 +52,11 @@ local cfgManager = config.init()
 
 local dbManager
 local configDatabaseFile = cfgManager:GetSetting("sync").database_file
-print("config", configDatabaseFile)
+
 if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
     dbManager = databaseManager.new(configDatabaseFile) --Keep the connection
 else
-    print("No db in config")
+    utils.nkprint("No database set in config, now using default path", "info")
     dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
 end
 
@@ -70,14 +69,14 @@ local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 local permManager = PermissionsHandler.new(dbManager)
 
 -- Creating tables / updating
-dbManager:createTableForClass(User)
-dbManager:createTableForClass(UserIps)
-dbManager:createTableForClass(UserStatus)
+dbManager:createTableForClass(User.new())
+dbManager:createTableForClass(UserIps.new())
+dbManager:createTableForClass(UserStatus.new())
 
-dbManager:createTableForClass(Role)
-dbManager:createTableForClass(Command)
-dbManager:createTableForClass(UserRole)
-dbManager:createTableForClass(RoleCommand)
+dbManager:createTableForClass(Role.new())
+dbManager:createTableForClass(Command.new())
+dbManager:createTableForClass(UserRole.new())
+dbManager:createTableForClass(RoleCommand.new())
 
 dbManager:closeConnection()
 

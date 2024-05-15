@@ -121,14 +121,27 @@ end
 
 ---nkprint
 ---@param message string
----@param type string Can be "warn", "error", or "info"
+---@param type string Can be "warn", "error", "info" or "debug"
 function Misc.nkprint(message, type)
+  
+    -- Miscellanous
+    local config = require("main.config.Settings")
+
+
+    -- Instances
+    local cfgManager = config.init()
+
+
     if type == "warn" then
-        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[WARN] " .. message, "yellow"))
+        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|WARN] " .. message, "yellow"))
     elseif type == "error" then
-        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[ERROR] " .. message, "red"))
+        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|ERROR] " .. message, "red"))
     elseif type == "info" then
-        print(Misc.print_color("[NICKEL] ", "gray") .. Misc.print_color("[INFO] " .. message, "blue"))
+        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|INFO] " .. message, "blue"))
+    elseif type == "debug" then
+      if cfgManager:GetSetting("advanced").debug then
+        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|DEBUG] " .. message, "cyan"))
+      end
     end
 end
 

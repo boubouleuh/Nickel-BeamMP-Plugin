@@ -17,7 +17,6 @@ function CommandsHandler.init(managers)
     local files = FS.ListFiles(utils.script_path() .. "main/commands/all")
 
     local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
-        print("test")
         self.dbManager:openConnection()
 
         local commandsFromDB = self.dbManager:getAllEntry(Command)
@@ -49,7 +48,6 @@ function CommandsHandler.init(managers)
 
     for _, file in pairs(files) do
         local string = string.gsub(file, ".lua", "")
-        print(string)
         addCommand(string)
     end
 
