@@ -1,8 +1,8 @@
-NickelConfig.toml
-version.txt
-/data
+
 /.vscode
 /versionwithdatabaseID
 /extensions
-HotReload.txt
 /database/db.sqlite
+/share
+/lib
+/bin

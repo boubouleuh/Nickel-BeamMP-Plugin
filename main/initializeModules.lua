@@ -17,10 +17,9 @@ function init.initialize()
         utils.nkprint("Checking Nickel modules", "info")
 
         os.execute("luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install toml && luarocks --lua-version 5.3 --tree " .. utils.script_path() .. " install luasec")
-        utils.nkprint("If an error occur type this command instead : " .. "luarocks --tree " .. utils.script_path() .. " install lsqlite3 && luarocks --tree " .. utils.script_path() .. " install toml && luarocks --tree " .. utils.script_path() .. " install luasec", "warn")
     end
 
-    --todo install a specific version of lsqlite3
+
 
     -- Check if LuaRocks is installed
     local installCmd = "sudo apt install -y libssl-dev cmake libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && tar -zxf luarocks-3.10.0.tar.gz && (cd luarocks-3.10.0 && ./configure) && (cd luarocks-3.10.0 && make) && (cd luarocks-3.10.0 && sudo make install) && curl -R -O https://www.sqlite.org/2024/sqlite-autoconf-3450300.tar.gz && tar -zxf sqlite-autoconf-3450300.tar.gz && (cd sqlite-autoconf-3450300 && ./configure) && (cd sqlite-autoconf-3450300 && make) && (cd sqlite-autoconf-3450300 && sudo make install)"

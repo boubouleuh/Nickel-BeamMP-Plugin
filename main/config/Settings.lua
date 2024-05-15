@@ -41,6 +41,9 @@ function Settings.init()
         },
         conditions = {
             guest = false
+        },
+        advanced = {
+            debug = false
         }
     }
 

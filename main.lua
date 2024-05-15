@@ -21,6 +21,7 @@ package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
 initializeModules.initialize()
 
+
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables
 local UserIps = require("objects.UserIps")
@@ -31,7 +32,7 @@ local Role = require("objects.Role")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
 local onConsoleInput = require("main.events.console.onConsoleInput")
---
+
 
 -- Events / Database / Events handler
 local onPlayerAuth = require("main.events.register.onPlayerAuth")
@@ -44,8 +45,9 @@ local default = require("main.permissions.default")
 
 -- Miscellanous
 local config = require("main.config.Settings")
+local utils = require("utils.misc")
 
--- coucou
+
 -- Instances
 local cfgManager = config.init()
 
