@@ -108,4 +108,4 @@ infos.setInfosKey("isInitialLaunch", true)
 
 local extensions = require("main.initializeExtensions")
 
-extensions.initialize()
+extensions.initialize(managers)
