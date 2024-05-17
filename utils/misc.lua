@@ -2,7 +2,8 @@
 
 -- Database Management Class
 local Misc = {}
-
+---script_path
+---@return string --get the script path
 function Misc.script_path()
   local separator = package.config:sub(1, 1) -- Obtient le séparateur de chemin d'accès ("/" ou "\")
   local scriptPath = debug.getinfo(1, "S").source:sub(2):gsub("[\\/][^\\/]+$", separator)
@@ -24,7 +25,11 @@ function Misc.get_key_for_value( t, value )
     return nil
 end
 
-
+---table_to_string |
+-- if the element exist in the table
+---@param element string
+---@param list table
+---@return boolean
 function Misc.element_exist_in_table(element, list)
   -- Check if the element exists in the list
   if type(list) == "table" then
@@ -37,7 +42,23 @@ function Misc.element_exist_in_table(element, list)
   return false  -- Element does not exist or invalid input
 end
 
+---mergeTables |
+-- merge two tables together
+---@param table1 table
+---@param table2 table
+---@return table
+function Misc.mergeTables(table1, table2)
+  for i = 1, #table2 do
+      table1[#table1 + 1] = table2[i]
+  end
+  return table1
+end
 
+
+---table_to_string |
+-- Invert of string_to_table()
+---@param tbl table
+---@return string
 function Misc.table_to_string( tbl )
   local result, done = {}, {}
   for k, v in ipairs( tbl ) do
@@ -53,7 +74,11 @@ function Misc.table_to_string( tbl )
   return "{" .. table.concat( result, "," ) .. "}"
 end
 
--- Fonction pour convertir la chaîne en une table Lua
+
+---string_to_table |
+-- Convert string like "{a,a,a}" to a table
+---@param text string
+---@return table
 function Misc.string_to_table(text)
   text = text:gsub("[{}]", "")
 
@@ -65,7 +90,9 @@ function Misc.string_to_table(text)
   return ipTable
 end
 
-
+---getPlayerBeamMPID
+---@param player_name string
+---@return number
 function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
 
   local online = require "main.online"
@@ -86,6 +113,9 @@ function Misc.getPlayerBeamMPID(player_name) --Playername only used when using t
   return player_beammp_id
 end
 
+---GetPlayerId
+---@param player_name string
+---@return number
 function Misc.GetPlayerId(player_name)
   local players = MP.GetPlayers()
   for key, value in pairs(players) do
@@ -96,6 +126,12 @@ function Misc.GetPlayerId(player_name)
   return -1
 end
 
+
+---print_color |
+-- Its better to use the nkprint function than this
+---@param message string
+---@param color string Can be "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "gray"
+---@return string
 function Misc.print_color(message, color)
     -- Les codes de couleur ANSI pour différentes couleurs
     local colors = {
@@ -122,6 +158,7 @@ end
 ---nkprint
 ---@param message string
 ---@param type string Can be "warn", "error", "info" or "debug"
+---@return nil
 function Misc.nkprint(message, type)
   
     if type == "warn" then
@@ -140,7 +177,9 @@ function Misc.nkprint(message, type)
       end
     end
 end
-
+---timeConverter
+---@param time string 1d 1s 1m 1h
+---@return nil | number
 function Misc.timeConverter(time)
     local oldtime = time
 

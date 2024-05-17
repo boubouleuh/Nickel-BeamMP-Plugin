@@ -104,3 +104,8 @@ onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
 infos.setInfosKey("isInitialLaunch", true)
+
+
+local extensions = require("main.initializeExtensions")
+
+extensions.initialize()

@@ -14,7 +14,11 @@ function CommandsHandler.init(managers)
     self.cfgManager = managers.cfgManager
     self.permManager = managers.permManager
     self.commands = {}
-    local files = FS.ListFiles(utils.script_path() .. "main/commands/all")
+    local inbuildCommands = FS.ListFiles(utils.script_path() .. "main/commands/all")
+    local extensionsCommands =  FS.ListFiles(utils.script_path() .. "extensions/commands")
+
+    local files = utils.mergeTables(inbuildCommands, extensionsCommands)
+
 
     local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
         self.dbManager:openConnection()
@@ -42,7 +46,16 @@ function CommandsHandler.init(managers)
 
         local command = Command.new(commandName)
         self.dbManager:save(command)
-        self.commands[commandName] = require("main.commands.all." .. commandName)
+
+        local success, module = pcall(require, "main.commands.all." .. commandName)
+            --if it exist then its a inbuilt command
+        if success then
+            self.commands[commandName] = module
+        else
+            self.commands[commandName] = require("extensions.commands." .. commandName)
+        end --if not then its an extension command
+
+       
     end
 
 
