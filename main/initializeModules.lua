@@ -2,6 +2,9 @@ local utils = require("utils.misc")
 
 local init = {}
 
+
+
+-- DO NOT USE NKPRINT DEBUG HERE !! OR IT WILL BREAK BECAUSE CONFIG ISNT GENERATED YET
 function init.initialize()
     -- Function to check if LuaRocks is installed
     local function isLuaRocksInstalled()
