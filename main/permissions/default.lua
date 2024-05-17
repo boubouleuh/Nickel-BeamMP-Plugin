@@ -2,40 +2,44 @@ local PermissionsHandler = require("main.permissions.PermissionsHandler")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
 local utils = require("utils.misc")
+local Infos = require("objects.Infos")
 local default = {}
 
 function default.init(PermissionsManager)
 
-    PermissionsManager:addRole("Member", 0, true)
-
-    PermissionsManager:addRole("Moderator", 1, false) -- TODO need to run that only the first time but idk how for the moment
-
-    PermissionsManager:addRole("Administrator", 2, false)
-
-    PermissionsManager:addRole("Owner", 3, false)
-
-
-    PermissionsManager:assignCommand("dm", "Member")
-
-    PermissionsManager:assignCommand("createrole", "Administrator")
-    PermissionsManager:assignCommand("deleterole", "Administrator")
-    PermissionsManager:assignCommand("grantcommand", "Administrator")
-    PermissionsManager:assignCommand("grantrole", "Administrator")
-    PermissionsManager:assignCommand("revokerole", "Administrator")
-    PermissionsManager:assignCommand("revokecommand", "Administrator")
-
-    PermissionsManager:assignCommand("kick", "Moderator")
-    PermissionsManager:assignCommand("ban", "Moderator")
-    PermissionsManager:assignCommand("tempban", "Moderator")
-    PermissionsManager:assignCommand("banip", "Moderator")
-    PermissionsManager:assignCommand("unban", "Moderator")
-    PermissionsManager:assignCommand("mute", "Moderator")
-    PermissionsManager:assignCommand("unmute", "Moderator")
-    PermissionsManager:assignCommand("tempmute", "Moderator")
 
     local dbManager = PermissionsManager.dbManager
-    
+    dbManager:openConnection()
+    if dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue == "true" then
 
+        PermissionsManager:addRole("Member", 0, true)
+
+        PermissionsManager:addRole("Moderator", 1, false) 
+
+        PermissionsManager:addRole("Administrator", 2, false)
+
+        PermissionsManager:addRole("Owner", 3, false)
+
+
+        PermissionsManager:assignCommand("dm", "Member")
+
+        PermissionsManager:assignCommand("createrole", "Administrator")
+        PermissionsManager:assignCommand("deleterole", "Administrator")
+        PermissionsManager:assignCommand("grantcommand", "Administrator")
+        PermissionsManager:assignCommand("grantrole", "Administrator")
+        PermissionsManager:assignCommand("revokerole", "Administrator")
+        PermissionsManager:assignCommand("revokecommand", "Administrator")
+
+        PermissionsManager:assignCommand("kick", "Moderator")
+        PermissionsManager:assignCommand("ban", "Moderator")
+        PermissionsManager:assignCommand("tempban", "Moderator")
+        PermissionsManager:assignCommand("banip", "Moderator")
+        PermissionsManager:assignCommand("unban", "Moderator")
+        PermissionsManager:assignCommand("mute", "Moderator")
+        PermissionsManager:assignCommand("unmute", "Moderator")
+        PermissionsManager:assignCommand("tempmute", "Moderator")
+    end
+    dbManager:closeConnection()
     dbManager:openConnection()
     local everyCommands = dbManager:getAllEntry(Command)
     local everyCommandBinded = dbManager:getAllEntry(RoleCommand)

@@ -4,6 +4,7 @@
 local initializeModules = require("main.initializeModules")
 
 
+local infos = require("infos.infos")
 
 
 
@@ -31,6 +32,7 @@ local UserRole = require("objects.UserRole")
 local Role = require("objects.Role")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
+local Infos = require("objects.Infos")
 local onConsoleInput = require("main.events.console.onConsoleInput")
 
 
@@ -77,6 +79,9 @@ dbManager:createTableForClass(Role.new())
 dbManager:createTableForClass(Command.new())
 dbManager:createTableForClass(UserRole.new())
 dbManager:createTableForClass(RoleCommand.new())
+dbManager:createTableForClass(Infos.new())
+
+dbManager:save(Infos.new("isInitialDatabaseLaunch", "true"), true)
 
 dbManager:closeConnection()
 
@@ -98,4 +103,4 @@ onPlayerAuth.new(permManager, msgManager)
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
-
+infos.setInfosKey("isInitialLaunch", true)
