@@ -1,7 +1,6 @@
 
 /.vscode
 /versionwithdatabaseID
-/extensions
 /database/db.sqlite
 /share
 /lib
