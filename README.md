@@ -3,7 +3,7 @@
 
 # Nickel Moderation Plugin
 
-<font size="4em">Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. This plugin contains a variety of commands for managing your server, including removing and adding staff members, banning and unbanning players, and kicking players.</font>
+Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. This plugin contains a variety of commands for managing your server, including removing and adding staff members, banning and unbanning players, and kicking players.
 
 ## Installation
 
@@ -11,6 +11,10 @@
     Go to the Resources/Server path on your server and run these commands:
 
     `$ git clone https://github.com/boubouleuh/Nickel-BeamMP-Plugin`
+
+    `$ cd Nickel-BeamMP-Plugin`
+
+    `$ git checkout dev`
     
     Now head to the <a href="#first-setup">First Setup</a> section.
 - ### Debian
@@ -19,6 +23,10 @@
     `$ sudo apt install git wget curl`
 
     `$ git clone https://github.com/boubouleuh/Nickel-BeamMP-Plugin`
+
+    `$ cd Nickel-BeamMP-Plugin`
+
+    `$ git checkout dev`
 
     Now head to the <a href="#first-setup">First Setup</a> section.
 - ### Windows

@@ -66,6 +66,7 @@
     "commands.revokecommand.description" : "Revoke the permission of a command from a specific role",
     "commands.revokerole.description" : "Revoke a role from a player",
 
+    "commands.help.description" : "Show every commands",
 
 
     "commands.not_found" : "Command {Command} not found",
