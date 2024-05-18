@@ -41,10 +41,6 @@ CONFIG = {
     VOTEKICK = "true",
     KEEPINGLOGSDAYS = "3",
     WHITELIST = "false",
-    MAXPING = "500",
-    PINGTHRESHOLD = "20",
-    KICKPINGMSG = "Ping too high",
-    MAXVEHICLEAFKTIME = "300",
     CHATHANDLER = "true"
 }
 
@@ -57,7 +53,7 @@ USERPATH = script_path() .. "data/users/"
 OLDPATH = script_path() .. "data/old/"
 CONFIGPATH = script_path() .. "NickelConfig.toml"
 LOGSPATH = script_path() .. "data/logs/"
-VERSION = "2.1.0"
+VERSION = "2.1.1"
 
 ------------ END OF CONFIG AND GLOBAL VARIABLE ------------
 
@@ -2514,72 +2510,72 @@ end
 
 ------------ START OF EVENTS ------------
 
-function checkForUpdates()
+-- function checkForUpdates()       --disable update
     
-    -- Récupérer la version actuelle de votre script local à partir de version.txt
-    local oldversion = io.open(VERSIONPATH, "r")
-    local localVersion = oldversion:read()
-    oldversion:close()
+--     -- Récupérer la version actuelle de votre script local à partir de version.txt
+--     local oldversion = io.open(VERSIONPATH, "r")
+--     local localVersion = oldversion:read()
+--     oldversion:close()
 
 
 
-    --retire les deux premier caractères de localVersion (--)
-    localVersion = string.sub(localVersion, 3)
+--     --retire les deux premier caractères de localVersion (--)
+--     localVersion = string.sub(localVersion, 3)
 
     
 
-    --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
+--     --this go to this https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases/latest
 
-    local response = Util.JsonDecode(httpRequest("https://nickel.martadash.fr/version.txt"))
+--     local response = Util.JsonDecode(httpRequest("https://nickel.martadash.fr/version.txt"))
 
-    if response == nil then
-        nkprinterror("Get remote version failed to check update !")
-        return
-    end
-    -- Récupérer la version distante à partir de la réponse
+--     if response == nil then
+--         nkprinterror("Get remote version failed to check update !")
+--         return
+--     end
+--     -- Récupérer la version distante à partir de la réponse
 
-    local remoteVersion = response.tag_name
+--     local remoteVersion = response.tag_name
 
-    if remoteVersion == nil then
-        nkprinterror("Get remote version failed to check update (Check server probably down) ! Try again later ! If it keep happening ask for help in the discord : https://discord.gg/h5P84FFw7B")
-        return
-    end
+--     if remoteVersion == nil then
+--         nkprinterror("Get remote version failed to check update (Check server probably down) ! Try again later ! If it keep happening ask for help in the discord : https://discord.gg/h5P84FFw7B")
+--         return
+--     end
 
-    -- Comparer les versions locales et distantes
-    if remoteVersion > localVersion then
-        -- Effectuer la mise à jour
-        if getConfigValue("AUTOUPDATE") == "false" then
+--     -- Comparer les versions locales et distantes
+--     if remoteVersion > localVersion then
+--         -- Effectuer la mise à jour
+--         if getConfigValue("AUTOUPDATE") == "false" then
 
-            nkprintwarning("An update is available ! " .. localVersion .. " -> " .. remoteVersion .. "\nAUTOUPDATE is deactivated in " .. CONFIGPATH .. " if you want to update automatically, set it to true")
+--             nkprintwarning("An update is available ! " .. localVersion .. " -> " .. remoteVersion .. "\nAUTOUPDATE is deactivated in " .. CONFIGPATH .. " if you want to update automatically, set it to true")
 
-            return
-        else
-            local url = "https://raw.githubusercontent.com/boubouleuh/Nickel-BeamMP-Plugin/" .. remoteVersion .. "/main.lua"
-            -- Télécharger la dernière version de votre script depuis GitHub
-            local response = httpRequest(url)
-            --if download fail 
-            if response == nil then
-                nkprinterror("Update failed !")
-                return
-            else
-                nkprint("Update downloaded !")
-            end
-            -- Écrire la réponse dans un fichier pour mettre à jour votre script
-            local main = io.open(script_path() .. "main.lua", "w")
-            main:write(response)
-            main:close()
+--             return
+--         else
+--             local url = "https://raw.githubusercontent.com/boubouleuh/Nickel-BeamMP-Plugin/" .. remoteVersion .. "/main.lua"
+--             -- Télécharger la dernière version de votre script depuis GitHub
+--             local response = httpRequest(url)
+--             --if download fail 
+--             if response == nil then
+--                 nkprinterror("Update failed !")
+--                 return
+--             else
+--                 nkprint("Update downloaded !")
+--             end
+--             -- Écrire la réponse dans un fichier pour mettre à jour votre script
+--             local main = io.open(script_path() .. "main.lua", "w")
+--             main:write(response)
+--             main:close()
             
-            -- Mettre à jour la version locale dans version.txt
-            local newversion = io.open(VERSIONPATH, "w")
-            newversion:write("--" .. remoteVersion)
-            newversion:close()
+--             -- Mettre à jour la version locale dans version.txt
+--             local newversion = io.open(VERSIONPATH, "w")
+--             newversion:write("--" .. remoteVersion)
+--             newversion:close()
 
-            nkprint("Update done !")
-        end
+--             nkprint("Update done !")
+--         end
         
-    end
+--     end
 
-end
+-- end
 
 
 
@@ -2799,62 +2795,62 @@ local AFK_TIMER = {}
 
 
 
-function CheckPing()
-    local players = MP.GetPlayers()
+-- function CheckPing()
+--     local players = MP.GetPlayers()
 
-    for key, value in pairs(players) do
+--     for key, value in pairs(players) do
 
-        local pingChecked = false
-        local vehicleRaw = MP.GetPlayerVehicles(key)
+--         local pingChecked = false
+--         local vehicleRaw = MP.GetPlayerVehicles(key)
 
-        if vehicleRaw ~= nil then
+--         if vehicleRaw ~= nil then
 
-            local vehicle = vehicleRaw[#vehicleRaw]
-            if vehicle ~= nil then
+--             local vehicle = vehicleRaw[#vehicleRaw]
+--             if vehicle ~= nil then
 
-                local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
+--                 local username, num1, num2 = string.match(vehicle, '(%w+):(%d+)-(%d+)') 
 
-                if username and num1 and num2 then
+--                 if username and num1 and num2 then
 
-                    if not pingChecked then
+--                     if not pingChecked then
 
-                        local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
+--                         local Raw = MP.GetPositionRaw(tonumber(num1), tonumber(num2))
 
-                        if Raw ~= nil then
+--                         if Raw ~= nil then
 
-                            local Maxping = "0." .. getConfigValue("MAXPING")
+--                             local Maxping = "0." .. getConfigValue("MAXPING")
 
-                            if Raw.ping ~= nil then
-                                if Raw.ping > tonumber(Maxping) then
-                                    if PINGARRAY[key] == nil then
-                                        PINGARRAY[key] = 1
-                                    else
-                                        PINGARRAY[key] = PINGARRAY[key] + 1
-                                    end
+--                             if Raw.ping ~= nil then
+--                                 if Raw.ping > tonumber(Maxping) then
+--                                     if PINGARRAY[key] == nil then
+--                                         PINGARRAY[key] = 1
+--                                     else
+--                                         PINGARRAY[key] = PINGARRAY[key] + 1
+--                                     end
 
-                                    if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
-                                        MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
-                                    end
-                                elseif Raw.ping <= tonumber(Maxping) / 2 then
-                                    PINGARRAY[key] = 0
-                                end
-                            end
-                            pingChecked = true
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
+--                                     if PINGARRAY[key] > tonumber(getConfigValue("PINGTHRESHOLD")) then
+--                                         MP.DropPlayer(key, getConfigValue("KICKPINGMSG"))
+--                                     end
+--                                 elseif Raw.ping <= tonumber(Maxping) / 2 then
+--                                     PINGARRAY[key] = 0
+--                                 end
+--                             end
+--                             pingChecked = true
+--                         end
+--                     end
+--                 end
+--             end
+--         end
+--     end
+-- end
 
 
 
 ------------ END OF EVENTS ------------
 
-MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
-MP.CancelEventTimer("CheckPing")
-MP.CreateEventTimer("CheckPing", 1000)
+-- MP.RegisterEvent("CheckPing", "CheckPing") -- registering our event for the timer
+-- MP.CancelEventTimer("CheckPing")
+-- MP.CreateEventTimer("CheckPing", 1000)
 
 -- MP.RegisterEvent("CheckAFK", "CheckAFK")
 MP.CancelEventTimer("CheckAFK")
@@ -2871,9 +2867,9 @@ MP.RegisterEvent("onPlayerConnecting", "onPlayerConnecting")
 MP.CancelEventTimer("EverySecond") -- Old event timer
 MP.CancelEventTimer("CountSeconds")
 MP.CancelEventTimer("CheckPingAndAFK")
-
-MP.RegisterEvent("CheckUpdate", "checkForUpdates")
-MP.CreateEventTimer("CheckUpdate", 1800000)
+MP.CancelEventTimer("CheckUpdate")
+-- MP.RegisterEvent("CheckUpdate", "checkForUpdates")
+-- MP.CreateEventTimer("CheckUpdate", 1800000)
 
 
 
