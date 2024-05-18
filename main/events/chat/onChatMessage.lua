@@ -8,8 +8,6 @@ function onChatMessage.new(cmdManager)
     
 
     function onMessage(player_id, player_name, message)
-            print(player_id, player_name, message)
-
             local dbManager = cmdManager.dbManager
             local beammpid = utils.getPlayerBeamMPID(player_name)
             dbManager:openConnection()

@@ -22,6 +22,7 @@ function default.init(PermissionsManager)
 
 
         PermissionsManager:assignCommand("dm", "Member")
+        PermissionsManager:assignCommand("help", "Member")
 
         PermissionsManager:assignCommand("createrole", "Administrator")
         PermissionsManager:assignCommand("deleterole", "Administrator")

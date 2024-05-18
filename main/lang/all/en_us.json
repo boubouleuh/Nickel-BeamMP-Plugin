@@ -15,31 +15,58 @@
     "commands.dm.missing_args" : "Usage : {Prefix}dm <targetname> <message>",
     "commands.dm.from" : "{Player} - me : {Message}",
     "commands.dm.to" : "me - {Player} : {Message}",
+    "commands.dm.description" : "Send a direct message to someone",
 
     "commands.ban.missing_args" : "Usage : {Prefix}ban <targetname> <reason>",
     "commands.ban.success" : "{Player} successfully banned for {Reason}",
+    "commands.ban.description" : "Ban a player",
 
     "commands.tempban.missing_args" : "Usage : {Prefix}tempban <targetname> <time(example : 1s,1m,1h,1d)>, <reason>",
     "commands.tempban.success" : "{Player} successfully tempbanned for {Reason} until {Date}",
+    "commands.tempban.description" : "Ban a player for a specific time",
 
     "commands.banip.missing_args" : "Usage : {Prefix}banip <targetname>",
     "commands.banip.success" : "{Count} ip of {Player} has been banned",
     "commands.banip.no_registered" : "{Player} does not have any ip registered so he cant be banned",
+    "commands.banip.description" : "Ban every ips of a player",
 
     "commands.unban.missing_args" : "Usage : {Prefix}unban <targetname>",
     "commands.unban.success" : "{Player} successfully unbanned",
+    "commands.unban.description" : "Unban a player",
+
 
     "commands.mute.missing_args" : "Usage : {Prefix}mute <targetname> <reason>",
     "commands.mute.success" : "{Player} successfully muted for {Reason}",
+    "commands.mute.description" : "Mute a player",
 
     "commands.tempmute.missing_args" : "Usage : {Prefix}tempmute <targetname> <time(example : 1s,1m,1h,1d)>, <reason>",
     "commands.tempmute.success" : "{Player} successfully tempmuted for {Reason} until {Date}",
+    "commands.tempmute.description" : "Tempmute a player for a specific time",
 
     "commands.unmute.missing_args" : "Usage : {Prefix}unmute <targetname>",
     "commands.unmute.success" : "{Player} successfully unmuted",
+    "commands.unmute.description" : "Unmute a player",
 
     "commands.kick.missing_args" : "Usage : {Prefix}kick <targetname> <reason>",
     "commands.kick.success" : "{Player} successfully kicked for {Reason}",
+    "commands.kick.description" : "Kick a player",
+
+
+    "commands.createrole.missing_args" : "Usage : {Prefix}createrole <rolename> <permlvl>",
+    "commands.deleterole.missing_args" : "Usage : {Prefix}deleterole <rolename>",
+    "commands.grantcommand.missing_args" : "Usage : {Prefix}grantcommand <commandname> <rolename>",
+    "commands.grantrole.missing_args" : "Usage : {Prefix}grantrole <rolename> <targetname>",
+    "commands.revokecommand.missing_args" : "Usage : {Prefix}revokecommand <commandname> <rolename>",
+    "commands.revokerole.missing_args" : "Usage : {Prefix}revokerole <rolename> <playername>",
+
+    "commands.createrole.description" : "Create a role",
+    "commands.deleterole.description" : "Delete a role",
+    "commands.grantcommand.description" : "Grant the permission of a command to a specific role",
+    "commands.grantrole.description" : "Grant a role to a player",
+    "commands.revokecommand.description" : "Revoke the permission of a command from a specific role",
+    "commands.revokerole.description" : "Revoke a role from a player",
+
+
 
     "commands.not_found" : "Command {Command} not found",
 

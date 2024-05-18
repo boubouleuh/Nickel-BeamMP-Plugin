@@ -54,8 +54,7 @@ function CommandsHandler.init(managers)
         else
             self.commands[commandName] = require("extensions.commands." .. commandName)
         end --if not then its an extension command
-
-       
+            self.commands[commandName].description = self.msgManager:GetMessage(-2, "commands." .. commandName .. ".description") or ""
     end
 
 
@@ -70,7 +69,9 @@ function CommandsHandler.init(managers)
 end
 
 
-
+function CommandsHandler:GetCommands()
+    return self.commands
+end
 
 
 
