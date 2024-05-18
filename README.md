@@ -1,6 +1,8 @@
 <img src="readme_img/nickel_banner.png" alt="Logo" width="100%"/>
 
 
+<h1><a href="https://discord.gg/6apG8dNcJF">Community Discord</a></h1>
+
 # Nickel Moderation Plugin
 
 Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. This plugin contains a variety of commands for managing your server, including removing and adding staff members, banning and unbanning players, and kicking players.
@@ -61,6 +63,8 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
  - `revokerole <rolename> <targetname>` Revoke a role from a player
  - `grantcommand <commandname> <rolename>` Grant the permission of a command to a specific role
  - `revokecommand <commandname> <rolename>` Revoke the permission of a command from a specific role
- 
+
+
+
 
 
