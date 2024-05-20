@@ -15,6 +15,11 @@ function command.init(sender_id, sender_name, managers, playername)
         return false
     end
 
+    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
+        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+        return false
+    end
+
     local beammpid = utils.getPlayerBeamMPID(playername)
     permManager.dbManager:openConnection()
     local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)

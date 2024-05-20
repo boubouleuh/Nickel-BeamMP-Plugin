@@ -68,6 +68,7 @@
 
     "commands.help.description" : "Show every commands",
 
+    "commands.guest_not_compatible" : "This command cant be used against guests players",
 
     "commands.not_found" : "Command {Command} not found",
 

@@ -14,6 +14,11 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         return false
     end
 
+    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
+        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+        return false
+    end
+
 
     local beammpid = utils.getPlayerBeamMPID(playername) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
     if beammpid ~= nil then

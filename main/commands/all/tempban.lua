@@ -17,6 +17,11 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
     end
 
+    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
+        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+        return false
+    end
+
     local timestamp = os.time() + utils.timeConverter(time)
     local end_date = os.date("%d/%m/%Y %H:%M:%S", timestamp)
 
