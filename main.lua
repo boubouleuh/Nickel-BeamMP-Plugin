@@ -20,7 +20,7 @@ package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/socket/?.
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
-initializeModules.initialize()
+--initializeModules.initialize() remove sudo here
 
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
