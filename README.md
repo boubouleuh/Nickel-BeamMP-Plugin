@@ -17,8 +17,10 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
     `$ cd Nickel-BeamMP-Plugin`
 
     `$ git checkout dev`
+
+    `$ chmod +x modules.sh && sudo modules.sh`
     
-    Now head to the <a href="#first-setup">First Setup</a> section.
+    Now wait for the modules to install and head to the <a href="#first-setup">First Setup</a> section.
 - ### Debian
     Go to the Resources/Server path on your server and run these commands: 
 
@@ -30,7 +32,9 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
     `$ git checkout dev`
 
-    Now head to the <a href="#first-setup">First Setup</a> section.
+    `$ chmod +x modules.sh && sudo modules.sh`
+
+    Now wait for the modules to install and head to the <a href="#first-setup">First Setup</a> section.
 - ### Windows
     If you really need to run it on Windows, you will need either WSL or Docker or an other solution to have a virtual Linux environment.
 
