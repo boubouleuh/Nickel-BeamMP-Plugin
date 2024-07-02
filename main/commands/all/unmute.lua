@@ -1,6 +1,6 @@
 
 local utils = require("utils.misc")
-local userStatus = require("objects.UserStatus")
+local StatusService = require("database.services.StatusService")
 local userIps = require("objects.UserIps")
 
 local command = {}
@@ -21,22 +21,18 @@ function command.init(sender_id, sender_name, managers, playername)
     end
 
     local beammpid = utils.getPlayerBeamMPID(playername)
-    permManager.dbManager:openConnection()
-    local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)
-    permManager.dbManager:closeConnection()
-    if userStatusClass ~= nil then
-        if userStatusClass.status_type == "ismuted" and userStatusClass.is_status_value == 1 or userStatusClass.status_type == "istempmuted" and userStatusClass.is_status_value == 1 then
 
-            userStatusClass.status_type = ""
-            userStatusClass.is_status_value = false
-            local result = dbManager:save(userStatusClass)
-            msgManager:SendMessage(sender_id, "commands.unmute.success", playername)
-            msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    local statusService = StatusService.new(beammpid, dbManager)
 
-        else
-            msgManager:SendMessage(sender_id, "moderation.not_muted", playername)
-        end
+    if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
+
+        statusService:removeStatus("ismuted")
+        statusService:removeStatus("istempmuted")
+        msgManager:SendMessage(sender_id, "commands.unmute.success", playername)
+    else
+        msgManager:SendMessage(sender_id, "moderation.not_muted", playername)
     end
+
 
     return true
 end

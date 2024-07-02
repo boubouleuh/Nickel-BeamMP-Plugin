@@ -81,9 +81,27 @@ dbManager:createTableForClass(UserRole.new())
 dbManager:createTableForClass(RoleCommand.new())
 dbManager:createTableForClass(Infos.new())
 
-dbManager:save(Infos.new("isInitialDatabaseLaunch", "true"), true)
+dbManager:closeConnection()
+
+dbManager:openConnection()
+
+
+local entry = dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch")
+if entry == nil then
+    dbManager:save(Infos.new("isInitialDatabaseLaunch", "false"), true)
+elseif entry.infoValue == "false" then
+
+    local class = Infos.new("isInitialDatabaseLaunch", "true")
+
+
+    dbManager:save(class, true)
+
+end
+
 
 dbManager:closeConnection()
+
+
 
 
 local managers = {
@@ -103,7 +121,7 @@ onPlayerAuth.new(permManager, msgManager)
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
-infos.setInfosKey("isInitialLaunch", true)
+
 utils.nkprint("Plugin successfully initialized", "info")
 
 local extensions = require("main.initializeExtensions")

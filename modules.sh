@@ -12,7 +12,7 @@ function checkRoot() {
 }
 
 askToInstall() {
-    read -p "The program need you to install : LuaRocks 3.10.0 and dependencies, libssl-dev, sqlite3 3.45, libsqlite3, build-essential, libreadline-dev, unzip, lua5.3 | Do you want to install ? (y/n): " choice
+    read -p "The program need you to install : LuaRocks 3.10.0 and dependencies, liblua5.3-dev, libssl-dev, sqlite3 3.45, libsqlite3, build-essential, libreadline-dev, unzip, lua5.3 | Do you want to install ? (y/n): " choice
     case "$choice" in
         y|Y ) 
             return 0  # True
@@ -28,7 +28,7 @@ askToInstall() {
 
 # Command to install LuaRocks and its dependencies
 installCmd="apt update && \
-            apt install -y libssl-dev cmake libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && \
+            apt install -y liblua5.3-dev libssl-dev cmake libsqlite3-dev build-essential libreadline-dev unzip lua5.3 && \
             curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.10.0.tar.gz && \
             tar -zxf luarocks-3.10.0.tar.gz && \
             (cd luarocks-3.10.0 && ./configure) && \

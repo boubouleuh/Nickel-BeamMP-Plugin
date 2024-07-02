@@ -10,7 +10,8 @@ function default.init(PermissionsManager)
 
     local dbManager = PermissionsManager.dbManager
     dbManager:openConnection()
-    if dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue == "true" then
+
+    if dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue == "false" then
 
         PermissionsManager:addRole("Member", 0, true)
 

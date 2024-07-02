@@ -18,6 +18,8 @@ end
 
 function DatabaseManager:createTableIfNotExists(tableName, columns)
   local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(columns, ", "))
+
+  print(query)
   self.db:exec(query)
 end
 
@@ -33,6 +35,32 @@ function DatabaseManager:returnQuery(query)
 end
 
 
+function DatabaseManager:prepareAndExecute(query, ...)
+  local stmt = self.db:prepare(query)
+  if not stmt then
+    error("Failed to prepare statement: " .. query)
+  end
+
+  -- Bind the values
+  local args = {...}
+  for i, value in ipairs(args) do
+    stmt:bind(i, value)
+  end
+
+  -- Execute the statement
+  local result = stmt:step()
+  utils.nkprint(query, "debug")
+  utils.nkprint("Changes = " .. self.db:changes(), "debug")
+  if self.db:changes() == 0 then
+    stmt:finalize()
+    return "nickel.nochange"
+  end
+
+  -- Finalize the statement to release resources
+  stmt:finalize()
+
+  return result
+end
 
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
@@ -67,24 +95,29 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(values, tostring(value))
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
-
-
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, firstColumn .. " = '" .. tostring(object[firstColumn]) .. "'") --watch out, problems can happen maybe (black magic)
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   utils.nkprint(selectQuery, "debug")
   local count = 0
-  for row in self.db:nrows(selectQuery) do
+  local stmt = self.db:prepare(selectQuery)
+  stmt:bind(1, object[firstColumn])
+  for row in stmt:nrows() do
     count = tonumber(row["COUNT(*)"])
   end
-
+  stmt:finalize()
   if count > 0 and canupdate then
 
       -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = '%s'", tableName, table.concat(updateColumns, ", "), firstColumn, tostring(object[firstColumn]))
-      utils.nkprint(updateQuery, "debug")
-      return self:returnQuery(updateQuery)
+      -- Update query with a placeholder for the WHERE clause
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
+
+      -- Execute the query using prepareAndExecute with the bound value for the WHERE clause
+      return self:prepareAndExecute(updateQuery, object[firstColumn])
   else
-    local insertQuery = string.format("INSERT INTO %s (%s) VALUES ('%s')", tableName, table.concat(columns, ", "), table.concat(values, "', '"))
-    return self:returnQuery(insertQuery)
+    local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
+    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
+    
+    -- Execute the query using prepareAndExecute with the values array
+    return self:prepareAndExecute(insertQuery, table.unpack(values))
   end
 end
 
@@ -92,13 +125,20 @@ end
 function DatabaseManager:getEntry(class, columnName, columnValue)
 
   local tableName = class.tableName
-  local query = string.format("SELECT * FROM %s WHERE %s = '%s'", tableName, columnName, tostring(columnValue))
-  local results = {}
 
-  for row in self.db:nrows(query) do
+
+  local query = string.format("SELECT * FROM %s WHERE %s = ?", tableName, columnName)
+  local stmt = self.db:prepare(query)
+  if not stmt then
+    error("Failed to prepare statement: " .. query)
+  end
+  stmt:bind_values(columnValue)
+  local results = {}
+  for row in stmt:nrows() do
     table.insert(results, row)
     break
   end
+  stmt:finalize()
 
   return results[1]
 end
@@ -121,6 +161,7 @@ function DatabaseManager:deleteObject(class, conditions)
   end
 
   local whereClauseString = table.concat(whereClauses, " AND ")
+
   local deleteQuery = string.format("DELETE FROM %s WHERE %s", tableName, whereClauseString)
   
   return self:returnQuery(deleteQuery)
@@ -274,7 +315,31 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
   return result
 end
 
+function DatabaseManager:getAllClassByBeammpId(class, beammpid)
+  local tableName = class.tableName
+  local query = string.format("SELECT * FROM %s WHERE beammpid = %s", tableName, tostring(beammpid))
+  local result = {}
 
+  local i = 1
+  for row in self.db:nrows(query) do
+    result[i] = class.new();
+
+  
+    for key, value in pairs(row) do
+      if type(value) == "string" and value:find("{") and value:find("}") then
+        local parsedList = utils.string_to_table(value)
+        result[i]:setKey(key, parsedList)
+      else
+        -- Utilisez une méthode set ou affectez directement les valeurs aux propriétés de la classe
+        result[i]:setKey(key, value)  -- Assurez-vous que votre classe a une méthode set appropriée
+      end
+    end
+    i = i + 1
+  end
+
+
+  return result
+end
 
 
 

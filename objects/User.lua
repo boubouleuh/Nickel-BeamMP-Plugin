@@ -25,7 +25,7 @@ end
 -- Dans la classe User
 function User:getColumns()
     return {
-      "beammpid INT PRIMARY KEY",
+      "beammpid INTEGER PRIMARY KEY",
       "name TEXT NOT NULL",
       "whitelisted BOOLEAN NOT NULL",
       "language TEXT"

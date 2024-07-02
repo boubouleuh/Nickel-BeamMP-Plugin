@@ -3,6 +3,7 @@ local userIps = require("objects.UserIps")
 local userStatus = require("objects.UserStatus")
 local userRole = require("objects.UserRole")
 local utils = require("utils.misc")
+local StatusService = require("database.services.StatusService")
 
 local registerPlayer = {}
 
@@ -16,15 +17,6 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         local newUser = user.new(beammpid, name)
         permManager.dbManager:openConnection()
         local ipClass = permManager.dbManager:getClassByBeammpId(userIps, beammpid)
-
-        local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)
-        permManager.dbManager:closeConnection()
-
-        if userStatusClass == nil then
-            local newUserStatus = userStatus.new(beammpid)
-            permManager.dbManager:save(newUserStatus)
-        end
-        permManager.dbManager:openConnection()
         local userRoleClass = permManager.dbManager:getClassByBeammpId(userRole, beammpid)
         permManager.dbManager:closeConnection()
 
@@ -63,33 +55,27 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
             local newUserIp = userIps.new(beammpid, ip)
             permManager.dbManager:save(newUserIp)
         end
-        print(newUser)
 
         permManager.dbManager:save(newUser)
 
         --Check status
-        if userStatusClass ~= nil then
-            print("STATUS = ", userStatusClass)
-            if userStatusClass.status_type == "isbanned" and userStatusClass.is_status_value == 1 then
-                print("IT GO IN BRO")
-                return userStatusClass.reason
 
-            elseif userStatusClass.status_type == "istempbanned" and userStatusClass.is_status_value == 1 then
-                if userStatusClass.time <= os.time() then
-                    return userStatusClass.reason
-                else
-                    userStatusClass.status_type = ""
-                    userStatusClass.status_value = false
-                    permManager.dbManager:save(userStatusClass)
-                end
+        local statusService = StatusService.new(beammpid, permManager.dbManager)
+        if statusService:checkStatus("isbanned") then
+            return statusService:getStatus("isbanned").reason
+        elseif statusService:checkStatus("istempbanned") then
+            if statusService:checkStatusTime("istempbanned") then
+                return statusService:getStatus("istempbanned").reason
+            else
+                statusService:removeStatus("istempbanned")
             end
         end
+  
 
         permManager.dbManager:openConnection()
         local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
         permManager.dbManager:closeConnection()
         for _, entry in pairs(entries) do
-            print("ENTRY=", entry)
             if entry.is_banned == 1 then
                 return "REASON" --TODO ADD REASON ?
             end

@@ -1,7 +1,7 @@
 
 local utils = require("utils.misc")
 local userIps = require("objects.UserIps")
-
+local UsersIpsService = require("database.services.UsersIpsService")
 local command = {}
 
 function command.init(sender_id, sender_name, managers, playername)
@@ -25,20 +25,27 @@ function command.init(sender_id, sender_name, managers, playername)
     local beammpid = utils.getPlayerBeamMPID(playername)
 
 
-    permManager.dbManager:openConnection()
-    local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
-    permManager.dbManager:closeConnection()
-    local count = 0
-    for _, entry in pairs(entries) do
-        count = count + 1
-        local newUserIp = userIps.new(beammpid, entry.ip)
-        newUserIp.is_banned = true
-        permManager.dbManager:save(newUserIp)
-        local target_id = utils.GetPlayerId(playername)
-        if target_id ~= -1 then
-            MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.ipbanned"))
-        end
-    end
+    local usersIpsService = UsersIpsService.new(beammpid, dbManager)
+
+    local count = usersIpsService:banAllIps()
+
+
+    -- permManager.dbManager:openConnection()
+    -- local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
+    -- permManager.dbManager:closeConnection()
+    -- local count = 0
+    -- for _, entry in pairs(entries) do
+    --     count = count + 1
+    --     local newUserIp = userIps.new(beammpid, entry.ip)
+    --     newUserIp.is_banned = true
+    --     permManager.dbManager:save(newUserIp)
+    --     local target_id = utils.GetPlayerId(playername)
+    --     if target_id ~= -1 then
+    --         MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.ipbanned"))
+    --     end
+    -- end
+
+
     if count > 0 then
         msgManager:SendMessage(sender_id, "commands.banip.success", playername, count)
     else

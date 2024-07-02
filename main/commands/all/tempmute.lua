@@ -1,6 +1,6 @@
 
 local utils = require("utils.misc")
-local userStatus = require("objects.UserStatus")
+local StatusService = require("database.services.StatusService")
 
 local command = {}
 
@@ -26,29 +26,31 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
     local end_date = os.date("%d/%m/%Y %H:%M:%S", timestamp)
 
     local beammpid = utils.getPlayerBeamMPID(playername)
-    permManager.dbManager:openConnection()
-    local userStatusClass = permManager.dbManager:getClassByBeammpId(userStatus, beammpid)
-    permManager.dbManager:closeConnection()
-    if userStatusClass ~= nil then
-        if userStatusClass.status_type == "ismuted" and userStatusClass.is_status_value == 1 or userStatusClass.status_type == "istempmuted" and userStatusClass.is_status_value == 1 then
-            msgManager:SendMessage(sender_id, "moderation.alreadymuted", playername)
 
-        else
-            userStatusClass.status_type = "istempmuted"
-            userStatusClass.is_status_value = true
-            userStatusClass.reason = reason
-            userStatusClass.time = timestamp
-            local result = dbManager:save(userStatusClass)
-            local target_id = utils.GetPlayerId(playername)
 
-            if target_id ~= -1 then
-                msgManager:SendMessage(target_id, "moderation.tempmuted", reason, end_date)
-            end
-            msgManager:SendMessage(sender_id, "commands.tempmute.success", playername, reason)
-            msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    local statusService = StatusService.new(beammpid, dbManager)
 
+
+
+
+    if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
+        msgManager:SendMessage(sender_id, "moderation.alreadymuted", playername)
+
+    else
+
+
+        local result = statusService:createStatus("istempmuted", reason, timestamp)
+
+        local target_id = utils.GetPlayerId(playername)
+
+        if target_id ~= -1 then
+            msgManager:SendMessage(target_id, "moderation.tempmuted", reason, end_date)
         end
+        msgManager:SendMessage(sender_id, "commands.tempmute.success", playername, reason, end_date)
+        msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+
     end
+
     return true
 end
 
