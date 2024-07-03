@@ -47,7 +47,10 @@ function command.init(sender_id, sender_name, managers, playername)
 
 
     if count > 0 then
-        msgManager:SendMessage(sender_id, "commands.banip.success", playername, count)
+        msgManager:SendMessage(sender_id, "commands.banip.success", count, playername)
+    elseif usersIpsService:isIpBanned() then
+        msgManager:SendMessage(sender_id, "moderation.alreadyipbanned", playername)
+        return false
     else
         msgManager:SendMessage(sender_id, "commands.banip.no_registered", playername)
         return false

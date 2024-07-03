@@ -5,6 +5,10 @@ local userRole = require("objects.UserRole")
 local utils = require("utils.misc")
 local StatusService = require("database.services.StatusService")
 
+local UsersService = require("database.services.UsersService")
+
+local UsersIpsService = require("database.services.UsersIpsService")
+
 local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip, msgManager, isguest)
@@ -14,7 +18,14 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
     -- Insérer ou mettre à jour un utilisateur
     if not isguest then
-        local newUser = user.new(beammpid, name)
+
+        local usersService = UsersService.new(beammpid, permManager.dbManager)
+
+        local newUser = usersService:getUser()
+        if usersService:getUser() == nil then
+            newUser = user.new(beammpid, name)
+        end
+
         permManager.dbManager:openConnection()
         local ipClass = permManager.dbManager:getClassByBeammpId(userIps, beammpid)
         local userRoleClass = permManager.dbManager:getClassByBeammpId(userRole, beammpid)
@@ -58,8 +69,18 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
         permManager.dbManager:save(newUser)
 
+
+
+        if cfgManager:GetSetting("conditions").whitelist then
+            if not usersService:isWhitelisted() then
+                return "You are not whitelisted"
+            end
+        end
+
+
         --Check status
 
+    
         local statusService = StatusService.new(beammpid, permManager.dbManager)
         if statusService:checkStatus("isbanned") then
             return statusService:getStatus("isbanned").reason
@@ -72,13 +93,11 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         end
   
 
-        permManager.dbManager:openConnection()
-        local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
-        permManager.dbManager:closeConnection()
-        for _, entry in pairs(entries) do
-            if entry.is_banned == 1 then
-                return "REASON" --TODO ADD REASON ?
-            end
+        
+        local usersIpsService = UsersIpsService.new(beammpid, permManager.dbManager)
+
+        if usersIpsService:isIpBanned() then
+            return "REASON" --TODO ADD REASON ?
         end
     elseif isguest and not cfgManager:GetSetting("conditions").guest then
         return msgManager:GetMessage(-1, "conditions.guest_not_allowed")

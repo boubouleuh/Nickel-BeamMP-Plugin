@@ -12,6 +12,9 @@ function command.init(sender_id, sender_name, managers, rolename)
         return false
     end
 
+    rolename = utils.capitalize(rolename)
+
+
     local result = permManager:removeRole(rolename)
     msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
     return true

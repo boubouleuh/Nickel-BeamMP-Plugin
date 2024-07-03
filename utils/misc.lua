@@ -11,6 +11,11 @@ function Misc.script_path()
   return scriptDir
 end
 
+function Misc.capitalize(str)
+  return (str:gsub("^%l", string.upper))
+end
+
+
 function Misc.getLinuxVersion()
     local handle = io.popen("lsb_release -ds")
     local result = handle:read("*a")

@@ -18,9 +18,9 @@ end
 
 function Service:getAllIps()
     self.dbManager:openConnection()
-    local status = self.dbManager:getAllClassByBeammpId(userIps, self.beammpid)
+    local ips = self.dbManager:getAllClassByBeammpId(userIps, self.beammpid)
     self.dbManager:closeConnection()
-    return status
+    return ips
 end
 
 function Service:banip(ip)
@@ -38,12 +38,41 @@ function Service:banAllIps()
     local ips = self:getAllIps()
     local count = 0
     for _, value in ipairs(ips) do
-        count = count + 1
-        value.is_banned = true
-        self.dbManager:save(value, true)
+        if value.is_banned == 0 then
+            count = count + 1
+            value.is_banned = true
+            self.dbManager:save(value, true)
+        end
+    
+
     end
     return count
 end
 
+
+function Service:unbanAllIps()
+    local ips = self:getAllIps()
+    local count = 0
+    for _, value in ipairs(ips) do
+
+        if value.is_banned == 1 then
+            count = count + 1
+            value.is_banned = false
+            self.dbManager:save(value, true)
+        end
+
+    end
+    return count
+end
+
+function Service:isIpBanned()
+    local ips = self:getAllIps()
+    for _, value in ipairs(ips) do
+        if value.is_banned == 1 then
+            return true
+        end
+    end
+    return false
+end
 
 return Service

@@ -33,6 +33,19 @@ function Service:setWhitelisted(bool)
     return result
 end
 
+function Service:isWhitelisted()
+    local user = self:getUser()
+
+    local b = user:getKey("whitelisted")
+
+    if b == 0 then
+        return false
+    elseif b == 1 then
+        return true
+    end
+
+end
+
 function Service:setLanguage(region)
     local user = self:getUser()
 

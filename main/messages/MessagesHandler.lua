@@ -35,7 +35,7 @@ function MessagesHandler:GetMessage(sender_id, key, ...)
 
 
     local beamId
-    if sender_id ~= -2 then
+    if sender_id ~= -2 and sender_id ~= -1 then
         beamId = utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
     end
     self.dbManager:openConnection()

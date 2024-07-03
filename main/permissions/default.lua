@@ -24,6 +24,7 @@ function default.init(PermissionsManager)
 
         PermissionsManager:assignCommand("dm", "Member")
         PermissionsManager:assignCommand("help", "Member")
+        PermissionsManager:assignCommand("countdown", "Member")
 
         PermissionsManager:assignCommand("createrole", "Administrator")
         PermissionsManager:assignCommand("deleterole", "Administrator")
@@ -32,6 +33,7 @@ function default.init(PermissionsManager)
         PermissionsManager:assignCommand("revokerole", "Administrator")
         PermissionsManager:assignCommand("revokecommand", "Administrator")
 
+        PermissionsManager:assignCommand("whitelist", "Moderator")
         PermissionsManager:assignCommand("kick", "Moderator")
         PermissionsManager:assignCommand("ban", "Moderator")
         PermissionsManager:assignCommand("tempban", "Moderator")

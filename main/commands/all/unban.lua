@@ -2,6 +2,7 @@
 local utils = require("utils.misc")
 local StatusService = require("database.services.StatusService")
 local userIps = require("objects.UserIps")
+local UsersIpsService = require("database.services.UsersIpsService")
 
 local command = {}
 
@@ -18,6 +19,7 @@ function command.init(sender_id, sender_name, managers, playername)
     local beammpid = utils.getPlayerBeamMPID(playername)
 
     local statusService = StatusService.new(beammpid, dbManager)
+    local usersIpsService = UsersIpsService.new(beammpid, dbManager)
 
  
     if statusService:checkStatus("isbanned") or statusService:checkStatus("istempbanned") then
@@ -27,21 +29,16 @@ function command.init(sender_id, sender_name, managers, playername)
 
         msgManager:SendMessage(sender_id, "commands.unban.success", playername)
 
-    else
+    elseif not usersIpsService:isIpBanned() then
         msgManager:SendMessage(sender_id, "moderation.not_banned", playername)
     end
 
 
-    permManager.dbManager:openConnection()
-    local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
-    permManager.dbManager:closeConnection()
-    local count = 0
-    for _, entry in pairs(entries) do
-        count = count + 1
-        local newUserIp = userIps.new(beammpid, entry.ip)
-        newUserIp.is_banned = false
-        permManager.dbManager:save(newUserIp)
+    if usersIpsService:isIpBanned() then
+        local result = usersIpsService:unbanAllIps()
+        msgManager:SendMessage(sender_id, "commands.unban.unbanip.success", result, playername)
     end
+
 
     return true
 end

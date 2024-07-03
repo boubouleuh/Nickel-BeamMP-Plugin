@@ -40,6 +40,7 @@ function Settings.init()
            database_file = ""
         },
         conditions = {
+            whitelist = false,
             guest = false
         },
         advanced = {
