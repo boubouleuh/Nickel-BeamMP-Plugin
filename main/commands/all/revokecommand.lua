@@ -2,7 +2,8 @@
 local utils = require("utils.misc")
 
 local command = {}
-
+--- command
+---@param managers managers
 function command.init(sender_id, sender_name, managers, commandName, rolename)
 
     local permManager = managers.permManager

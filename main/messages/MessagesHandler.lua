@@ -4,6 +4,7 @@ local new = require("objects.New")
 
 local user = require("objects.User")
 
+---@class MessagesHandler
 MessagesHandler = {}
 
 function MessagesHandler.new(dbManager, configManager)

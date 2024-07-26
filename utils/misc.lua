@@ -118,6 +118,14 @@ function Misc.getPlayerBeamMPID(player_name) --Playername only used when using t
   return player_beammp_id
 end
 
+function Misc.getBeamMPConfig() 
+  local toml = require("toml")
+  local existingConfigPath = "ServerConfig.toml"
+  if FS.Exists(existingConfigPath) then
+      return toml.decodeFromFile(existingConfigPath)
+  end
+end
+
 ---GetPlayerId
 ---@param player_name string
 ---@return number

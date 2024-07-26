@@ -4,9 +4,10 @@ local new = require("objects.New")
 
 local utils = require("utils.misc")
 
-
+local online = require("main.online")
 
 -- Database Management Class
+---@class DatabaseManager
 local DatabaseManager = {}
 
 function DatabaseManager.new(databaseName)
@@ -343,6 +344,240 @@ end
 
 
 
+
+
+--- Get all users dynamically
+---@param limit integer
+---@param offset integer
+---@param onlinePlayers table
+-- function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
+--   -- Get a set of online player beammpids
+--   local onlineBeammpids = {}
+--   for id, name in pairs(onlinePlayers) do
+--     if not MP.IsPlayerGuest(id) then
+--       local beammpid = tostring(utils.getPlayerBeamMPID(name))
+--       onlineBeammpids[beammpid] = true
+--     end
+--   end
+  
+
+--   -- Create a list of beammpids for the SQL IN clause
+--   local onlineBeammpidsList = {}
+--   for beammpid in pairs(onlineBeammpids) do
+--     table.insert(onlineBeammpidsList, "'" .. beammpid .. "'")
+--   end
+--   local onlineBeammpidsString = table.concat(onlineBeammpidsList, ", ")
+
+
+--   local isNot;
+
+--   if offset == 0 then
+--     isNot = ""
+--   else
+--     isNot = "NOT"
+--   end
+
+--   -- Prepare the SQL query
+--   local selectQuery = [[
+--     SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+--     FROM Users
+--     JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
+--     JOIN Roles ON UserRoles.roleID = Roles.roleID
+--     LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+--     ORDER BY 
+--       CASE WHEN Users.beammpid ]] .. isNot .. [[ IN (]] .. onlineBeammpidsString .. [[) THEN 0 ELSE 1 END, 
+--       Roles.permlvl DESC, Users.name ASC
+--     LIMIT ? OFFSET ?;
+--   ]]
+
+--   print(selectQuery)
+
+--   local stmt = self.db:prepare(selectQuery)
+--   stmt:bind(1, limit)
+--   stmt:bind(2, offset)
+
+--   local results = {}
+  
+--   for row in stmt:nrows() do
+--     local user_id = row.user_beammpid
+--     if not results[user_id] then
+--       results[user_id] = {
+--         roles = {},
+--         status = {},
+--         beammpid = row.user_beammpid,
+--         name = row.name,
+--         whitelisted = row.whitelisted,
+--         online = onlineBeammpids[tostring(user_id)] or false, -- Add online status
+--       }
+--     end
+
+--     table.insert(results[user_id].roles, {
+--       name = row.roleName,
+--       permlvl = row.permlvl,
+--       -- Add any specific columns from UserRoles here
+--     })
+
+--     if row.status_type ~= nil then
+--       table.insert(results[user_id].status, {
+--         status_type = row.status_type,
+--         status_value = row.is_status_value,
+--         reason = row.reason,
+--         time = row.time,
+--         -- Add any specific columns from UsersStatus here
+--       })
+--     end
+--   end
+--   stmt:finalize()
+
+--   -- Convert the dictionary to a list for final output
+--   local final_results = {}
+--   for _, user in pairs(results) do
+--     table.insert(final_results, user)
+--   end
+
+--   return final_results
+-- end
+
+--- Get all users dynamically
+---@param limit integer
+---@param offset integer
+---@param onlinePlayers table
+function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
+  -- Get a set of online player beammpids
+  local onlineBeammpids = {}
+  for id, name in pairs(onlinePlayers) do
+    if not MP.IsPlayerGuest(id) then
+      local beammpid = tostring(utils.getPlayerBeamMPID(name))
+      onlineBeammpids[beammpid] = true
+    end
+  end
+
+  -- Create a list of beammpids for the SQL IN clause
+  local onlineBeammpidsList = {}
+  for beammpid in pairs(onlineBeammpids) do
+    table.insert(onlineBeammpidsList, "'" .. beammpid .. "'")
+  end
+  local onlineBeammpidsString = table.concat(onlineBeammpidsList, ", ")
+
+  -- Query to get all online users
+  local onlineQuery = [[
+    SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+    FROM Users
+    JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
+    JOIN Roles ON UserRoles.roleID = Roles.roleID
+    LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+    WHERE Users.beammpid IN (]] .. onlineBeammpidsString .. [[)
+    ORDER BY Users.beammpid, Roles.permlvl DESC, Users.name ASC;
+  ]]
+
+  -- Fetch online users
+  local onlineResults = {}
+  local stmtOnline = self.db:prepare(onlineQuery)
+  for row in stmtOnline:nrows() do
+    local user_id = row.user_beammpid
+    if not onlineResults[user_id] then
+      onlineResults[user_id] = {
+        roles = {},
+        status = {},
+        beammpid = row.user_beammpid,
+        name = row.name,
+        whitelisted = row.whitelisted,
+        online = true, -- Mark all as online
+        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.name, 40)
+      }
+    end
+
+    -- Insert role
+    table.insert(onlineResults[user_id].roles, {
+      name = row.roleName,
+      permlvl = row.permlvl,
+    })
+
+    -- Insert status if available
+    if row.status_type ~= nil then
+      table.insert(onlineResults[user_id].status, {
+        status_type = row.status_type,
+        status_value = row.is_status_value,
+        reason = row.reason,
+        time = row.time,
+      })
+    end
+  end
+  stmtOnline:finalize()
+
+  -- Create a set of online beammpids for exclusion
+  local onlineBeammpidsSet = {}
+  for user_id in pairs(onlineResults) do
+    onlineBeammpidsSet[user_id] = true
+  end
+
+  -- Query to get remaining users with pagination
+  local remainingQuery = [[
+    SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+    FROM Users
+    JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
+    JOIN Roles ON UserRoles.roleID = Roles.roleID
+    LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+    WHERE Users.beammpid NOT IN (]] .. table.concat(onlineBeammpidsList, ", ") .. [[)
+    ORDER BY Roles.permlvl DESC, Users.name ASC
+    LIMIT ? OFFSET ?;
+  ]]
+
+  -- Fetch remaining users
+  local stmtRemaining = self.db:prepare(remainingQuery)
+  stmtRemaining:bind(1, limit)
+  stmtRemaining:bind(2, offset)
+
+  local remainingResults = {}
+  for row in stmtRemaining:nrows() do
+    local user_id = row.user_beammpid
+    if not onlineResults[user_id] then
+      remainingResults[user_id] = {
+        roles = {},
+        status = {},
+        beammpid = row.user_beammpid,
+        name = row.name,
+        whitelisted = row.whitelisted,
+        online = false, -- Mark as offline
+        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.name, 40)
+      }
+    end
+
+    -- Insert role
+    table.insert(remainingResults[user_id].roles, {
+      name = row.roleName,
+      permlvl = row.permlvl,
+    })
+
+    -- Insert status if available
+    if row.status_type ~= nil then
+      table.insert(remainingResults[user_id].status, {
+        status_type = row.status_type,
+        status_value = row.is_status_value,
+        reason = row.reason,
+        time = row.time,
+      })
+    end
+  end
+  stmtRemaining:finalize()
+
+  -- Combine results, with online users first
+  local final_results = {}
+  for _, user in pairs(onlineResults) do
+    table.insert(final_results, user)
+  end
+
+  for _, user in pairs(remainingResults) do
+    table.insert(final_results, user)
+  end
+
+  -- Return only the number of users specified by limit
+  if limit then
+    final_results = {table.unpack(final_results, 1, limit)}
+  end
+
+  return final_results
+end
 
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)

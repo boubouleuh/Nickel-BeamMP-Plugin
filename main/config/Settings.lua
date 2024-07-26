@@ -1,6 +1,7 @@
 local toml = require("toml")
 local new = require("objects.New")
 
+---@class Settings
 local Settings = {}
 
 -- Fonction pour charger la configuration à partir d'un fichier existant

@@ -4,10 +4,15 @@ local Role = require("objects.Role")
 local Command = require("objects.Command")
 local sqlcodes = require("database.sqlresultcode")
 local RoleCommand = require("objects.RoleCommand")
+---@class PermissionsHandler
 PermissionsHandler = {}
 
+
+--- create a new instance of PermissionsHandler
+---@param dbManager DatabaseManager
 function PermissionsHandler.new(dbManager)
     local self = {}
+
     self.dbManager = dbManager
 
     return new._object(PermissionsHandler, self)

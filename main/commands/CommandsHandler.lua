@@ -6,12 +6,18 @@ local utils = require("utils.misc")
 
 CommandsHandler = {}
 
-
+--- init commands
+---@param managers managers
 function CommandsHandler.init(managers)
     local self = {}
+
+    ---@type MessagesHandler
     self.msgManager = managers.msgManager
+    ---@type DatabaseManager
     self.dbManager = managers.dbManager
+    ---@type Settings
     self.cfgManager = managers.cfgManager
+    ---@type PermissionsHandler
     self.permManager = managers.permManager
     self.commands = {}
     local inbuildCommands = FS.ListFiles(utils.script_path() .. "main/commands/all")

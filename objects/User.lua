@@ -1,8 +1,10 @@
 
 local new = require("objects.New")
 
--- Classe User
-local User = {tableName="Users"}
+---@class User
+local User = {}
+
+User.tableName = "Users"
 
 function User.new(beammpid, name)
   local self = {}

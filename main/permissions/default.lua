@@ -5,9 +5,11 @@ local utils = require("utils.misc")
 local Infos = require("objects.Infos")
 local default = {}
 
+--- initialize default roles and permissions
+---@param PermissionsManager PermissionsHandler
 function default.init(PermissionsManager)
 
-
+    ---@type DatabaseManager
     local dbManager = PermissionsManager.dbManager
     dbManager:openConnection()
 

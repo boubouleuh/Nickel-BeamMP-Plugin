@@ -1,6 +1,5 @@
 
 
-
 local initializeModules = require("main.initializeModules")
 
 
@@ -9,6 +8,9 @@ local infos = require("infos.infos")
 
 
 local utils = require("utils.misc")
+
+
+
 local rootDirectory = utils.script_path()
 package.path = rootDirectory .. "objects/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
@@ -21,7 +23,6 @@ package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
 initializeModules.initialize() 
-
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables
@@ -37,6 +38,7 @@ local onConsoleInput = require("main.events.console.onConsoleInput")
 
 
 -- Events / Database / Events handler
+local initInterface = require("main.events.interface.init")
 local onPlayerAuth = require("main.events.register.onPlayerAuth")
 local onChatMessage = require("main.events.chat.onChatMessage")
 local databaseManager = require("database.Database")
@@ -50,8 +52,10 @@ local config = require("main.config.Settings")
 
 
 -- Instances
+---@type Settings
 local cfgManager = config.init()
 
+---@type DatabaseManager
 local dbManager
 local configDatabaseFile = cfgManager:GetSetting("sync").database_file
 
@@ -65,9 +69,10 @@ end
 
 dbManager:openConnection()
 
-
+---@type MessagesHandler
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 
+---@type PermissionsHandler
 local permManager = PermissionsHandler.new(dbManager)
 
 -- Creating tables / updating
@@ -103,7 +108,7 @@ dbManager:closeConnection()
 
 
 
-
+---@class managers
 local managers = {
     dbManager = dbManager,
     cfgManager = cfgManager,
@@ -121,6 +126,7 @@ onPlayerAuth.new(permManager, msgManager)
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
+initInterface.new(managers)
 
 utils.nkprint("Plugin successfully initialized", "info")
 

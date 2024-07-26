@@ -1,28 +1,30 @@
 
 local new = require("objects.New")
 
--- Classe User
-local infos = {tableName="Infos"}
+---@class Infos
+local Infos = {}
 
-function infos.new(infoKey, infoValue)
+Infos.tableName = "Infos"
+
+function Infos.new(infoKey, infoValue)
   local self = {}
   self.infoID = nil
   self.infoKey = infoKey
   self.infoValue = infoValue
-  return new._object(infos, self)
+  return new._object(Infos, self)
 end
 
 
-function infos:getKey(key)
+function Infos:getKey(key)
   return self[key]
 end
 
-function infos:setKey(key, value)
+function Infos:setKey(key, value)
   self[key] = value
 end
 
 -- Dans la classe User
-function infos:getColumns()
+function Infos:getColumns()
     return {
       "infoID INTEGER PRIMARY KEY AUTOINCREMENT",
       "infoKey TEXT UNIQUE NOT NULL",
@@ -33,4 +35,4 @@ function infos:getColumns()
   
 
 
-return infos
+return Infos

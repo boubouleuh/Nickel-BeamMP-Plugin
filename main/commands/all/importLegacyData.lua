@@ -2,7 +2,8 @@
 local legacy = require("main.legacy")
 
 local command = {}
-
+--- command
+---@param managers managers
 function command.init(sender_id, sender_name, managers)
     local permManager = managers.permManager
     local msgManager = managers.msgManager

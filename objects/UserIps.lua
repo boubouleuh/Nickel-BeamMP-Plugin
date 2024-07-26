@@ -1,29 +1,31 @@
 local new = require("objects.New")
 local utils = require("utils.misc")
 
--- Classe UserIps
-local UserIps = { tableName = "UsersIps" }
+---@class UserIp
+local UserIp = {}
 
-function UserIps.new(beammpid, ip)
+UserIp.tableName = "UsersIps" 
+
+function UserIp.new(beammpid, ip)
   local self = {}
   self.ip_id = nil  -- You can set this to a specific value if needed
   self.beammpid = beammpid
   self.ip = ip
   self.is_banned = false
-  return new._object(UserIps, self)
+  return new._object(UserIp, self)
 end
 
-function UserIps:getKey(key)
+function UserIp:getKey(key)
   return self[key]
 end
 
-function UserIps:setKey(key, value)
+function UserIp:setKey(key, value)
     self[key] = value
 end
 
 
 -- Dans la classe UserIps
-function UserIps:getColumns()
+function UserIp:getColumns()
   return {
     "ip_id INTEGER PRIMARY KEY AUTOINCREMENT",
     "beammpid INTEGER",
@@ -34,4 +36,4 @@ function UserIps:getColumns()
   }
 end
 
-return UserIps
+return UserIp

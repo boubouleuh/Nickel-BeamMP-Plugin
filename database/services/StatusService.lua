@@ -4,6 +4,7 @@ local new = require("objects.New")
 local userStatus = require("objects.UserStatus")
 
 
+---@class StatusService
 local Service = {}
 
 

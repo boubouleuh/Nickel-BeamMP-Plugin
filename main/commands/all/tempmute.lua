@@ -3,7 +3,8 @@ local utils = require("utils.misc")
 local StatusService = require("database.services.StatusService")
 
 local command = {}
-
+--- command
+---@param managers managers
 function command.init(sender_id, sender_name, managers, playername, time, reason)
     local permManager = managers.permManager
     local msgManager = managers.msgManager

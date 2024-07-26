@@ -5,7 +5,8 @@ local userIps = require("objects.UserIps")
 local UsersIpsService = require("database.services.UsersIpsService")
 
 local command = {}
-
+--- command
+---@param managers managers
 function command.init(sender_id, sender_name, managers, playername)
     local permManager = managers.permManager
     local msgManager = managers.msgManager

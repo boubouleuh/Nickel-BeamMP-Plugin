@@ -8,7 +8,7 @@ local StatusService = require("database.services.StatusService")
 local UsersService = require("database.services.UsersService")
 
 local UsersIpsService = require("database.services.UsersIpsService")
-
+local interface = require("main.client.initInterface")
 local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip, msgManager, isguest)
@@ -99,9 +99,11 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         if usersIpsService:isIpBanned() then
             return "REASON" --TODO ADD REASON ?
         end
+
     elseif isguest and not cfgManager:GetSetting("conditions").guest then
         return msgManager:GetMessage(-1, "conditions.guest_not_allowed")
     end
+
 
 end
 
