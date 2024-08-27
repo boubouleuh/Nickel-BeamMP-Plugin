@@ -9,6 +9,8 @@ local UsersService = require("database.services.UsersService")
 
 local UsersIpsService = require("database.services.UsersIpsService")
 local interface = require("main.client.initInterface")
+
+local online = require("main.online")
 local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip, msgManager, isguest)
@@ -18,6 +20,8 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
     -- Insérer ou mettre à jour un utilisateur
     if not isguest then
+
+        online.savePlayerAvatarImg(name, 40)
 
         local usersService = UsersService.new(beammpid, permManager.dbManager)
 

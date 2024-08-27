@@ -1,7 +1,7 @@
 
 local https = require 'ssl.https'
 local mime = require("mime")
-
+local utils = require("utils.misc")
 local online = {}
 
 function online.getPlayerJson(playername)
@@ -20,8 +20,25 @@ function online.getPlayerJson(playername)
     end
 end
 
-function online.getPlayerB64Img(playername, size)
+function online.getPlayerB64Img(beammpid)
 
+    local file_path = string.format(utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)
+    local file = io.open(file_path, "r")
+
+    if file then
+        local image = file:read("*all")
+        file:close() -- Close the file
+        return mime.b64(image)
+    else
+        local file_path = string.format(utils.script_path() .. "/player_avatars/default_avatar.png")
+        local file = io.open(file_path, "r")
+        local image = file:read("*all")
+        file:close() -- Close the file
+        return mime.b64(image)
+    end
+end
+
+function online.savePlayerAvatarImg(playername, size)
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
 
     local body, code, headers, status = https.request(url)
@@ -36,7 +53,17 @@ function online.getPlayerB64Img(playername, size)
         local body2, code2, headers2, status2 = https.request(url2)
 
         if code2 == 200 then
-            return mime.b64(body2)
+            local file_path = string.format(utils.script_path() .. "/player_avatars/%s_avatar.png", json.user.id)
+
+            -- Open the file in binary write mode
+            local file = io.open(file_path, "wb")
+            if file then
+                file:write(body2) -- Write the image data to the file
+                file:close() -- Close the file
+                return file_path -- Return the file path of the saved image
+            else
+                return "" -- Return an empty string if the file couldn't be opened
+            end
         else
             return ""    
         end

@@ -458,58 +458,54 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
     table.insert(onlineBeammpidsList, "'" .. beammpid .. "'")
   end
   local onlineBeammpidsString = table.concat(onlineBeammpidsList, ", ")
-
-  -- Query to get all online users
-  local onlineQuery = [[
-    SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
-    FROM Users
-    JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
-    JOIN Roles ON UserRoles.roleID = Roles.roleID
-    LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
-    WHERE Users.beammpid IN (]] .. onlineBeammpidsString .. [[)
-    ORDER BY Users.beammpid, Roles.permlvl DESC, Users.name ASC;
-  ]]
-
-  -- Fetch online users
   local onlineResults = {}
-  local stmtOnline = self.db:prepare(onlineQuery)
-  for row in stmtOnline:nrows() do
-    local user_id = row.user_beammpid
-    if not onlineResults[user_id] then
-      onlineResults[user_id] = {
-        roles = {},
-        status = {},
-        beammpid = row.user_beammpid,
-        name = row.name,
-        whitelisted = row.whitelisted,
-        online = true, -- Mark all as online
-        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.name, 40)
-      }
-    end
+  -- Query to get all online users
+  if offset == 0 then
+    local onlineQuery = [[
+      SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+      FROM Users
+      JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
+      JOIN Roles ON UserRoles.roleID = Roles.roleID
+      LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+      WHERE Users.beammpid IN (]] .. onlineBeammpidsString .. [[)
+      ORDER BY Roles.permlvl DESC, Users.name ASC;
+    ]]
 
-    -- Insert role
-    table.insert(onlineResults[user_id].roles, {
-      name = row.roleName,
-      permlvl = row.permlvl,
-    })
+    -- Fetch online users
+    local stmtOnline = self.db:prepare(onlineQuery)
+    for row in stmtOnline:nrows() do
+      local user_id = row.user_beammpid
+      if not onlineResults[user_id] then
+        onlineResults[user_id] = {
+          roles = {},
+          status = {},
+          beammpid = row.user_beammpid,
+          name = row.name,
+          whitelisted = row.whitelisted,
+          online = true, -- Mark all as online
+          b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid, 40)
+        }
+      end
 
-    -- Insert status if available
-    if row.status_type ~= nil then
-      table.insert(onlineResults[user_id].status, {
-        status_type = row.status_type,
-        status_value = row.is_status_value,
-        reason = row.reason,
-        time = row.time,
+      -- Insert role
+      table.insert(onlineResults[user_id].roles, {
+        name = row.roleName,
+        permlvl = row.permlvl,
       })
-    end
-  end
-  stmtOnline:finalize()
 
-  -- Create a set of online beammpids for exclusion
-  local onlineBeammpidsSet = {}
-  for user_id in pairs(onlineResults) do
-    onlineBeammpidsSet[user_id] = true
+      -- Insert status if available
+      if row.status_type ~= nil then
+        table.insert(onlineResults[user_id].status, {
+          status_type = row.status_type,
+          status_value = row.is_status_value,
+          reason = row.reason,
+          time = row.time,
+        })
+      end
+    end
+    stmtOnline:finalize()
   end
+
 
   -- Query to get remaining users with pagination
   local remainingQuery = [[
@@ -539,7 +535,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
         name = row.name,
         whitelisted = row.whitelisted,
         online = false, -- Mark as offline
-        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.name, 40)
+        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid, 40)
       }
     end
 
@@ -573,7 +569,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
 
   -- Return only the number of users specified by limit
   if limit then
-    final_results = {table.unpack(final_results, 1, limit)}
+    final_results = {table.unpack(final_results)}
   end
 
   return final_results

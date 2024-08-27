@@ -46,6 +46,12 @@ function Settings.init()
         },
         advanced = {
             debug = false
+        },
+        client = {
+            temperature = 0,
+            time = {0, 0},
+            gravity = 0,
+            wind = 0
         }
     }
 
@@ -70,6 +76,11 @@ end
 -- Fonction pour obtenir une valeur spécifique du fichier de configuration
 function Settings:GetSetting(settingKey)
     return self.config[settingKey]
+end
+
+function Settings:SetSetting(settingKey, value)
+    self.config[settingKey] = value
+    toml.encodeToFile(self.config, {file = "NickelConfig.toml", overwrite = true})
 end
 
 return Settings

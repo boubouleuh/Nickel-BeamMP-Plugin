@@ -5,7 +5,7 @@ local init = {}
 function init.new(managers)
 
     local lastCallTime = {}
-    local cooldown = 5 -- Cooldown period in seconds
+    local cooldown = 2 -- Cooldown period in seconds
     function initInterface(id, offset)
         local currentTime = os.time()
 

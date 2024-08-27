@@ -2,7 +2,6 @@
 
 local initializeModules = require("main.initializeModules")
 
-
 local infos = require("infos.infos")
 
 
@@ -41,10 +40,14 @@ local onConsoleInput = require("main.events.console.onConsoleInput")
 local initInterface = require("main.events.interface.init")
 local onPlayerAuth = require("main.events.register.onPlayerAuth")
 local onChatMessage = require("main.events.chat.onChatMessage")
+local onVehicleSpawn = require("main.events.vehicles.onVehicleSpawn")
+local onVehicleEdited = require("main.events.vehicles.onVehicleEdited")
+local onVehicleReset = require("main.events.vehicles.onVehicleReset")
 local databaseManager = require("database.Database")
 local messageHandlerManager = require("main.messages.MessagesHandler")
 local commandHandler = require("main.commands.CommandsHandler")
 local default = require("main.permissions.default")
+local syncEnvironment = require("main.events.interface.syncEnvironment")
 
 
 -- Miscellanous
@@ -126,7 +129,12 @@ onPlayerAuth.new(permManager, msgManager)
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
+onVehicleSpawn.new(managers)
+onVehicleEdited.new(managers)
+onVehicleReset.new(managers)
+
 initInterface.new(managers)
+syncEnvironment.new(managers)
 
 utils.nkprint("Plugin successfully initialized", "info")
 
