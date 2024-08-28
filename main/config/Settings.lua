@@ -51,7 +51,8 @@ function Settings.init()
             temperature = 0,
             time = {0, 0},
             gravity = 0,
-            wind = 0
+            wind = 0,
+            meteo = "sunny"
         }
     }
 
