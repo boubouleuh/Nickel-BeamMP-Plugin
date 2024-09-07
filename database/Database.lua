@@ -483,7 +483,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
           name = row.name,
           whitelisted = row.whitelisted,
           online = true, -- Mark all as online
-          b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid, 40)
+          b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid)
         }
       end
 
@@ -535,7 +535,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
         name = row.name,
         whitelisted = row.whitelisted,
         online = false, -- Mark as offline
-        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid, 40)
+        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid)
       }
     end
 
