@@ -8,3 +8,5 @@
 /data
 /player_avatars/*
 !/player_avatars/default_avatar
+version.txt
+NickelConfig.toml
