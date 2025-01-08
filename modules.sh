@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Function to check if the script is run as root
@@ -12,7 +11,7 @@ function checkRoot() {
 }
 
 askToInstall() {
-    read -p "The program need you to install : LuaRocks 3.10.0 and dependencies, liblua5.3-dev, libssl-dev, sqlite3 3.45, libsqlite3, build-essential, libreadline-dev, unzip, lua5.3 | Do you want to install ? (y/n): " choice
+    read -p "The program needs you to install: LuaRocks 3.10.0 and dependencies, liblua5.3-dev, libssl-dev, sqlite3 3.45, libsqlite3, build-essential, libreadline-dev, unzip, lua5.3 | Do you want to install? (y/n): " choice
     case "$choice" in
         y|Y ) 
             return 0  # True
@@ -22,6 +21,22 @@ askToInstall() {
             ;;
         * ) 
             askToInstall "$1"  # Repeat the function call
+            ;;
+    esac
+}
+
+askToInstallLuaSec() {
+    echo "LuaSec is a library that adds SSL/TLS support to Lua, this can be more convenient and integrated compared to using wget as a fallback. But isnt required."
+    read -p "Do you want to install LuaSec? (y/n): " choice
+    case "$choice" in
+        y|Y ) 
+            return 0  # True
+            ;;
+        n|N ) 
+            return 1  # False
+            ;;
+        * ) 
+            askToInstallLuaSec "$1"  # Repeat the function call
             ;;
     esac
 }
@@ -44,15 +59,18 @@ installCmd="apt update && \
 function installModules() {
     luarocks --lua-version 5.3 --tree $script_dir install lsqlite3
     luarocks --lua-version 5.3 --tree $script_dir install toml 
-    luarocks --lua-version 5.3 --tree $script_dir install luasec 
+    if askToInstallLuaSec; then
+        luarocks --lua-version 5.3 --tree $script_dir install luasec
+    else
+        echo "Skipping LuaSec installation. wget will be used as a fallback for HTTPS requests."
+    fi
 }
 
 # Check for root privileges
 checkRoot
 
-
 if ! askToInstall; then
-    echo "Install cancelled !"
+    echo "Install cancelled!"
     exit
 fi
 

@@ -1,14 +1,40 @@
-
-local https = require 'ssl.https'
-local mime = require("mime")
 local utils = require("utils.misc")
+local success, module = pcall(require, 'ssl.https')
+local https = nil
+if success then
+    https = module
+else
+    https = {request = function(url)
+        local response = ""
+        
+        if MP.GetOSName() == "Windows" then
+            response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
+        else
+            response = os.execute("wget -q -O temp.txt " .. url)
+        end
+        
+        if response then
+            local file = io.open("temp.txt", "r")
+            local content = file:read("*all")
+            file:close()
+            os.remove("temp.txt")
+            return content, 200
+        else
+            return "", 404
+        end
+    end}
+end
+
+
+
+local mime = require("mime")
 local online = {}
 
 function online.getPlayerJson(playername)
-
+    
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
 
-    local body, code, headers, status = https.request(url)
+    local body, code = https.request(url)
     
     -- Check if the request was successful (status code 200)
     if code == 200 then
@@ -17,6 +43,7 @@ function online.getPlayerJson(playername)
         return json
     else
         print("Failed to get player data. Status code:", code)
+        return nil
     end
 end
 
