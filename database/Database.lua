@@ -6,6 +6,11 @@ local utils = require("utils.misc")
 
 local online = require("main.online")
 
+local UserRoles = require("objects.UserRole")
+local UsersStatus = require("objects.UserStatus")
+local Users = require("objects.User")
+local Roles = require("objects.Role")
+
 -- Database Management Class
 ---@class DatabaseManager
 local DatabaseManager = {}
@@ -506,7 +511,6 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
     stmtOnline:finalize()
   end
 
-
   -- Query to get remaining users with pagination
   local remainingQuery = [[
     SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
@@ -574,6 +578,48 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
 
   return final_results
 end
+
+
+
+--get an user with his roles and details like online, b64img but simple and return a json like getUsersDynamically return but only with one user
+function DatabaseManager:getUserWithRoles(beammpid)
+  local onlinePlayers = MP.GetPlayers()
+  local user = self:getClassByBeammpId(Users, beammpid)
+  local userRoles = self:getAllClassByBeammpId(UserRoles, beammpid)
+  local userStatus = self:getAllClassByBeammpId(UsersStatus, beammpid)
+  local userRolesFinal = {}
+  local userStatusFinal = {}
+  for i, v in ipairs(userRoles) do
+    local role = self:getEntry(Roles, "roleID", v.roleID) -- Utilisation de getClassByBeammpId pour obtenir les détails du rôle
+    table.insert(userRolesFinal, {
+      name = role.roleName,
+      permlvl = role.permlvl
+    })
+  end
+  for i, v in ipairs(userStatus) do
+    table.insert(userStatusFinal, {
+      beammpid = beammpid,
+      status_type = v.status_type,
+      status_value = v.is_status_value,
+      reason = v.reason,
+      time = v.time
+    })
+  end
+  playerid = utils.GetPlayerId(user.name)
+  local userFinal = {
+    roles = userRolesFinal,
+    status = userStatusFinal,
+    beammpid = beammpid,
+    name = user.name,
+    whitelisted = user.whitelisted,
+    online = onlinePlayers[playerid] ~= nil,
+    b64img = "data:image/png;base64," .. online.getPlayerB64Img(beammpid)
+  }
+  return userFinal
+end
+  
+
+
 
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)

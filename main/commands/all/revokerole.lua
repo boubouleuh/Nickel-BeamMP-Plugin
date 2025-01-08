@@ -1,6 +1,6 @@
 
 local utils = require("utils.misc")
-
+local interfaceUtils = require("main.client.interfaceUtils")
 local command = {}
 --- command
 ---@param managers managers
@@ -38,6 +38,7 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         end
         local result = permManager:unassignRole(rolename, beammpid)
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+        interfaceUtils.sendPlayer(-1, managers.dbManager, beammpid)
         return true
 
     else

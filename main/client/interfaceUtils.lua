@@ -1,5 +1,5 @@
 local Roles = require("objects.Role")
-
+local usersService = require("database.services.UsersService")
 local utils = {}
 --- send a string to the client
 ---@param id integer
@@ -34,6 +34,21 @@ function utils.sendPlayers(id, offset, dbManager)
     MP.TriggerClientEvent(id, "NKgetPlayers", "") 
 
 end
+
+--- send one player to client
+---@param id integer
+---@param dbManager DatabaseManager
+---@param beammpid integer
+function utils.sendPlayer(id, dbManager, beammpid)
+    print(dbManager)
+    dbManager:openConnection()
+    local player = dbManager:getUserWithRoles(beammpid)
+    dbManager:closeConnection()
+
+    utils.sendTable(id, "NKinsertPlayers", player)
+    MP.TriggerClientEvent(id, "NKgetPlayers", "") 
+end
+
 --- send every roles to client
 ---@param id integer
 ---@param event_name string

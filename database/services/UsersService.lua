@@ -18,9 +18,9 @@ end
 
 function Service:getUser()
     self.dbManager:openConnection()
-    local status = self.dbManager:getClassByBeammpId(userClass, self.beammpid)
+    local user = self.dbManager:getClassByBeammpId(userClass, self.beammpid)
     self.dbManager:closeConnection()
-    return status
+    return user
 end
 
 function Service:setWhitelisted(bool)

@@ -1,4 +1,5 @@
 local utils = require("utils.misc")
+local interfaceUtils = require("main.client.interfaceUtils")
 
 local command = {}
 --- command
@@ -18,6 +19,7 @@ function command.init(sender_id, sender_name, managers, rolename)
 
     local result = permManager:removeRole(rolename)
     msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    interfaceUtils.sendPlayers(-1, 0, managers.dbManager)
     return true
 end
 
