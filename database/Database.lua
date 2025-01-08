@@ -531,7 +531,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
   local remainingResults = {}
   for row in stmtRemaining:nrows() do
     local user_id = row.user_beammpid
-    if not onlineResults[user_id] then
+    if not remainingResults[user_id] then
       remainingResults[user_id] = {
         roles = {},
         status = {},

@@ -3,7 +3,7 @@ local new = require("objects.New")
 local Command = require("objects.Command")
 
 local utils = require("utils.misc")
-
+---@class CommandsHandler
 CommandsHandler = {}
 
 --- init commands

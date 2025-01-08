@@ -49,8 +49,11 @@ end
 function PermissionsHandler:unassignRole(rolename, beammpid)
     self.dbManager:openConnection()
    
-    local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
-
+    local role = self.dbManager:getEntry(Role, "roleName", rolename)
+    if role.is_default == 1 then
+        return 516
+    end
+    local roleid = role.roleID
     local conditions = {
         {"roleID", roleid},
         {"beammpid", beammpid}

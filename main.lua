@@ -48,7 +48,7 @@ local messageHandlerManager = require("main.messages.MessagesHandler")
 local commandHandler = require("main.commands.CommandsHandler")
 local default = require("main.permissions.default")
 local syncEnvironment = require("main.events.interface.syncEnvironment")
-
+local runCommand = require("main.events.interface.runCommand")
 
 -- Miscellanous
 local config = require("main.config.Settings")
@@ -109,6 +109,7 @@ end
 
 dbManager:closeConnection()
 
+---@type CommandsHandler
 
 
 ---@class managers
@@ -116,10 +117,10 @@ local managers = {
     dbManager = dbManager,
     cfgManager = cfgManager,
     msgManager = msgManager,
-    permManager = permManager
+    permManager = permManager,
 }
-
 local cmdManager = commandHandler.init(managers)
+managers.cmdManager = cmdManager
 
 default.init(permManager)
 
@@ -135,7 +136,7 @@ onVehicleReset.new(managers)
 
 initInterface.new(managers)
 syncEnvironment.new(managers)
-
+runCommand.new(managers)
 utils.nkprint("Plugin successfully initialized", "info")
 
 local extensions = require("main.initializeExtensions")
