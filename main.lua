@@ -32,6 +32,8 @@ local UserRole = require("objects.UserRole")
 local Role = require("objects.Role")
 local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
+local Action = require("objects.Action")
+local RoleAction = require("objects.RoleAction")
 local Infos = require("objects.Infos")
 local onConsoleInput = require("main.events.console.onConsoleInput")
 
@@ -46,6 +48,7 @@ local onVehicleReset = require("main.events.vehicles.onVehicleReset")
 local databaseManager = require("database.Database")
 local messageHandlerManager = require("main.messages.MessagesHandler")
 local commandHandler = require("main.commands.CommandsHandler")
+local actionHandler = require("main.actions.ActionsHandler")
 local default = require("main.permissions.default")
 local syncEnvironment = require("main.events.interface.syncEnvironment")
 local runCommand = require("main.events.interface.runCommand")
@@ -86,13 +89,33 @@ dbManager:createTableForClass(UserStatus.new())
 dbManager:createTableForClass(Role.new())
 dbManager:createTableForClass(Command.new())
 dbManager:createTableForClass(UserRole.new())
+dbManager:createTableForClass(Action.new())
+dbManager:createTableForClass(RoleAction.new())
 dbManager:createTableForClass(RoleCommand.new())
 dbManager:createTableForClass(Infos.new())
 
 dbManager:closeConnection()
 
-dbManager:openConnection()
 
+
+---@type CommandsHandler
+
+
+---@class managers
+local managers = {
+    dbManager = dbManager,
+    cfgManager = cfgManager,
+    msgManager = msgManager,
+    permManager = permManager,
+}
+local cmdManager = commandHandler.init(managers)
+local actManager = actionHandler.init(managers)
+managers.actManager = actManager
+managers.cmdManager = cmdManager
+
+default.init(permManager)
+
+dbManager:openConnection()
 
 local entry = dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch")
 if entry == nil then
@@ -106,23 +129,7 @@ elseif entry.infoValue == "false" then
 
 end
 
-
 dbManager:closeConnection()
-
----@type CommandsHandler
-
-
----@class managers
-local managers = {
-    dbManager = dbManager,
-    cfgManager = cfgManager,
-    msgManager = msgManager,
-    permManager = permManager,
-}
-local cmdManager = commandHandler.init(managers)
-managers.cmdManager = cmdManager
-
-default.init(permManager)
 
 -- Init Events
 onPlayerAuth.new(permManager, msgManager)

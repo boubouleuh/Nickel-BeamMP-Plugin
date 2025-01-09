@@ -4,6 +4,8 @@ local Role = require("objects.Role")
 local Command = require("objects.Command")
 local sqlcodes = require("database.sqlresultcode")
 local RoleCommand = require("objects.RoleCommand")
+local RoleAction = require("objects.RoleAction")
+local Action = require("objects.Action")
 ---@class PermissionsHandler
 PermissionsHandler = {}
 
@@ -88,6 +90,34 @@ function PermissionsHandler:assignCommand(commandname, rolename)
 
     local newRoleCommand = RoleCommand.new(roleid, commandid)
     local result = self.dbManager:save(newRoleCommand, false)
+
+    return result
+end
+
+function PermissionsHandler:assignAction(actionname, rolename)
+    self.dbManager:openConnection()
+    local actionid = self.dbManager:getEntry(Action, "actionName", actionname).actionID
+    local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+    self.dbManager:closeConnection()
+
+    local newRoleAction = RoleAction.new(roleid, actionid)
+    local result = self.dbManager:save(newRoleAction, false)
+
+    return result
+end
+
+function PermissionsHandler:unassignAction(actionname, rolename)
+    self.dbManager:openConnection()
+    local actionid = self.dbManager:getEntry(Action, "actionName", actionname).actionID
+    local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+
+    local conditions = {
+        {"roleID", roleid},
+        {"actionID", actionid}
+    }
+
+    local result = self.dbManager:deleteObject(RoleAction, conditions)
+    self.dbManager:closeConnection()
 
     return result
 end
@@ -194,7 +224,61 @@ end
 
 
 
+function PermissionsHandler:hasPermissionForAction(beammpid, action)
+    self.dbManager:openConnection()
 
+    if beammpid == -2 then
+        return true     -- if it's the console, give full permission
+    end
+
+    -- Obtenir tous les rôles de l'utilisateur
+    local userRoles = self:getRoles(beammpid)
+    local actionId = self.dbManager:getEntry(Action, "actionName", action).actionID
+
+    -- Vérifier si l'un des rôles de l'utilisateur a la permission pour l'action
+    for _, userRole in ipairs(userRoles) do
+        local roleId = userRole.roleID
+        local conditions = {
+            {"roleID", roleId},
+            {"actionID", actionId}
+        }
+
+        local roleActionEntries = self.dbManager:getAllEntry(RoleAction, conditions)
+
+        if #roleActionEntries > 0 then
+            self.dbManager:closeConnection()
+            return true
+        end
+    end
+
+    -- Si l'utilisateur n'a pas la permission avec ses rôles actuels, vérifier les niveaux de permission inférieurs
+    for _, userRole in ipairs(userRoles) do
+        local roleId = userRole.roleID
+        local role = self.dbManager:getEntry(Role, "roleID", roleId)
+        local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
+
+        while lowerPermissions >= 0 do
+            local lowerRole = self.dbManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
+            if lowerRole then
+                local lowerConditions = {
+                    {"roleID", lowerRole.roleID},
+                    {"actionID", actionId}
+                }
+
+                local lowerRoleActionEntries = self.dbManager:getAllEntry(RoleAction, lowerConditions)
+
+                if #lowerRoleActionEntries > 0 then
+                    self.dbManager:closeConnection()
+                    return true
+                end
+            end
+            lowerPermissions = lowerPermissions - 1
+        end
+    end
+
+    self.dbManager:closeConnection()
+    return false
+end
 
 function PermissionsHandler:hasPermission(beammpid, commandname)
     self.dbManager:openConnection()

@@ -44,6 +44,8 @@ function default.init(PermissionsManager)
         PermissionsManager:assignCommand("mute", "Moderator")
         PermissionsManager:assignCommand("unmute", "Moderator")
         PermissionsManager:assignCommand("tempmute", "Moderator")
+
+        PermissionsManager:assignAction("editEnvironnement", "Moderator")
     end
     dbManager:closeConnection()
     dbManager:openConnection()
