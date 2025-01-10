@@ -41,6 +41,8 @@ local onConsoleInput = require("main.events.console.onConsoleInput")
 -- Events / Database / Events handler
 local initInterface = require("main.events.interface.init")
 local onPlayerAuth = require("main.events.register.onPlayerAuth")
+local onPlayerJoin = require("main.events.misc.onPlayerJoin")
+local onPlayerDisconnect = require("main.events.misc.onPlayerDisconnect")
 local onChatMessage = require("main.events.chat.onChatMessage")
 local onVehicleSpawn = require("main.events.vehicles.onVehicleSpawn")
 local onVehicleEdited = require("main.events.vehicles.onVehicleEdited")
@@ -133,6 +135,9 @@ dbManager:closeConnection()
 
 -- Init Events
 onPlayerAuth.new(permManager, msgManager)
+
+onPlayerJoin.new(managers)
+onPlayerDisconnect.new(managers)
 
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
