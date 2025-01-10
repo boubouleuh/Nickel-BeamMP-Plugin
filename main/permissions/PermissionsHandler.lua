@@ -122,6 +122,26 @@ function PermissionsHandler:unassignAction(actionname, rolename)
     return result
 end
 
+--getActions
+function PermissionsHandler:getActions(beammpid)
+
+    local actions = {}
+
+    -- Récupérer toutes les actions possibles
+    self.dbManager:openConnection()
+    local allActions = self.dbManager:getAllEntry(Action)
+    self.dbManager:closeConnection()
+
+    for _, action in ipairs(allActions) do
+        -- Vérifier si l'utilisateur a la permission pour cette action
+        if self:hasPermissionForAction(beammpid, action.actionName) then
+            table.insert(actions, action)
+        end
+    end
+
+    return actions
+end
+
 function PermissionsHandler:unassignCommand(commandname, rolename)
     self.dbManager:openConnection()
     local commandid = self.dbManager:getEntry(Command, "commandName", commandname).commandID

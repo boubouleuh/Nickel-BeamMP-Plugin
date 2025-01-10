@@ -38,13 +38,19 @@ end
 --- send one player to client
 ---@param id integer
 ---@param dbManager DatabaseManager
+---@param permManager PermissionsHandler
 ---@param beammpid integer
-function utils.sendPlayer(id, dbManager, beammpid)
-    print(dbManager)
+function utils.sendPlayer(id, dbManager, permManager, beammpid)
     dbManager:openConnection()
     local player = dbManager:getUserWithRoles(beammpid)
     dbManager:closeConnection()
-
+    local userInfos = {}
+    userInfos.self_action_perm = {}
+    local actions =  permManager:getActions(beammpid)
+    for _, action in ipairs(actions) do
+        table.insert(userInfos.self_action_perm, action.actionName) --need to fix every that
+    end
+    utils.sendTable(id, "NKgetUserInfos", userInfos) --update actions
     utils.sendTable(id, "NKinsertPlayers", player)
     MP.TriggerClientEvent(id, "NKgetPlayers", "") 
 end

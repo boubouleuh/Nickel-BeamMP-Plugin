@@ -39,7 +39,7 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         end
         local result = permManager:assignRole(rolename, beammpid)
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-        interfaceUtils.sendPlayer(-1, managers.dbManager, beammpid)
+        interfaceUtils.sendPlayer(-1, managers.dbManager, permManager, beammpid)
         return true
     else
         msgManager:SendMessage(sender_id, string.format("player.not_found", playername))

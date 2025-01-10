@@ -34,6 +34,8 @@ function default.init(PermissionsManager)
         PermissionsManager:assignCommand("grantrole", "Administrator")
         PermissionsManager:assignCommand("revokerole", "Administrator")
         PermissionsManager:assignCommand("revokecommand", "Administrator")
+        PermissionsManager:assignCommand("grantaction", "Administrator")
+        PermissionsManager:assignCommand("revokeaction", "Administrator")
 
         PermissionsManager:assignCommand("whitelist", "Moderator")
         PermissionsManager:assignCommand("kick", "Moderator")
@@ -45,7 +47,7 @@ function default.init(PermissionsManager)
         PermissionsManager:assignCommand("unmute", "Moderator")
         PermissionsManager:assignCommand("tempmute", "Moderator")
 
-        PermissionsManager:assignAction("editEnvironnement", "Moderator")
+        PermissionsManager:assignAction("editEnvironment", "Moderator")
     end
     dbManager:closeConnection()
     dbManager:openConnection()

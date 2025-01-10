@@ -47,6 +47,26 @@ function Misc.element_exist_in_table(element, list)
   return false  -- Element does not exist or invalid input
 end
 
+--- deepCompare |
+-- Compare two tables
+---@param t1 table
+---@param t2 table
+---@return boolean
+function Misc.deepCompare(t1, t2)
+  if type(t1) ~= type(t2) then return false end
+  if type(t1) ~= "table" then return t1 == t2 end
+  
+  for k, v in pairs(t1) do
+      if not Misc.deepCompare(v, t2[k]) then return false end
+  end
+  
+  for k, v in pairs(t2) do
+      if t1[k] == nil then return false end
+  end
+  
+  return true
+end
+
 ---mergeTables |
 -- merge two tables together
 ---@param table1 table
