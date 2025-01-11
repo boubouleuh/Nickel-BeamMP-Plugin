@@ -6,48 +6,48 @@ local Infos = require("objects.Infos")
 local default = {}
 
 --- initialize default roles and permissions
----@param PermissionsManager PermissionsHandler
-function default.init(PermissionsManager)
+---@param managers managers
+function default.init(managers)
 
     ---@type DatabaseManager
-    local dbManager = PermissionsManager.dbManager
+    local dbManager = managers.dbManager
     dbManager:openConnection()
 
     if dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue == "false" then
 
-        PermissionsManager:addRole("Member", 0, true)
+        managers:addRole("Member", 0, true)
 
-        PermissionsManager:addRole("Moderator", 1, false) 
+        managers:addRole("Moderator", 1, false) 
 
-        PermissionsManager:addRole("Administrator", 2, false)
+        managers:addRole("Administrator", 2, false)
 
-        PermissionsManager:addRole("Owner", 3, false)
+        managers:addRole("Owner", 3, false)
 
 
-        PermissionsManager:assignCommand("dm", "Member")
-        PermissionsManager:assignCommand("help", "Member")
-        PermissionsManager:assignCommand("countdown", "Member")
+        managers:assignCommand("dm", "Member")
+        managers:assignCommand("help", "Member")
+        managers:assignCommand("countdown", "Member")
 
-        PermissionsManager:assignCommand("createrole", "Administrator")
-        PermissionsManager:assignCommand("deleterole", "Administrator")
-        PermissionsManager:assignCommand("grantcommand", "Administrator")
-        PermissionsManager:assignCommand("grantrole", "Administrator")
-        PermissionsManager:assignCommand("revokerole", "Administrator")
-        PermissionsManager:assignCommand("revokecommand", "Administrator")
-        PermissionsManager:assignCommand("grantaction", "Administrator")
-        PermissionsManager:assignCommand("revokeaction", "Administrator")
+        managers:assignCommand("createrole", "Administrator")
+        managers:assignCommand("deleterole", "Administrator")
+        managers:assignCommand("grantcommand", "Administrator")
+        managers:assignCommand("grantrole", "Administrator")
+        managers:assignCommand("revokerole", "Administrator")
+        managers:assignCommand("revokecommand", "Administrator")
+        managers:assignCommand("grantaction", "Administrator")
+        managers:assignCommand("revokeaction", "Administrator")
 
-        PermissionsManager:assignCommand("whitelist", "Moderator")
-        PermissionsManager:assignCommand("kick", "Moderator")
-        PermissionsManager:assignCommand("ban", "Moderator")
-        PermissionsManager:assignCommand("tempban", "Moderator")
-        PermissionsManager:assignCommand("banip", "Moderator")
-        PermissionsManager:assignCommand("unban", "Moderator")
-        PermissionsManager:assignCommand("mute", "Moderator")
-        PermissionsManager:assignCommand("unmute", "Moderator")
-        PermissionsManager:assignCommand("tempmute", "Moderator")
+        managers:assignCommand("whitelist", "Moderator")
+        managers:assignCommand("kick", "Moderator")
+        managers:assignCommand("ban", "Moderator")
+        managers:assignCommand("tempban", "Moderator")
+        managers:assignCommand("banip", "Moderator")
+        managers:assignCommand("unban", "Moderator")
+        managers:assignCommand("mute", "Moderator")
+        managers:assignCommand("unmute", "Moderator")
+        managers:assignCommand("tempmute", "Moderator")
 
-        PermissionsManager:assignAction("editEnvironment", "Moderator")
+        managers:assignAction("editEnvironment", "Moderator")
     end
     dbManager:closeConnection()
     dbManager:openConnection()
@@ -65,7 +65,7 @@ function default.init(PermissionsManager)
     -- Check each command to see if it has an associated role
     for _, command in ipairs(everyCommands) do
         if not commandRoles[command.commandID] then
-            utils.nkprint(string.format("Command '%s' (ID: %d) is not associated with any role", command.commandName, command.commandID), "warn")
+            utils.nkprint(string.format("Command '%s' (ID: %d) is not associated with any role. Use the command '%sgrantcommand %s <role>' to assign it to a role.", command.commandName, command.commandID, managers.cfgManager:GetSetting("commands").prefix , command.commandName), "warn")
         end
     end
     

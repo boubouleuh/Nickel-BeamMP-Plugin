@@ -115,7 +115,7 @@ local actManager = actionHandler.init(managers)
 managers.actManager = actManager
 managers.cmdManager = cmdManager
 
-default.init(permManager)
+default.init(managers)
 
 dbManager:openConnection()
 
