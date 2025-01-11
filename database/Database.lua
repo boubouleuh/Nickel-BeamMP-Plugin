@@ -618,6 +618,28 @@ function DatabaseManager:getUserWithRoles(beammpid)
   return userFinal
 end
   
+function DatabaseManager:likeSearchUserWithRoles(name)
+  local users = {}
+  local query = "SELECT * FROM users WHERE name LIKE ? LIMIT 50"
+  local stmt = self.db:prepare(query)
+  if not stmt then
+      error("Failed to prepare statement: " .. query)
+  end
+
+  -- Bind the values
+  stmt:bind_values("%" .. name .. "%")
+
+  -- Execute the statement and iterate over the results
+  for row in stmt:nrows() do
+      local user = self:getUserWithRoles(row.beammpid)
+      table.insert(users, user)
+  end
+
+  -- Finalize the statement to release resources
+  stmt:finalize()
+
+  return users
+end
 
 
 

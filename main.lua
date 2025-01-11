@@ -54,6 +54,7 @@ local actionHandler = require("main.actions.ActionsHandler")
 local default = require("main.permissions.default")
 local syncEnvironment = require("main.events.interface.syncEnvironment")
 local runCommand = require("main.events.interface.runCommand")
+local search = require("main.events.interface.search")
 
 -- Miscellanous
 local config = require("main.config.Settings")
@@ -149,6 +150,7 @@ onVehicleReset.new(managers)
 initInterface.new(managers)
 syncEnvironment.new(managers)
 runCommand.new(managers)
+search.new(managers)
 utils.nkprint("Plugin successfully initialized", "info")
 
 local extensions = require("main.initializeExtensions")
