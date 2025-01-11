@@ -99,7 +99,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     local commandObject = self.commands[commandWithoutPrefix]
 
     if commandObject == nil then
-        self.msgManager:SendMessage(sender_id, "commands.not_found", commandWithoutPrefix)
+        self.msgManager:SendMessage(sender_id, "commands.not_found", {Command = commandWithoutPrefix})
         return
     end
 

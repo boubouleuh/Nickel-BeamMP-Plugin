@@ -10,7 +10,7 @@ function command.init(sender_id, sender_name, managers, rolename)
     local cfgManager = managers.cfgManager
 
     if rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.deleterole.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.deleterole.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 

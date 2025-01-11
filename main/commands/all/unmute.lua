@@ -12,7 +12,7 @@ function command.init(sender_id, sender_name, managers, playername)
     local cfgManager = managers.cfgManager
     local dbManager = managers.dbManager
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.unmute.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.unmute.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 
@@ -29,9 +29,9 @@ function command.init(sender_id, sender_name, managers, playername)
 
         statusService:removeStatus("ismuted")
         statusService:removeStatus("istempmuted")
-        msgManager:SendMessage(sender_id, "commands.unmute.success", playername)
+        msgManager:SendMessage(sender_id, "commands.unmute.success", {Player = playername})
     else
-        msgManager:SendMessage(sender_id, "moderation.not_muted", playername)
+        msgManager:SendMessage(sender_id, "moderation.not_muted", {Player = playername})
     end
 
 

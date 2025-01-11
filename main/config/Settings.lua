@@ -30,6 +30,9 @@ function Settings.init()
     local self = {}
     self.config = Settings.loadExistingConfig()
     local defaultConfig = {
+        misc = {
+            join_message = "[{Role}] {Player} joined the server",
+        },
         langs = {
             server_language = "en_us",
             force_server_language = false

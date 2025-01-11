@@ -13,7 +13,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
     local dbManager = managers.dbManager
 
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.ban.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.ban.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     elseif reason == nil then
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
@@ -30,7 +30,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
 
 
         if statusService:checkStatus("isbanned") or statusService:checkStatus("istempbanned") then
-            msgManager:SendMessage(sender_id, "moderation.alreadybanned", playername)
+            msgManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
         else
 
             local result = statusService:createStatus("isbanned", reason)
@@ -38,9 +38,9 @@ function command.init(sender_id, sender_name, managers, playername, reason)
             local target_id = utils.GetPlayerId(playername)
 
             if target_id ~= -1 then
-                MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.banned", reason))
+                MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
             end
-            msgManager:SendMessage(sender_id, "commands.ban.success", playername, reason)
+            msgManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
             msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
 
         end

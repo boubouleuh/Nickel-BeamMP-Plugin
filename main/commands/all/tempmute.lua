@@ -12,7 +12,7 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
     local dbManager = managers.dbManager
 
     if playername == nil or time == nil then
-        msgManager:SendMessage(sender_id, "commands.tempmute.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.tempmute.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     elseif reason == nil then
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
@@ -35,7 +35,7 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
 
 
     if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
-        msgManager:SendMessage(sender_id, "moderation.alreadymuted", playername)
+        msgManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
 
     else
 
@@ -45,9 +45,9 @@ function command.init(sender_id, sender_name, managers, playername, time, reason
         local target_id = utils.GetPlayerId(playername)
 
         if target_id ~= -1 then
-            msgManager:SendMessage(target_id, "moderation.tempmuted", reason, end_date)
+            msgManager:SendMessage(target_id, "moderation.tempmuted", {Reason = reason, Date = end_date})
         end
-        msgManager:SendMessage(sender_id, "commands.tempmute.success", playername, reason, end_date)
+        msgManager:SendMessage(sender_id, "commands.tempmute.success", {Player = playername, Reason = reason, Date = end_date})
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
 
     end

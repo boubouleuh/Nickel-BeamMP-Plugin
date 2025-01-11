@@ -11,7 +11,7 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
     local cfgManager = managers.cfgManager
 
     if rolename == nil or playername == nil then
-        msgManager:SendMessage(sender_id, "commands.revokerole.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.revokerole.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 
@@ -28,11 +28,11 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
 
         if sender_id ~= -2 then
             if not permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)) then
-                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", playername)
+                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
                 return false
             end
             if not permManager:canManageRole(utils.getPlayerBeamMPID(sender_name), rolename) then
-                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.addrole", rolename)
+                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
                 return false
             end
         end
@@ -42,7 +42,7 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         return true
 
     else
-        msgManager:SendMessage(sender_id, string.format("player.not_found", playername))
+        msgManager:SendMessage(sender_id, string.format("player.not_found", {Player = playername}))
     end
 end
 

@@ -10,7 +10,7 @@ function command.init(sender_id, sender_name, managers, rolename, permlvl)
     local cfgManager = managers.cfgManager
 
     if permlvl == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.createrole.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.createrole.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 

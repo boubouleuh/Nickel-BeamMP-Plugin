@@ -13,7 +13,7 @@ function command.init(sender_id, sender_name, managers, playername)
     local cfgManager = managers.cfgManager
     local dbManager = managers.dbManager
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.unban.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.unban.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 
@@ -28,16 +28,16 @@ function command.init(sender_id, sender_name, managers, playername)
         statusService:removeStatus("isbanned")
         statusService:removeStatus("istempbanned")
 
-        msgManager:SendMessage(sender_id, "commands.unban.success", playername)
+        msgManager:SendMessage(sender_id, "commands.unban.success", {Player = playername})
 
     elseif not usersIpsService:isIpBanned() then
-        msgManager:SendMessage(sender_id, "moderation.not_banned", playername)
+        msgManager:SendMessage(sender_id, "moderation.not_banned", {Player = playername})
     end
 
 
     if usersIpsService:isIpBanned() then
         local result = usersIpsService:unbanAllIps()
-        msgManager:SendMessage(sender_id, "commands.unban.unbanip.success", result, playername)
+        msgManager:SendMessage(sender_id, "commands.unban.unbanip.success", {Count = result, Player = playername})
     end
 
 

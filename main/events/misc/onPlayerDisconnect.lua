@@ -2,6 +2,7 @@ local utils = require("utils.misc")
 local interfaceUtils = require("main.client.interfaceUtils")
 
 local onPlayerDisconnect = {}
+---@param managers managers
 function onPlayerDisconnect.new(managers) 
     function onDisconnect(id)
 

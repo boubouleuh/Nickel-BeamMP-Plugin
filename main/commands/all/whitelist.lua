@@ -12,7 +12,7 @@ function command.init(sender_id, sender_name, managers, addORremove, playername)
 
 
     if playername == nil or not utils.element_exist_in_table(addORremove, {"add", "remove"}) then
-        msgManager:SendMessage(sender_id, "commands.whitelist.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.whitelist.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 
@@ -27,10 +27,10 @@ function command.init(sender_id, sender_name, managers, addORremove, playername)
 
     if addORremove == "add" then
         usersService:setWhitelisted(true)
-        msgManager:SendMessage(sender_id, "commands.whitelist.add.success", playername)
+        msgManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
     elseif addORremove == "remove" then
         usersService:setWhitelisted(false)
-        msgManager:SendMessage(sender_id, "commands.whitelist.remove.success", playername)
+        msgManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
     end
     
 

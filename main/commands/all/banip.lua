@@ -13,7 +13,7 @@ function command.init(sender_id, sender_name, managers, playername)
 
 
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.banip.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.banip.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
 
     end
@@ -48,12 +48,12 @@ function command.init(sender_id, sender_name, managers, playername)
 
 
     if count > 0 then
-        msgManager:SendMessage(sender_id, "commands.banip.success", count, playername)
+        msgManager:SendMessage(sender_id, "commands.banip.success", {Count = count, Player = playername})
     elseif usersIpsService:isIpBanned() then
-        msgManager:SendMessage(sender_id, "moderation.alreadyipbanned", playername)
+        msgManager:SendMessage(sender_id, "moderation.alreadyipbanned", {Player = playername})
         return false
     else
-        msgManager:SendMessage(sender_id, "commands.banip.no_registered", playername)
+        msgManager:SendMessage(sender_id, "commands.banip.no_registered", {Player = playername})
         return false
     end
 

@@ -11,7 +11,7 @@ function action.init(sender_id, sender_name, managers, actionName, rolename)
 
 
     if actionName == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.grantaction.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.grantaction.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     end
 

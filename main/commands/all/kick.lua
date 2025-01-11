@@ -13,7 +13,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
 
 
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.kick.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.kick.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     elseif reason == nil then
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
@@ -24,7 +24,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
     if target_id ~= -1 then
         MP.DropPlayer(target_id, reason)
     end
-    msgManager:SendMessage(sender_id, "commands.kick.success", playername, reason)
+    msgManager:SendMessage(sender_id, "commands.kick.success", {Player = playername, Reason = reason})
 
     return true
 end

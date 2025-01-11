@@ -175,6 +175,18 @@ function PermissionsHandler:getRoles(beammpid)
     return roles
 end
 
+function PermissionsHandler:GetHighestRole(beammpid)
+    self.dbManager:openConnection()
+    local roles = self:getRoles(beammpid)
+    self.dbManager:closeConnection()
+    local highestRole = nil
+    for _, role in ipairs(roles) do
+        if highestRole == nil or role.permlvl > highestRole.permlvl then
+            highestRole = role
+        end
+    end
+    return highestRole
+end
 
 function PermissionsHandler:canManageRole(manager_beammpid, rolename)
     self.dbManager:openConnection()

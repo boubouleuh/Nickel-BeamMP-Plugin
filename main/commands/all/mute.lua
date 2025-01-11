@@ -12,7 +12,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
     local dbManager = managers.dbManager
 
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.mute.missing_args", cfgManager.config.commands.prefix)
+        msgManager:SendMessage(sender_id, "commands.mute.missing_args", {Prefix = cfgManager.config.commands.prefix})
         return false
     elseif reason == nil then
         reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
@@ -28,7 +28,7 @@ function command.init(sender_id, sender_name, managers, playername, reason)
     local statusService = StatusService.new(beammpid, dbManager)
 
     if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
-        msgManager:SendMessage(sender_id, "moderation.alreadymuted", playername)
+        msgManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
     else
 
 
@@ -36,9 +36,9 @@ function command.init(sender_id, sender_name, managers, playername, reason)
         local target_id = utils.GetPlayerId(playername)
 
         if target_id ~= -1 then
-            msgManager:SendMessage(target_id, "moderation.muted", reason)
+            msgManager:SendMessage(target_id, "moderation.muted", {Reason = reason})
         end
-        msgManager:SendMessage(sender_id, "commands.mute.success", playername, reason)
+        msgManager:SendMessage(sender_id, "commands.mute.success", {Player = playername, Reason = reason})
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
 
     end

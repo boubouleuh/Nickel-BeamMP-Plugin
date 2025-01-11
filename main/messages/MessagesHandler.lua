@@ -15,15 +15,15 @@ function MessagesHandler.new(dbManager, configManager)
     return new._object(MessagesHandler, self)
   end
 
-function MessagesHandler:SendMessage(sender_id, messageKey, ...)
+  function MessagesHandler:SendMessage(sender_id, messageKey, values)
     local chatcolor = "^l^7"  -- Couleur
     local chatstyle = "^r^o"  -- Style
 
     local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
 
-    local formattedMessage = chatcolor .. "[Nickel]" .. chatstyle .. self:GetMessage(sender_id, messageKey, ...) .. "^r"
+    local formattedMessage = chatcolor .. "[Nickel]" .. chatstyle .. self:GetMessage(sender_id, messageKey, values) .. "^r"
 
-    local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, ...) .. "\x1b[39m\x1b[49m\x1b[0m"
+    local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, values) .. "\x1b[39m\x1b[49m\x1b[0m"
 
     if sender_id == -2 then
         print(consoleFormattedMessage)  -- Afficher dans la console
@@ -32,9 +32,7 @@ function MessagesHandler:SendMessage(sender_id, messageKey, ...)
     end
 end
 
-function MessagesHandler:GetMessage(sender_id, key, ...)
-
-
+function MessagesHandler:GetMessage(sender_id, key, values)
     local beamId
     if sender_id ~= -2 and sender_id ~= -1 then
         beamId = utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
@@ -58,22 +56,26 @@ function MessagesHandler:GetMessage(sender_id, key, ...)
 
     local json = Util.JsonDecode(jsonFileContent)
     
-    if json[key] ~= nil then
-        local message = json[key]
-
-        local args = {...}
-
-        for i, var in ipairs(args) do
-            local placeholder = "{(.-)}"
-            message = message:gsub(placeholder, var, 1)
+    local message = json[key]
+    if message == nil then
+        -- Si la clé n'est pas trouvée, vérifiez si elle contient des placeholders
+        message = key
+        if values then
+            for placeholder, value in pairs(values) do
+                message = message:gsub("{" .. placeholder .. "}", value)
+            end
         end
-
-        return message
     else
-        return key
+        -- Si la clé est trouvée, remplacez les placeholders par les valeurs fournies
+        if values then
+            for placeholder, value in pairs(values) do
+                message = message:gsub("{" .. placeholder .. "}", value)
+            end
+        end
     end
-end
 
+    return message
+end
 
 
 return MessagesHandler
