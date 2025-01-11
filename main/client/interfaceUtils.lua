@@ -61,7 +61,7 @@ end
 ---@param dbManager DatabaseManager
 function utils.sendRoles(id, event_name, dbManager)
     dbManager:openConnection()
-    local roles = dbManager:getAllEntry(Roles, {})
+    local roles = dbManager:getAllEntry(Roles)
     dbManager:closeConnection()
 
     local rolesfinal = {}

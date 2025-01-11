@@ -36,6 +36,7 @@ function default.init(managers)
         managers:assignCommand("revokecommand", "Administrator")
         managers:assignCommand("grantaction", "Administrator")
         managers:assignCommand("revokeaction", "Administrator")
+        managers:assignCommand("listroles", "Administrator")
 
         managers:assignCommand("whitelist", "Moderator")
         managers:assignCommand("kick", "Moderator")
