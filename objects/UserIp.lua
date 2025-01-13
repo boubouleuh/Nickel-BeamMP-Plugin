@@ -4,7 +4,7 @@ local utils = require("utils.misc")
 ---@class UserIp
 local UserIp = {}
 
-UserIp.tableName = "UsersIps" 
+UserIp.tableName = "UserIps" 
 
 function UserIp.new(beammpid, ip)
   local self = {}

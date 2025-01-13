@@ -1,5 +1,5 @@
 local user = require("objects.User")
-local userIps = require("objects.UserIps")
+local userIp = require("objects.UserIp")
 local userStatus = require("objects.UserStatus")
 local userRole = require("objects.UserRole")
 local utils = require("utils.misc")
@@ -31,7 +31,7 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         end
 
         permManager.dbManager:openConnection()
-        local ipClass = permManager.dbManager:getClassByBeammpId(userIps, beammpid)
+        local ipClass = permManager.dbManager:getClassByBeammpId(userIp, beammpid)
         local userRoleClass = permManager.dbManager:getClassByBeammpId(userRole, beammpid)
         permManager.dbManager:closeConnection()
 
@@ -67,7 +67,7 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
             permManager.dbManager:save(ipClass, false)
 
         else
-            local newUserIp = userIps.new(beammpid, ip)
+            local newUserIp = userIp.new(beammpid, ip)
             permManager.dbManager:save(newUserIp)
         end
 

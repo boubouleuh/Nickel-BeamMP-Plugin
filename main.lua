@@ -25,7 +25,7 @@ initializeModules.initialize()
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables
-local UserIps = require("objects.UserIps")
+local UserIp = require("objects.UserIp")
 local UserStatus = require("objects.UserStatus")
 local User = require("objects.User")
 local UserRole = require("objects.UserRole")
@@ -86,7 +86,7 @@ local permManager = PermissionsHandler.new(dbManager)
 
 -- Creating tables / updating
 dbManager:createTableForClass(User.new())
-dbManager:createTableForClass(UserIps.new())
+dbManager:createTableForClass(UserIp.new())
 dbManager:createTableForClass(UserStatus.new())
 
 dbManager:createTableForClass(Role.new())

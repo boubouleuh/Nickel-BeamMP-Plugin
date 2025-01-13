@@ -30,9 +30,9 @@ function interface.init(id, managers, offset)
 
         local actions = managers.permManager:getActions(utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
         for _, action in ipairs(actions) do
-            table.insert(userInfos.self_action_perm, action.actionName) --need to fix every that
+            table.insert(userInfos.self_action_perm, action.actionName)
         end
-
+        
 
         interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
 

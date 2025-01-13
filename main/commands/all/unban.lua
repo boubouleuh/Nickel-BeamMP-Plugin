@@ -1,7 +1,6 @@
 
 local utils = require("utils.misc")
 local StatusService = require("database.services.StatusService")
-local userIps = require("objects.UserIps")
 local UsersIpsService = require("database.services.UsersIpsService")
 
 local command = {}

@@ -1,7 +1,7 @@
 
 local new = require("objects.New")
 
-local userIps = require("objects.UserIps")
+local userIp = require("objects.UserIp")
 
 
 local Service = {}
@@ -18,7 +18,7 @@ end
 
 function Service:getAllIps()
     self.dbManager:openConnection()
-    local ips = self.dbManager:getAllClassByBeammpId(userIps, self.beammpid)
+    local ips = self.dbManager:getAllClassByBeammpId(userIp, self.beammpid)
     self.dbManager:closeConnection()
     return ips
 end
