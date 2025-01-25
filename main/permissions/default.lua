@@ -3,6 +3,8 @@ local RoleCommand = require("objects.RoleCommand")
 local Command = require("objects.Command")
 local utils = require("utils.misc")
 local Infos = require("objects.Infos")
+local Action = require("objects.Action")
+local RoleAction = require("objects.RoleAction")
 local default = {}
 
 --- initialize default roles and permissions
@@ -49,11 +51,14 @@ function default.init(managers)
         managers:assignCommand("tempmute", "Moderator")
 
         managers:assignAction("editEnvironment", "Moderator")
+        managers:assignAction("seeAdvancedUserInfos", "Moderator")
     end
     dbManager:closeConnection()
     dbManager:openConnection()
     local everyCommands = dbManager:getAllEntry(Command)
     local everyCommandBinded = dbManager:getAllEntry(RoleCommand)
+    local everyActions = dbManager:getAllEntry(Action)
+    local everyRoleActions = dbManager:getAllEntry(RoleAction)
     dbManager:closeConnection()
         -- Create a dictionary to store role associations
     local commandRoles = {}
@@ -69,7 +74,23 @@ function default.init(managers)
             utils.nkprint(string.format("Command '%s' (ID: %d) is not associated with any role. Use the command '%sgrantcommand %s <role>' to assign it to a role.", command.commandName, command.commandID, managers.cfgManager:GetSetting("commands").prefix , command.commandName), "warn")
         end
     end
-    
+
+
+    -- Create a dictionary to store role associations
+    local actionRoles = {}
+
+    -- Fill the dictionary with role actions
+    for _, roleAction in ipairs(everyRoleActions) do
+        actionRoles[roleAction.actionID] = true
+    end
+
+    -- Check each action to see if it has an associated role
+    for _, action in ipairs(everyActions) do
+        if not actionRoles[action.actionID] then
+            utils.nkprint(string.format("Action '%s' (ID: %d) is not associated with any role. Use the command '%sgrantaction %s <role>' to assign it to a role.", action.actionName, action.actionID, managers.cfgManager:GetSetting("commands").prefix , action.actionName), "warn")
+        end
+    end
+ 
 
 end
 

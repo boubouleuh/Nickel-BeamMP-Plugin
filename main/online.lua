@@ -33,7 +33,7 @@ local online = {}
 function online.getPlayerJson(playername)
     
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
-
+    print(url)
     local body, code = https.request(url)
     
     -- Check if the request was successful (status code 200)

@@ -10,6 +10,7 @@ local UserRoles = require("objects.UserRole")
 local UsersStatus = require("objects.UserStatus")
 local Users = require("objects.User")
 local Roles = require("objects.Role")
+local UserIp = require("objects.UserIp")
 
 -- Database Management Class
 ---@class DatabaseManager
@@ -447,7 +448,8 @@ end
 ---@param limit integer
 ---@param offset integer
 ---@param onlinePlayers table
-function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
+---@param permManager PermissionsHandler
+function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permManager)
   -- Get a set of online player beammpids
   local onlineBeammpids = {}
   for id, name in pairs(onlinePlayers) do
@@ -467,11 +469,12 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
   -- Query to get all online users
   if offset == 0 then
     local onlineQuery = [[
-      SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+      SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*, UserIps.ip
       FROM Users
       JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
       JOIN Roles ON UserRoles.roleID = Roles.roleID
       LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+      LEFT JOIN UserIps ON Users.beammpid = UserIps.beammpid
       WHERE Users.beammpid IN (]] .. onlineBeammpidsString .. [[)
       ORDER BY Roles.permlvl DESC, Users.name ASC;
     ]]
@@ -484,6 +487,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
         onlineResults[user_id] = {
           roles = {},
           status = {},
+          ips = {},
           beammpid = row.user_beammpid,
           name = row.name,
           whitelisted = row.whitelisted,
@@ -492,20 +496,46 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
         }
       end
 
-      -- Insert role
-      table.insert(onlineResults[user_id].roles, {
-        name = row.roleName,
-        permlvl = row.permlvl,
-      })
+      -- Use hash tables to track existing roles, status, and IPs
+      local rolesHash = {}
+      for _, role in ipairs(onlineResults[user_id].roles) do
+        rolesHash[role.name] = true
+      end
 
-      -- Insert status if available
-      if row.status_type ~= nil then
+      local statusHash = {}
+      for _, status in ipairs(onlineResults[user_id].status) do
+        statusHash[status.status_type] = true
+      end
+
+      local ipsHash = {}
+      for _, ip in ipairs(onlineResults[user_id].ips) do
+        ipsHash[ip] = true
+      end
+
+      -- Insert role if not already present
+      if not rolesHash[row.roleName] then
+        table.insert(onlineResults[user_id].roles, {
+          name = row.roleName,
+          permlvl = row.permlvl,
+        })
+        rolesHash[row.roleName] = true
+      end
+
+      -- Insert status if available and not already present
+      if row.status_type ~= nil and not statusHash[row.status_type] then
         table.insert(onlineResults[user_id].status, {
           status_type = row.status_type,
           status_value = row.is_status_value,
           reason = row.reason,
           time = row.time,
         })
+        statusHash[row.status_type] = true
+      end
+
+      -- Insert IP if available and not already present
+      if row.ip ~= nil and not ipsHash[row.ip] then
+        table.insert(onlineResults[user_id].ips, row.ip)
+        ipsHash[row.ip] = true
       end
     end
     stmtOnline:finalize()
@@ -513,11 +543,12 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
 
   -- Query to get remaining users with pagination
   local remainingQuery = [[
-    SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*
+    SELECT Users.beammpid AS user_beammpid, Users.name, Users.whitelisted, Roles.roleName, Roles.permlvl, UsersStatus.*, UserIps.ip
     FROM Users
     JOIN UserRoles ON Users.beammpid = UserRoles.beammpid
     JOIN Roles ON UserRoles.roleID = Roles.roleID
     LEFT JOIN UsersStatus ON Users.beammpid = UsersStatus.beammpid
+    LEFT JOIN UserIps ON Users.beammpid = UserIps.beammpid
     WHERE Users.beammpid NOT IN (]] .. table.concat(onlineBeammpidsList, ", ") .. [[)
     ORDER BY Roles.permlvl DESC, Users.name ASC
     LIMIT ? OFFSET ?;
@@ -535,6 +566,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
       remainingResults[user_id] = {
         roles = {},
         status = {},
+        ips = {},
         beammpid = row.user_beammpid,
         name = row.name,
         whitelisted = row.whitelisted,
@@ -543,20 +575,46 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers)
       }
     end
 
-    -- Insert role
-    table.insert(remainingResults[user_id].roles, {
-      name = row.roleName,
-      permlvl = row.permlvl,
-    })
+    -- Use hash tables to track existing roles, status, and IPs
+    local rolesHash = {}
+    for _, role in ipairs(remainingResults[user_id].roles) do
+      rolesHash[role.name] = true
+    end
 
-    -- Insert status if available
-    if row.status_type ~= nil then
+    local statusHash = {}
+    for _, status in ipairs(remainingResults[user_id].status) do
+      statusHash[status.status_type] = true
+    end
+
+    local ipsHash = {}
+    for _, ip in ipairs(remainingResults[user_id].ips) do
+      ipsHash[ip] = true
+    end
+
+    -- Insert role if not already present
+    if not rolesHash[row.roleName] then
+      table.insert(remainingResults[user_id].roles, {
+        name = row.roleName,
+        permlvl = row.permlvl,
+      })
+      rolesHash[row.roleName] = true
+    end
+
+    -- Insert status if available and not already present
+    if row.status_type ~= nil and not statusHash[row.status_type] then
       table.insert(remainingResults[user_id].status, {
         status_type = row.status_type,
         status_value = row.is_status_value,
         reason = row.reason,
         time = row.time,
       })
+      statusHash[row.status_type] = true
+    end
+
+    -- Insert IP if available and not already present
+    if row.ip ~= nil and not ipsHash[row.ip] then
+      table.insert(remainingResults[user_id].ips, row.ip)
+      ipsHash[row.ip] = true
     end
   end
   stmtRemaining:finalize()
@@ -582,13 +640,16 @@ end
 
 
 --get an user with his roles and details like online, b64img but simple and return a json like getUsersDynamically return but only with one user
-function DatabaseManager:getUserWithRoles(beammpid)
+function DatabaseManager:getUserWithRoles(beammpid, permManager)
   local onlinePlayers = MP.GetPlayers()
   local user = self:getClassByBeammpId(Users, beammpid)
   local userRoles = self:getAllClassByBeammpId(UserRoles, beammpid)
   local userStatus = self:getAllClassByBeammpId(UsersStatus, beammpid)
+  local userIps = self:getAllClassByBeammpId(UserIp, beammpid)
   local userRolesFinal = {}
   local userStatusFinal = {}
+  local userIpsFinal = {}
+
   for i, v in ipairs(userRoles) do
     local role = self:getEntry(Roles, "roleID", v.roleID) -- Utilisation de getClassByBeammpId pour obtenir les détails du rôle
     table.insert(userRolesFinal, {
@@ -596,6 +657,8 @@ function DatabaseManager:getUserWithRoles(beammpid)
       permlvl = role.permlvl
     })
   end
+
+
   for i, v in ipairs(userStatus) do
     table.insert(userStatusFinal, {
       beammpid = beammpid,
@@ -605,20 +668,28 @@ function DatabaseManager:getUserWithRoles(beammpid)
       time = v.time
     })
   end
+
+  for i, v in ipairs(userIps) do
+    table.insert(userIpsFinal, v.ip)
+  end
+
   playerid = utils.GetPlayerId(user.name)
-  local userFinal = {
-    roles = userRolesFinal,
-    status = userStatusFinal,
-    beammpid = beammpid,
-    name = user.name,
-    whitelisted = user.whitelisted,
-    online = onlinePlayers[playerid] ~= nil,
-    b64img = "data:image/png;base64," .. online.getPlayerB64Img(beammpid)
-  }
-  return userFinal
+
+
+    local userFinal = {
+      roles = userRolesFinal,
+      status = userStatusFinal,
+      ips = userIpsFinal,
+      beammpid = beammpid,
+      name = user.name,
+      whitelisted = user.whitelisted,
+      online = onlinePlayers[playerid] ~= nil,
+      b64img = "data:image/png;base64," .. online.getPlayerB64Img(beammpid)
+    }
+    return userFinal
 end
   
-function DatabaseManager:likeSearchUserWithRoles(name)
+function DatabaseManager:likeSearchUserWithRoles(name, permManager)
   local users = {}
   local query = "SELECT * FROM users WHERE name LIKE ? LIMIT 50"
   local stmt = self.db:prepare(query)
@@ -631,7 +702,7 @@ function DatabaseManager:likeSearchUserWithRoles(name)
 
   -- Execute the statement and iterate over the results
   for row in stmt:nrows() do
-      local user = self:getUserWithRoles(row.beammpid)
+      local user = self:getUserWithRoles(row.beammpid, permManager)
       table.insert(users, user)
   end
 

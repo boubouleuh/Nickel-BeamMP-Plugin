@@ -1,5 +1,6 @@
 local Roles = require("objects.Role")
 local usersService = require("database.services.UsersService")
+local misc = require("utils.misc")
 local utils = {}
 --- send a string to the client
 ---@param id integer
@@ -20,19 +21,58 @@ end
 ---@param id integer
 ---@param offset integer
 ---@param dbManager DatabaseManager
-function utils.sendPlayers(id, offset, dbManager)
+---@param permManager PermissionsHandler
+---@
+function utils.sendPlayers(receiver_id, sender_id, offset, dbManager, permManager)
+
+
+    if receiver_id < 0 then
+        error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
+    end
+
     dbManager:openConnection()
     local onlineplayers = MP.GetPlayers()
-    local players = dbManager:getUsersDynamically(150, offset, onlineplayers) 
+    local players = dbManager:getUsersDynamically(150, offset, onlineplayers, permManager) 
     dbManager:closeConnection()
 
 
+    
+
     for i, v in ipairs(players) do
-        utils.sendTable(id,"NKinsertPlayers", v)
+        if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
+            v.ips = {}
+        end
+
+        utils.resetUserInfos(receiver_id, sender_id, permManager)
+
+
+        utils.sendTable(receiver_id,"NKinsertPlayers", v)
     end
 
-    MP.TriggerClientEvent(id, "NKgetPlayers", "") 
+    MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
 
+end
+
+
+
+function utils.resetUserInfos(receiver_id, sender_id, permManager)
+    if sender_id == -2 then
+        return
+    end
+    local userInfos = {}
+    userInfos.self_action_perm = {}
+    local actions = permManager:getActions(misc.getPlayerBeamMPID(MP.GetPlayerName(sender_id)))
+    for _, action in ipairs(actions) do
+        table.insert(userInfos.self_action_perm, action.actionName)
+    end
+    utils.sendTable(receiver_id, "NKgetUserInfos", userInfos)
+end
+
+function utils.resetAllUserInfos(permManager)
+    local onlineplayers = MP.GetPlayers()
+    for i, v in ipairs(onlineplayers) do
+        utils.resetUserInfos(i, i, permManager)
+    end
 end
 
 --- send one player to client
@@ -40,19 +80,22 @@ end
 ---@param dbManager DatabaseManager
 ---@param permManager PermissionsHandler
 ---@param beammpid integer
-function utils.sendPlayer(id, dbManager, permManager, beammpid)
-    dbManager:openConnection()
-    local player = dbManager:getUserWithRoles(beammpid)
-    dbManager:closeConnection()
-    local userInfos = {}
-    userInfos.self_action_perm = {}
-    local actions =  permManager:getActions(beammpid)
-    for _, action in ipairs(actions) do
-        table.insert(userInfos.self_action_perm, action.actionName) --need to fix every that
+function utils.sendPlayer(receiver_id, sender_id, dbManager, permManager, beammpid)
+
+    if receiver_id < 0 then
+        error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
-    utils.sendTable(id, "NKgetUserInfos", userInfos) --update actions
-    utils.sendTable(id, "NKinsertPlayers", player)
-    MP.TriggerClientEvent(id, "NKgetPlayers", "") 
+
+    dbManager:openConnection()
+    local player = dbManager:getUserWithRoles(beammpid, permManager)
+    dbManager:closeConnection()
+
+    if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
+        player.ips = {}
+    end
+    utils.resetUserInfos(receiver_id, sender_id, permManager)
+    utils.sendTable(receiver_id, "NKinsertPlayers", player)
+    MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
 end
 
 --- send every roles to client
