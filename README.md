@@ -36,7 +36,7 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
 ``;whitelist <add/remove> <name>``: Add or remove a player from the server's whitelist.
 
-``;interface``: Show or hide Nickel interface if installed.
+``;interface``: Show or hide Nickel interface if installed. $${\color{red}(DEPRECATED)}$$
 
 # Configuration
 The plugin includes a configuration file that allows you to modify certain messages sent by the plugin and also change values to enable or disable features.
@@ -67,7 +67,7 @@ Simply add the .lua file to your "BeamServer/Resources/Server/Nickel" directory 
 
     ### Get the Interface:
     You can already access the Nickel Interface on GitHub via the link below:
-    [Nickel Interface Github](https://github.com/boubouleuh/Nickel-Interface)
+    [Nickel Interface Github](https://github.com/boubouleuh/Nickel-Interface) $${\color{red}(SOON-AVAILABLE)}$$
 
     ### Installation Guide:
     To install the interface, simply create a zip file and drag and drop the two folders into it. Once installed, you'll be able to enjoy the early experience of our user-friendly moderating solution.
