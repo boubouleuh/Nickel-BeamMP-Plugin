@@ -12,7 +12,7 @@ function search.new(managers)
         interfaceUtils.sendString(id, "NKResetSearch", "")
         MP.Sleep(20) --need to test if it lag
         for i, v in pairs(searchResults) do
-            interfaceUtils.sendPlayer(id, id, managers.dbManager, managers.permManager, v.beammpid)
+            interfaceUtils.sendPlayer(id, managers.dbManager, managers.permManager, v.beammpid)
         end
     end
     MP.RegisterEvent("searchPlayer", "searchPlayer")

@@ -41,7 +41,7 @@ function command.init(sender_id, sender_name, managers, rolename, playername)
         msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
         local onlineplayers = MP.GetPlayers()
         for id, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id, sender_id, 0, managers.dbManager, permManager, beammpid)
+            interfaceUtils.sendPlayer(id, 0, managers.dbManager, permManager, beammpid)
         end
         return true
     else

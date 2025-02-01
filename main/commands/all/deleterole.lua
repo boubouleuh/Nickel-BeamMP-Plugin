@@ -22,7 +22,7 @@ function command.init(sender_id, sender_name, managers, rolename)
 
     local onlineplayers = MP.GetPlayers()
     for id, player in pairs(onlineplayers) do
-        interfaceUtils.sendPlayers(id, sender_id, 0, managers.dbManager, managers.permManager)
+        interfaceUtils.sendPlayers(id, 0, managers.dbManager, managers.permManager)
     end
     
     return true

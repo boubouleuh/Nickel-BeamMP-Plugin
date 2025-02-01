@@ -22,8 +22,7 @@ function init.new(managers)
         if not utils.deepCompare(environment, server_env) or force then
 
 
-            if managers.permManager:hasPermissionForAction(utils.getPlayerBeamMPID(MP.GetPlayerName(id)), "editEnvironment") == false then
-
+            if not managers.permManager:hasPermissionForAction(utils.getPlayerBeamMPID(MP.GetPlayerName(id)), "editEnvironment") then
                 interfaceUtils.sendTable(id, "receiveEnvironment", server_env)
                 MP.Sleep(200) --need to see if it lags the server
                 interfaceUtils.sendString(id, "clientSyncEnvironment", "")

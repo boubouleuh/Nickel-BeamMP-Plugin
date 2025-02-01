@@ -30,13 +30,13 @@ function interface.init(id, managers, offset)
 
         interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
 
-        interfaceUtils.resetUserInfos(id, id, managers.permManager)
+        interfaceUtils.resetUserInfos(id, managers.permManager)
 
         interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
     end
  
 
-    interfaceUtils.sendPlayers(id, id, offset, managers.dbManager, managers.permManager)
+    interfaceUtils.sendPlayers(id, offset, managers.dbManager, managers.permManager)
     MP.TriggerLocalEvent("SyncEnvironment", id, Util.JsonEncode(managers.cfgManager:GetSetting("client")), true)
 end
 

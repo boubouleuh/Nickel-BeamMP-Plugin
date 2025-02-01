@@ -23,7 +23,7 @@ end
 ---@param dbManager DatabaseManager
 ---@param permManager PermissionsHandler
 ---@
-function utils.sendPlayers(receiver_id, sender_id, offset, dbManager, permManager)
+function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
 
 
     if receiver_id < 0 then
@@ -42,12 +42,10 @@ function utils.sendPlayers(receiver_id, sender_id, offset, dbManager, permManage
         if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
             v.ips = {}
         end
-
-        utils.resetUserInfos(receiver_id, sender_id, permManager)
-
-
         utils.sendTable(receiver_id,"NKinsertPlayers", v)
     end
+
+    utils.resetUserInfos(receiver_id, permManager)
 
     MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
 
@@ -55,23 +53,21 @@ end
 
 
 
-function utils.resetUserInfos(receiver_id, sender_id, permManager)
-    if sender_id == -2 then
-        return
-    end
+function utils.resetUserInfos(receiver_id, permManager)
     local userInfos = {}
     userInfos.self_action_perm = {}
-    local actions = permManager:getActions(misc.getPlayerBeamMPID(MP.GetPlayerName(sender_id)))
+    local actions = permManager:getActions(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
     for _, action in ipairs(actions) do
         table.insert(userInfos.self_action_perm, action.actionName)
     end
+    print(receiver_id, userInfos)
     utils.sendTable(receiver_id, "NKgetUserInfos", userInfos)
 end
 
 function utils.resetAllUserInfos(permManager)
     local onlineplayers = MP.GetPlayers()
     for i, v in ipairs(onlineplayers) do
-        utils.resetUserInfos(i, i, permManager)
+        utils.resetUserInfos(i, permManager)
     end
 end
 
@@ -80,7 +76,7 @@ end
 ---@param dbManager DatabaseManager
 ---@param permManager PermissionsHandler
 ---@param beammpid integer
-function utils.sendPlayer(receiver_id, sender_id, dbManager, permManager, beammpid)
+function utils.sendPlayer(receiver_id, dbManager, permManager, beammpid)
 
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
@@ -93,7 +89,7 @@ function utils.sendPlayer(receiver_id, sender_id, dbManager, permManager, beammp
     if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
         player.ips = {}
     end
-    utils.resetUserInfos(receiver_id, sender_id, permManager)
+    utils.resetUserInfos(receiver_id, permManager)
     utils.sendTable(receiver_id, "NKinsertPlayers", player)
     MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
 end
