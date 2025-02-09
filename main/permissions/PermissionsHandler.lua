@@ -80,6 +80,21 @@ function PermissionsHandler:getDefaultsRoles()
 end
 
 
+function PermissionsHandler:getCommands(beammpid)
+    local commands = {}
+
+    -- Récupérer toutes les commandes possibles
+    self.dbManager:openConnection()
+    local allCommands = self.dbManager:getAllEntry(Command)
+    self.dbManager:closeConnection()
+    for _, command in ipairs(allCommands) do
+        -- Vérifier si l'utilisateur a la permission pour cette commande
+        if self:hasPermission(beammpid, command.commandName) then
+            table.insert(commands, command)
+        end
+    end
+    return commands
+end
 
 
 function PermissionsHandler:assignCommand(commandname, rolename)

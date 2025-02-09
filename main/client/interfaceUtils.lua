@@ -71,6 +71,35 @@ function utils.resetAllUserInfos(permManager)
     end
 end
 
+function utils.sendUserCommands(receiver_id, permManager)
+    local beammpid = misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
+    local commands = permManager:getCommands(beammpid)
+    local userCommands = {}
+    for i, v in ipairs(commands) do
+        local success, module = pcall(require, "main.commands.all." .. v.commandName)
+        --if it exist then its a inbuilt command
+        if success then
+            local command = module
+            command.init = nil --prevent warn messages
+            if command.type then
+                if command.type == "user" then
+                    userCommands[v.commandName] = command
+                end
+            end
+        else
+            local success, module = require("extensions.commands." .. v.commandName)
+            local command = module
+            command.init = nil --prevent warn messages
+            if command.type then
+                if command.type == "user" then
+                    userCommands[v.commandName] = command
+                end
+            end
+        end --if not then its an extension command
+    end
+    utils.sendTable(receiver_id, "NKgetUserCommands", userCommands)
+end
+
 --- send one player to client
 ---@param id integer
 ---@param dbManager DatabaseManager

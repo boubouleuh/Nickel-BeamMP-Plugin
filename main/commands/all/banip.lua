@@ -2,7 +2,9 @@
 local utils = require("utils.misc")
 local userIp = require("objects.UserIp")
 local UsersIpsService = require("database.services.UsersIpsService")
-local command = {}
+local command = {
+    type = "user"
+}
 --- command
 ---@param managers managers
 function command.init(sender_id, sender_name, managers, playername)

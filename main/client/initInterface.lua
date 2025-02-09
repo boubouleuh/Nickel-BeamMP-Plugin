@@ -33,6 +33,7 @@ function interface.init(id, managers, offset)
         interfaceUtils.resetUserInfos(id, managers.permManager)
 
         interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
+        interfaceUtils.sendUserCommands(id, managers.permManager)  --doesnt work yet     -- make event 'on perm change' and things to make updating, do the same for everything else
     end
  
 
