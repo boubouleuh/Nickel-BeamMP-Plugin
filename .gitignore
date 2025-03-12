@@ -5,3 +5,8 @@ version.txt
 /versionwithdatabaseID
 /extensions
 HotReload.txt
+/share
+/bin
+/lib
+/player_avatars
+/database/db.sqlite
