@@ -1,7 +1,12 @@
 
 local utils = require("utils.misc")
 
-local command = {}
+local command = {
+    args = {
+        {name = "commandName", type = "string"},
+        {name = "rolename", type = "string"}
+    }
+}
 --- command
 ---@param managers managers
 function command.init(sender_id, sender_name, managers, commandName, rolename)

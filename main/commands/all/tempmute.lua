@@ -3,7 +3,12 @@ local utils = require("utils.misc")
 local StatusService = require("database.services.StatusService")
 
 local command = {
-    type = "user"
+    type = "user",
+    args = {
+        {name = "playername", type = "string"},
+        {name = "time", type = "string"},
+        {name = "reason", type = "string"}
+    }
 }
 --- command
 ---@param managers managers

@@ -1,7 +1,12 @@
 
 local utils = require("utils.misc")
 local interfaceUtils = require("main.client.interfaceUtils")
-local command = {}
+local command = {
+    args = {
+        {name = "rolename", type = "string"},
+        {name = "playername", type = "string"}
+    }
+}
 --- command
 ---@param managers managers
 function command.init(sender_id, sender_name, managers, rolename, playername)

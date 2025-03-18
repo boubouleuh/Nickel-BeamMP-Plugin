@@ -2,7 +2,11 @@
 local utils = require("utils.misc")
 local UsersService = require("database.services.UsersService")
 local command = {
-    type = "user"
+    --TODO need type user but the command layout doesnt support it yet, need to think about a better way to handle args for the interface
+    args = {
+        {name = "addORremove", type = "string"},
+        {name = "playername", type = "string"}
+    }
 }
 --- command
 ---@param managers managers

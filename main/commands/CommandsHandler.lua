@@ -9,6 +9,7 @@ CommandsHandler = {}
 --- init commands
 ---@param managers managers
 function CommandsHandler.init(managers)
+    print("CommandsHandler init")
     local self = {}
 
     ---@type MessagesHandler
@@ -76,7 +77,7 @@ end
 
 
 function CommandsHandler:GetCommands()
-    return self.commands
+    return utils.shallowCopy(self.commands)
 end
 
 
@@ -95,6 +96,8 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     local command = string.match(message, "%S+")
     local commandWithoutPrefix = string.sub(command, 2)
 
+    print("test 3" .. commandWithoutPrefix)
+    print(self)
 
     local commandObject = self.commands[commandWithoutPrefix]
 
@@ -102,6 +105,8 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
         self.msgManager:SendMessage(sender_id, "commands.not_found", {Command = commandWithoutPrefix})
         return
     end
+
+    print("test 2", commandObject) 
 
     local callback = commandObject.init
 
@@ -114,7 +119,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     local argstring = string.sub(message, #prefixcommand+1)
 
 
-    
+    print("test 1", callback) 
     --get number of args of callback function
     local info = debug.getinfo(callback, "u")
     local numParams = info.nparams - 1 -- -1 because the first argument is the sender_id

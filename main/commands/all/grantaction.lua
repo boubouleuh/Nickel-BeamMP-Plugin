@@ -1,7 +1,12 @@
 
 local utils = require("utils.misc")
 local interfaceUtils = require("main.client.interfaceUtils")
-local action = {}
+local action = {
+    args = {
+        {name = "actionName", type = "string"},
+        {name = "rolename", type = "string"}
+    }
+}
 --- action
 ---@param managers managers
 function action.init(sender_id, sender_name, managers, actionName, rolename)

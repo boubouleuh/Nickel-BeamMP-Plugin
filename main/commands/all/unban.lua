@@ -4,7 +4,10 @@ local StatusService = require("database.services.StatusService")
 local UsersIpsService = require("database.services.UsersIpsService")
 
 local command = {
-    type = "user"
+    type = "user",
+    args = {
+        {name = "playername", type = "string"},
+    }
 }
 --- command
 ---@param managers managers

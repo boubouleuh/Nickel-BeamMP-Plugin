@@ -3,7 +3,10 @@ local utils = require("utils.misc")
 local userIp = require("objects.UserIp")
 local UsersIpsService = require("database.services.UsersIpsService")
 local command = {
-    type = "user"
+    type = "user",
+    args = {
+        {name = "playername", type = "string"}
+    }
 }
 --- command
 ---@param managers managers
@@ -32,23 +35,6 @@ function command.init(sender_id, sender_name, managers, playername)
 
     local count = usersIpsService:banAllIps()
 
-
-    -- permManager.dbManager:openConnection()
-    -- local entries = permManager.dbManager:getAllEntry(userIps, {{"beammpid", beammpid}})
-    -- permManager.dbManager:closeConnection()
-    -- local count = 0
-    -- for _, entry in pairs(entries) do
-    --     count = count + 1
-    --     local newUserIp = userIps.new(beammpid, entry.ip)
-    --     newUserIp.is_banned = true
-    --     permManager.dbManager:save(newUserIp)
-    --     local target_id = utils.GetPlayerId(playername)
-    --     if target_id ~= -1 then
-    --         MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.ipbanned"))
-    --     end
-    -- end
-
-
     if count > 0 then
         msgManager:SendMessage(sender_id, "commands.banip.success", {Count = count, Player = playername})
     elseif usersIpsService:isIpBanned() then
@@ -60,6 +46,6 @@ function command.init(sender_id, sender_name, managers, playername)
     end
 
     return true
-    end
+end
 
 return command

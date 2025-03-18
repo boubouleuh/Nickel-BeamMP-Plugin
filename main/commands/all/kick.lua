@@ -3,7 +3,11 @@ local utils = require("utils.misc")
 local userStatus = require("objects.UserStatus")
 
 local command = {
-    type = "user"
+    type = "user",
+    args = {
+        {name = "playername", type = "string"},
+        {name = "reason", type = "string"}
+    }
 }
 --- command
 ---@param managers managers

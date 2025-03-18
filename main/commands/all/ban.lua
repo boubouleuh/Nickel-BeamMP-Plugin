@@ -3,7 +3,12 @@ local utils = require("utils.misc")
 local userStatus = require("objects.UserStatus")
 local StatusService = require("database.services.StatusService")
 local command = {
-    type = "user"
+    type = "user",
+    args = {
+        {name = "playername", type = "string"},
+        {name = "reason", type = "string"}
+    }
+    -- usefull for the interface
 }
 
 --- command
