@@ -2,8 +2,6 @@
 /.vscode
 /versionwithdatabaseID
 /database/db.sqlite
-/share
-/lib
 /bin
 /data
 /player_avatars/*
