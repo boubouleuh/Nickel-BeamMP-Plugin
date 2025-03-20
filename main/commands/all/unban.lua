@@ -29,8 +29,9 @@ function command.init(sender_id, sender_name, managers, playername)
  
     if statusService:checkStatus("isbanned") or statusService:checkStatus("istempbanned") then
 
-        statusService:removeStatus("isbanned")
-        statusService:removeStatus("istempbanned")
+        
+        statusService:disableStatus("isbanned")
+        statusService:disableStatus("istempbanned")
 
         msgManager:SendMessage(sender_id, "commands.unban.success", {Player = playername})
 

@@ -26,10 +26,10 @@ function action.init(sender_id, sender_name, managers, actionName, rolename)
     local result = permManager:unassignAction(actionName, rolename)
     msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
     interfaceUtils.sendString(-1, "NKResetPlayerList", "")
-    local onlineplayers = MP.GetPlayers()
-    for id, player in pairs(onlineplayers) do
-        interfaceUtils.sendPlayers(id, 0,  managers.dbManager, permManager)
-    end
+    -- local onlineplayers = MP.GetPlayers()
+    -- for id, player in pairs(onlineplayers) do
+    --     interfaceUtils.sendPlayers(id, 0,  managers.dbManager, permManager)
+    -- end
     return true
 end
 

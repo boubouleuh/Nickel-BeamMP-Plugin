@@ -73,7 +73,7 @@ end
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   utils.nkprint("TABLENAME = " .. tableName, "debug")
-
+  object.tableName = nil
   local columns = {}
   local values = {}
   local updateColumns = {}
@@ -504,7 +504,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permM
 
       local statusHash = {}
       for _, status in ipairs(onlineResults[user_id].status) do
-        statusHash[status.status_type] = true
+        statusHash[status.expiry_time] = true
       end
 
       local ipsHash = {}
@@ -522,14 +522,14 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permM
       end
 
       -- Insert status if available and not already present
-      if row.status_type ~= nil and not statusHash[row.status_type] then
+      if row.status_type ~= nil and not statusHash[row.expiry_time] then
         table.insert(onlineResults[user_id].status, {
           status_type = row.status_type,
           status_value = row.is_status_value,
           reason = row.reason,
-          time = row.time,
+          expiry_time = row.expiry_time,
         })
-        statusHash[row.status_type] = true
+        statusHash[row.expiry_time] = true
       end
 
       -- Insert IP if available and not already present
@@ -583,7 +583,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permM
 
     local statusHash = {}
     for _, status in ipairs(remainingResults[user_id].status) do
-      statusHash[status.status_type] = true
+      statusHash[status.expiry_time] = true
     end
 
     local ipsHash = {}
@@ -601,14 +601,14 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permM
     end
 
     -- Insert status if available and not already present
-    if row.status_type ~= nil and not statusHash[row.status_type] then
+    if row.status_type ~= nil and not statusHash[row.expiry_time] then
       table.insert(remainingResults[user_id].status, {
         status_type = row.status_type,
         status_value = row.is_status_value,
         reason = row.reason,
-        time = row.time,
+        expiry_time = row.expiry_time,
       })
-      statusHash[row.status_type] = true
+      statusHash[row.expiry_time] = true
     end
 
     -- Insert IP if available and not already present
@@ -665,7 +665,7 @@ function DatabaseManager:getUserWithRoles(beammpid, permManager)
       status_type = v.status_type,
       status_value = v.is_status_value,
       reason = v.reason,
-      time = v.time
+      expiry_time = v.expiry_time
     })
   end
 

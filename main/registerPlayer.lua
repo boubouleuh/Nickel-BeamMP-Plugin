@@ -86,13 +86,26 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
     
         local statusService = StatusService.new(beammpid, permManager.dbManager)
-        if statusService:checkStatus("isbanned") then
-            return statusService:getStatus("isbanned").reason
-        elseif statusService:checkStatus("istempbanned") then
-            if statusService:checkStatusTime("istempbanned") then
-                return statusService:getStatus("istempbanned").reason
-            else
-                statusService:removeStatus("istempbanned")
+
+        -- Vérifier les statuts de bannissement
+        local bannedStatuses = statusService:getStatus("isbanned")
+        if #bannedStatuses > 0 then
+            for _, status in ipairs(bannedStatuses) do
+                if status.is_status_value == 1 then
+                    return status.reason
+                end
+            end
+        end
+        
+        -- Vérifier les statuts de bannissement temporaire
+        local tempBannedStatuses = statusService:getStatus("istempbanned")
+        if #tempBannedStatuses > 0 then
+            for _, status in ipairs(tempBannedStatuses) do
+                if statusService:checkStatusTime("istempbanned") then
+                    return status.reason
+                else
+                    statusService:removeStatus("istempbanned")
+                end
             end
         end
   

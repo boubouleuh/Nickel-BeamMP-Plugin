@@ -31,8 +31,8 @@ function command.init(sender_id, sender_name, managers, playername)
 
     if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
 
-        statusService:removeStatus("ismuted")
-        statusService:removeStatus("istempmuted")
+        statusService:disableStatus("ismuted")
+        statusService:disableStatus("istempmuted")
         msgManager:SendMessage(sender_id, "commands.unmute.success", {Player = playername})
     else
         msgManager:SendMessage(sender_id, "moderation.not_muted", {Player = playername})
