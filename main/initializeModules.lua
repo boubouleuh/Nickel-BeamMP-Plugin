@@ -17,7 +17,7 @@ function init.initialize()
     end
 
 
-    if not isModuleInstalled("lsqlite3") or not isModuleInstalled("toml") or not isLuaRocksInstalled() then
+    if not isModuleInstalled("lsqlite3") or not isModuleInstalled("toml") then
         utils.nkprint("You dont have the needed modules, please run " .. utils.script_path() .. "modules.sh", "error")
         exit()
     end

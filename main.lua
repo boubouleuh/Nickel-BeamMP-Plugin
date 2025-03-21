@@ -13,8 +13,14 @@ local utils = require("utils.misc")
 local rootDirectory = utils.script_path()
 package.path = rootDirectory .. "objects/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
-package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.so"
-package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.so"
+if MP.GetOSName() == "Windows" then
+    package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.dll"
+    package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.dll"
+else
+    package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.so"
+    package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.so"
+end
+
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/socket/?.lua"
