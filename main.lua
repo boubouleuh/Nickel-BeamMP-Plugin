@@ -122,7 +122,7 @@ local actManager = actionHandler.init(managers)
 managers.actManager = actManager
 managers.cmdManager = cmdManager
 
-default.init(managers)
+
 
 dbManager:openConnection()
 
@@ -139,6 +139,8 @@ elseif entry.infoValue == "false" then
 end
 
 dbManager:closeConnection()
+
+default.init(managers)
 
 -- Init Events
 onPlayerAuth.new(permManager, msgManager)
