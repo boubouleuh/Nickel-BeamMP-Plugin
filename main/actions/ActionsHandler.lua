@@ -21,8 +21,14 @@ function ActionsHandler.init(managers)
     self.permManager = managers.permManager
     self.actions = {}
     local inbuildActions = FS.ListFiles(utils.script_path() .. "main/actions/all")
-    local extensionsActions =  FS.ListFiles(utils.script_path() .. "extensions/actions") or {}
-    local files = utils.mergeTables(inbuildActions, extensionsActions)
+    local extensionsActions =  FS.ListFiles(utils.script_path() .. "extensions/actions")
+
+    local files = nil
+    if extensionsActions == nil then
+        files = inbuildActions
+    else
+        files = utils.mergeTables(inbuildActions, extensionsActions)
+    end
 
 
     local function checkActions()  --WATCH THIS IF ACTION ARE NOT HANDLED CORRECTLY
