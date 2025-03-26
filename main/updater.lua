@@ -8,24 +8,20 @@ local function execute_in_dir(dir, command)
     local full_command = "cd " .. dir .. " && " .. command
     return os.execute(full_command)
 end
-local function execute_in_dir_popen(dir, command)
-    local full_command = "cd " .. dir .. " && " .. command
-    local handle = io.popen(full_command)
-    if handle then
-        local result = handle:read("*a")
-        handle:close()
-        return result
-    end
-    return nil -- Si la commande échoue
-end
+
 
 local function get_latest_commit(dir)
-    local commit_hash = execute_in_dir_popen(dir, "git rev-parse HEAD")
-    if commit_hash then
-        return commit_hash:match("%S+") -- Nettoie les espaces ou sauts de ligne
-    else
-        return nil -- Si la commande échoue
+    local temp_file = dir .. "/latest_commit.txt"
+    local command = "cd " .. dir .. " && git rev-parse HEAD > " .. temp_file
+    if os.execute(command) then
+        local file = io.open(temp_file, "r")
+        if file then
+            local commit_hash = file:read("*l") -- Lire la première ligne
+            file:close()
+            return commit_hash
+        end
     end
+    return nil -- Si la commande échoue
 end
 
 -- 📌 Vérifie si le projet est déjà un dépôt Git
