@@ -9,6 +9,10 @@ local function execute_in_dir(dir, command)
     return os.execute(full_command)
 end
 
+local function get_latest_commit(dir)
+    return execute_in_dir(dir, "git rev-parse HEAD"):match("%S+")
+end
+
 -- 📌 Vérifie si le projet est déjà un dépôt Git
 function updater.check()
     if not os.execute("git --version") then
@@ -16,7 +20,15 @@ function updater.check()
         return
     end
     if FS.Exists(utils.script_path() .. ".git") then
-        execute_in_dir(utils.script_path(), "git fetch origin dev")
+        local before_pull = get_latest_commit(utils.script_path())
+        execute_in_dir(utils.script_path(), "git pull origin dev")
+        local after_pull = get_latest_commit(utils.script_path())
+
+        if before_pull == after_pull then
+            utils.nkprint("Already up to date.", "info")
+        else
+            utils.nkprint("Update applied successfully!", "success")
+        end
     else
         utils.nkprint("This project is not a Git repository. Initializing ...", "warn")
         updater.init_git()
