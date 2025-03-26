@@ -19,6 +19,7 @@ local function get_latest_commit(dir)
             local commit_hash = file:read("*l") -- Lire la première ligne
             file:close()
             os.remove(dir .. temp_file)
+            print(commit_hash)
             return commit_hash
         end
     end
@@ -35,7 +36,7 @@ function updater.check()
     if FS.Exists(utils.script_path() .. ".git") then
         local before_pull = get_latest_commit(utils.script_path())
         execute_in_dir(utils.script_path(), "git pull origin dev > /dev/null 2>&1")
-        MP.Sleep(200)
+        MP.Sleep(1000)
         local after_pull = get_latest_commit(utils.script_path())
 
         if before_pull == after_pull then
