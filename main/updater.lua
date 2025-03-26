@@ -20,7 +20,7 @@ local function execute_in_dir_popen(dir, command)
 end
 
 local function get_latest_commit(dir)
-    local commit_hash = execute_in_dir(dir, "git rev-parse HEAD")
+    local commit_hash = execute_in_dir_popen(dir, "git rev-parse HEAD")
     if commit_hash then
         return commit_hash:match("%S+") -- Nettoie les espaces ou sauts de ligne
     else
