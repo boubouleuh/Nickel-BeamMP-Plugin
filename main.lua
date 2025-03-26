@@ -1,4 +1,3 @@
---adding comment for autoupdate test
 
 local updater = require("main.updater")
 updater.check()
