@@ -35,6 +35,7 @@ function updater.check()
     if FS.Exists(utils.script_path() .. ".git") then
         local before_pull = get_latest_commit(utils.script_path())
         execute_in_dir(utils.script_path(), "git pull origin dev > /dev/null 2>&1")
+        MP.Sleep(200)
         local after_pull = get_latest_commit(utils.script_path())
 
         if before_pull == after_pull then
