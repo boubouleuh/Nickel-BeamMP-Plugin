@@ -1,5 +1,8 @@
 
 
+local updater = require("main.updater")
+updater.check()
+
 local initializeModules = require("main.initializeModules")
 
 local infos = require("infos.infos")
