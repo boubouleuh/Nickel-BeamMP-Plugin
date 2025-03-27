@@ -1,12 +1,12 @@
 local toml = require("toml")
 local new = require("objects.New")
-
+local utils = require("utils.misc")
 ---@class Settings
 local Settings = {}
 
 -- Fonction pour charger la configuration à partir d'un fichier existant
 function Settings.loadExistingConfig()
-    local existingConfigPath = "NickelConfig.toml"
+    local existingConfigPath = utils.script_path() .. "NickelConfig.toml"
     if FS.Exists(existingConfigPath) then
         return toml.decodeFromFile(existingConfigPath)
     end
@@ -20,7 +20,9 @@ local function mergeTables(dest, src)
             dest[key] = dest[key] or {}
             mergeTables(dest[key], value)
         else
-            dest[key] = dest[key] or value
+            if dest[key] == nil then -- Ne remplace que si la clé n'existe pas
+                dest[key] = value
+            end
         end
     end
 end
@@ -48,6 +50,7 @@ function Settings.init()
             guest = false
         },
         advanced = {
+            autoupdate = true,
             debug = false
         },
         client = {
@@ -72,7 +75,7 @@ function Settings.init()
     end
 
     -- Réécrit le fichier avec les données fusionnées
-    toml.encodeToFile(self.config, {file = "NickelConfig.toml", overwrite = true})
+    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig.toml", overwrite = true})
 
     return new._object(Settings, self)
 end
@@ -84,7 +87,7 @@ end
 
 function Settings:SetSetting(settingKey, value)
     self.config[settingKey] = value
-    toml.encodeToFile(self.config, {file = "NickelConfig.toml", overwrite = true})
+    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig.toml", overwrite = true})
 end
 
 return Settings

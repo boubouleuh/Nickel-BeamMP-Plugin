@@ -1,14 +1,10 @@
 
-local updater = require("main.updater")
-updater.check()
-
 local initializeModules = require("main.initializeModules")
 
 
 
+
 local utils = require("utils.misc")
-
-
 
 local rootDirectory = utils.script_path()
 package.path = rootDirectory .. "objects/?.lua"
@@ -28,6 +24,18 @@ package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
 package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
 initializeModules.initialize() 
+
+
+
+local config = require("main.config.Settings")
+
+---@type Settings
+local cfgManager = config.init()
+
+local updater = require("main.updater")
+
+updater.check(cfgManager)
+
 
 -- Démarrer la traversée à partir du répertoire racine de votre projet
 --Objects used to make the tables
@@ -63,12 +71,12 @@ local runCommand = require("main.events.interface.runCommand")
 local search = require("main.events.interface.search")
 local onInit = require("main.events.plugin_initialization.onInit")
 -- Miscellanous
-local config = require("main.config.Settings")
 
 
--- Instances
----@type Settings
-local cfgManager = config.init()
+
+
+
+
 
 ---@type DatabaseManager
 local dbManager

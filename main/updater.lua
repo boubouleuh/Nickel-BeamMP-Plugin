@@ -54,7 +54,7 @@ function updater.get_git_version()
 end
 
 -- 📌 Vérifie si le projet est déjà un dépôt Git
-function updater.check()
+function updater.check(cfgManager)
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
     if not git_check then
@@ -62,7 +62,11 @@ function updater.check()
         return
     end
     if FS.Exists(utils.script_path() .. ".git") then
-        execute_in_dir(utils.script_path(), "git pull origin dev")
+        if cfgManager:GetSetting("advanced").autoupdate then
+            execute_in_dir(utils.script_path(), "git pull origin dev")
+        else
+            utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
+        end
     else
         utils.nkprint("This project is not a Git repository. Initializing ...", "warn")
         updater.init_git()
