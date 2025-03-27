@@ -4,8 +4,6 @@ updater.check()
 
 local initializeModules = require("main.initializeModules")
 
-local infos = require("infos.infos")
-
 
 
 local utils = require("utils.misc")
@@ -63,7 +61,7 @@ local default = require("main.permissions.default")
 local syncEnvironment = require("main.events.interface.syncEnvironment")
 local runCommand = require("main.events.interface.runCommand")
 local search = require("main.events.interface.search")
-
+local onInit = require("main.events.plugin_initialization.onInit")
 -- Miscellanous
 local config = require("main.config.Settings")
 
@@ -140,11 +138,18 @@ elseif entry.infoValue == "false" then
 
 end
 
+
+
+dbManager:save(Infos.new("version", updater.get_git_version()), true) --set version
+
 dbManager:closeConnection()
 
 default.init(managers)
 
 -- Init Events
+
+onInit.new(managers)
+
 onPlayerAuth.new(permManager, msgManager)
 
 onPlayerJoin.new(managers)
@@ -161,8 +166,9 @@ initInterface.new(managers)
 syncEnvironment.new(managers)
 runCommand.new(managers)
 search.new(managers)
-utils.nkprint("Plugin successfully initialized", "info")
 
+utils.nkprint("Nickel successfully initialized", "info")
 local extensions = require("main.initializeExtensions")
 extensions.initialize(managers)
-utils.nkprint("Extensions initialized", "info")
+utils.nkprint("Extensions successfully initialized", "info")
+
