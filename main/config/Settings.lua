@@ -6,7 +6,7 @@ local Settings = {}
 
 -- Fonction pour charger la configuration à partir d'un fichier existant
 function Settings.loadExistingConfig()
-    local existingConfigPath = utils.script_path() .. "NickelConfig.toml"
+    local existingConfigPath = utils.script_path() .. "NickelConfig/NickelConfig.toml"
     if FS.Exists(existingConfigPath) then
         return toml.decodeFromFile(existingConfigPath)
     end
@@ -75,7 +75,7 @@ function Settings.init()
     end
 
     -- Réécrit le fichier avec les données fusionnées
-    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig.toml", overwrite = true})
+    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
 
     return new._object(Settings, self)
 end
@@ -87,7 +87,7 @@ end
 
 function Settings:SetSetting(settingKey, value)
     self.config[settingKey] = value
-    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig.toml", overwrite = true})
+    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
 end
 
 return Settings
