@@ -16,7 +16,8 @@ function interface.init(id, managers, offset)
     else
         offset = tonumber(offset)
     end
-
+    utils.nkprint("offset is " .. offset,"debug")
+    utils.nkprint("id is " .. id,"debug")
     if offset == 0 then
         local major, minor, patch = MP.GetServerVersion()
 
@@ -31,9 +32,10 @@ function interface.init(id, managers, offset)
         interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
 
         interfaceUtils.resetUserInfos(id, managers.permManager)
-
+        
         interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
-        interfaceUtils.sendUserCommands(id, managers.permManager, managers.cmdManager)  --doesnt work yet     -- make event 'on perm change' and things to make updating, do the same for everything else
+        interfaceUtils.sendUserCommands(id, managers.permManager, managers.cmdManager)  -- make event 'on perm change' and things to make updating, do the same for everything else
+        interfaceUtils.sendGlobalCommands(id, managers.permManager ,managers.cmdManager)
     end
  
 

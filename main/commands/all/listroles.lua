@@ -2,7 +2,11 @@
 
 local utils = require("utils.misc")
 local Role = require("objects.Role")
-local command = {}
+local command = {
+    type="global",
+    args = {
+    }
+}
 --- command
 ---@param managers managers
 function command.init(sender_id, sender_name, managers)

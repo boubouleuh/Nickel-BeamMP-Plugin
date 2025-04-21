@@ -9,7 +9,6 @@ CommandsHandler = {}
 --- init commands
 ---@param managers managers
 function CommandsHandler.init(managers)
-    print("CommandsHandler init")
     local self = {}
 
     ---@type MessagesHandler
@@ -22,9 +21,19 @@ function CommandsHandler.init(managers)
     self.permManager = managers.permManager
     self.commands = {}
     local inbuildCommands = FS.ListFiles(utils.script_path() .. "main/commands/all")
-    local extensionsCommands =  FS.ListFiles(utils.script_path() .. "extensions/commands")
+    local extensionsCommands = {}
+    local extensionsFolders = FS.ListDirectories(utils.script_path() .. "extensions")
 
-    local files = utils.mergeTables(inbuildCommands, extensionsCommands)
+    for _, extensionFolder in pairs(extensionsFolders) do
+        local commandsPath = utils.script_path() .. "extensions/" .. extensionFolder .. "/commands"
+        if FS.Exists(commandsPath) then
+            local commands = FS.ListFiles(commandsPath)
+            for _, command in pairs(commands) do
+                table.insert(extensionsCommands, {command = command, extension = extensionFolder})
+            end
+        end
+    end
+
 
 
     local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
@@ -49,26 +58,42 @@ function CommandsHandler.init(managers)
 
 
 
-    local function addCommand(commandName)
-
+    local function addCommand(commandName, extensionName)
         local command = Command.new(commandName)
         self.dbManager:save(command)
-
-        local success, module = pcall(require, "main.commands.all." .. commandName)
-            --if it exist then its a inbuilt command
+    
+        local success, module
+    
+        -- Vérifie si c'est une commande intégrée
+        success, module = pcall(require, "main.commands.all." .. commandName)
         if success then
             self.commands[commandName] = module
+            self.commands[commandName].extension = 'nickel'
         else
-            self.commands[commandName] = require("extensions.commands." .. commandName)
-        end --if not then its an extension command
+            -- Sinon, tente de charger depuis une extension
+            success, module = pcall(require, "extensions." .. extensionName .. ".commands." .. commandName)
+            if success then
+                self.commands[commandName] = module
+                self.commands[commandName].extension = extensionName
+            else
+                utils.nkprint("Failed to load command: " .. commandName, "error")
+                return
+            end
+        end
+    
         self.commands[commandName].description = self.msgManager:GetMessage(-2, "commands." .. commandName .. ".description") or ""
     end
 
-
-    for _, file in pairs(files) do
-        local string = string.gsub(file, ".lua", "")
-        addCommand(string)
+    for _, file in pairs(inbuildCommands) do
+        local commandName = string.gsub(file, ".lua", "")
+        addCommand(commandName, nil) -- Pas d'extensionName pour les commandes intégrées
     end
+    
+    for _, commandData in pairs(extensionsCommands) do
+        local commandName = string.gsub(commandData.command, ".lua", "")
+        addCommand(commandName, commandData.extension)
+    end
+
 
     checkCommands()
 
@@ -96,8 +121,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     local command = string.match(message, "%S+")
     local commandWithoutPrefix = string.sub(command, 2)
 
-    print("test 3" .. commandWithoutPrefix)
-    print(self)
+
 
     local commandObject = self.commands[commandWithoutPrefix]
 
@@ -105,8 +129,6 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
         self.msgManager:SendMessage(sender_id, "commands.not_found", {Command = commandWithoutPrefix})
         return
     end
-
-    print("test 2", commandObject) 
 
     local callback = commandObject.init
 
@@ -118,8 +140,6 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     local args = {}
     local argstring = string.sub(message, #prefixcommand+1)
 
-
-    print("test 1", callback) 
     --get number of args of callback function
     local info = debug.getinfo(callback, "u")
     local numParams = info.nparams - 1 -- -1 because the first argument is the sender_id

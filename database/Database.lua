@@ -26,7 +26,6 @@ end
 function DatabaseManager:createTableIfNotExists(tableName, columns)
   local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(columns, ", "))
 
-  print(query)
   self.db:exec(query)
 end
 

@@ -60,7 +60,6 @@ function utils.resetUserInfos(receiver_id, permManager)
     for _, action in ipairs(actions) do
         table.insert(userInfos.self_action_perm, action.actionName)
     end
-    print(receiver_id, userInfos)
     utils.sendTable(receiver_id, "NKgetUserInfos", userInfos)
 end
 
@@ -89,6 +88,26 @@ function utils.sendUserCommands(receiver_id, permManager, commandsHandler)
         end
     end
     utils.sendTable(receiver_id, "NKgetUserCommands", userCommands)
+end
+
+function utils.sendGlobalCommands(receiver_id, permManager, commandsHandler)
+    local beammpid = misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
+    local commands = permManager:getCommands(beammpid)
+    local globalCommands = {}
+    local commandCache = commandsHandler:GetCommands()
+    for i, v in ipairs(commands) do
+        local command = commandCache[v.commandName]
+        if command then
+            if command.type and command.type == "global" then
+                globalCommands[v.commandName] = {
+                    args = command.args or {},
+                    type = command.type,
+                    extension = command.extension
+                }
+            end
+        end
+    end
+    utils.sendTable(receiver_id, "NKgetGlobalCommands", globalCommands)
 end
 
 --- send one player to client

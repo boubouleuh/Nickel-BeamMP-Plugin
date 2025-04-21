@@ -32,12 +32,9 @@ end
 
 function Service:getStatus(status_type)
     local status = self:getAllStatus()
-    print(status)
     local result = {}
     for _, value in ipairs(status) do
         if value.status_type == status_type then
-            print("StatusService:getStatus")
-            print(value)
             table.insert(result, value)
         end
     end
@@ -46,10 +43,7 @@ end
 
 function Service:checkStatus(status_type)
     local status = self:getAllStatus()
-    print("StatusService:checkStatus")
-    print(status)
     for _, value in ipairs(status) do
-        print(value.status_type, status_type, value.is_status_value)
         if value.status_type == status_type and value.is_status_value == 1 then
             return true
         end
@@ -103,8 +97,6 @@ function Service:checkStatusTime(status_type)
     local status = self:getAllStatus()
     
     for _, value in ipairs(status) do
-        print("StatusService:checkStatusTime")
-        print(value)
         if value.status_type == status_type and value.is_status_value == 1 then
             return value.expiry_time <= os.time()
         end

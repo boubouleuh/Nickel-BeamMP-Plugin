@@ -26,7 +26,6 @@ function legacy.importOldData(managers)
 
     local files = FS.ListFiles(path)
 
-    print(files)
     for index, value in ipairs(files) do
 
         local file = io.open(path .. value, "r")

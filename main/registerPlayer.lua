@@ -15,7 +15,6 @@ local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, ip, msgManager, isguest)
 
-    print("Problem can happen here in the register function : ", beammpid, name, ip)
     local cfgManager = msgManager.configManager
 
     -- Insérer ou mettre à jour un utilisateur
@@ -54,7 +53,6 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         if default or userRoleClass == nil then
 
             for _, role in pairs(roles) do
-                print(role.roleName)
                 permManager:assignRole(role.roleName, beammpid)
             end
         end
