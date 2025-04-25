@@ -2,9 +2,9 @@
 
 local interfaceUtils = require("main.client.interfaceUtils")
 local utils = require("utils.misc")
-local init = {}
+local syncenvironment = {}
 ---@param managers managers
-function init.new(managers)
+function syncenvironment.new(managers)
 
     
     function SyncEnvironment(id, environment, force)
@@ -17,7 +17,7 @@ function init.new(managers)
             utils.nkprint("ENVIRONMENT IS NIL", "error")
             return
         end
-        local server_env = managers.cfgManager:GetSetting("client")
+        local server_env = managers.cfgManager:GetSetting("client").environment
 
         if not utils.deepCompare(environment, server_env) or force then
 
@@ -30,7 +30,7 @@ function init.new(managers)
                 return
             end
      
-            managers.cfgManager:SetSetting("client", environment)
+            managers.cfgManager:SetSetting("client.environment", environment)
     
             interfaceUtils.sendTable(-1, "receiveEnvironment", environment)
             MP.Sleep(200) --need to see if it lags the server
@@ -52,4 +52,4 @@ end
 
 
 
-return init
+return syncenvironment

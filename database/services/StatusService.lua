@@ -98,7 +98,7 @@ function Service:checkStatusTime(status_type)
     
     for _, value in ipairs(status) do
         if value.status_type == status_type and value.is_status_value == 1 then
-            return value.expiry_time <= os.time()
+            return value.expiry_time >= os.time()
         end
     end
     return false

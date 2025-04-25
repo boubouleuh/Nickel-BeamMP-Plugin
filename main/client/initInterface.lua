@@ -40,7 +40,9 @@ function interface.init(id, managers, offset)
  
 
     interfaceUtils.sendPlayers(id, offset, managers.dbManager, managers.permManager)
-    MP.TriggerLocalEvent("SyncEnvironment", id, Util.JsonEncode(managers.cfgManager:GetSetting("client")), true)
+    MP.TriggerLocalEvent("SyncEnvironment", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").environment), true)
+    MP.TriggerLocalEvent("SyncInterfaceValues", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").interfaceValues), true)
+
 end
 
 return interface

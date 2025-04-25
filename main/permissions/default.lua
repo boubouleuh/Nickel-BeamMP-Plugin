@@ -52,6 +52,7 @@ function default.init(managers)
 
         managers.permManager:assignAction("editEnvironment", "Moderator")
         managers.permManager:assignAction("seeAdvancedUserInfos", "Moderator")
+        managers.permManager:assignAction("editInterfaceSettings", "Administrator")
     end
     dbManager:closeConnection()
     dbManager:openConnection()

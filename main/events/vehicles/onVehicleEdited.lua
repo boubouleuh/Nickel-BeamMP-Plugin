@@ -4,7 +4,7 @@ function onVehicleEdited.new(managers)
     
     
     function onEdited(player_id, vehicle_id, data)
-        MP.TriggerLocalEvent("SyncEnvironment", player_id, Util.JsonEncode(managers.cfgManager:GetSetting("client")), true)
+        MP.TriggerLocalEvent("SyncEnvironment", player_id, Util.JsonEncode(managers.cfgManager:GetSetting("client").environment), true)
     end
 
     MP.RegisterEvent("onVehicleEdited", "onEdited")

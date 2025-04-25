@@ -133,6 +133,14 @@ function Misc.string_to_table(text)
   return ipTable
 end
 
+function Misc.split(input, delimiter)
+    local result = {}
+    for match in (input .. delimiter):gmatch("(.-)" .. delimiter) do
+        table.insert(result, match)
+    end
+    return result
+end
+
 ---getPlayerBeamMPID
 ---@param player_name string
 ---@return number

@@ -54,11 +54,16 @@ function Settings.init()
             debug = false
         },
         client = {
-            temperature = 0,
-            time = {0, 0},
-            gravity = 0,
-            wind = 0,
-            meteo = "sunny"
+            environment = {
+                temperature = 20,
+                time = {10, 20},
+                gravity = -9.81,
+                wind = 0,
+                meteo = "sunny"
+            },
+            interfaceValues = {
+                showNameplates = true
+            }
         }
     }
 
