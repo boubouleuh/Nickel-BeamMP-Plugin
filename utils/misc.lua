@@ -52,19 +52,39 @@ end
 ---@param t1 table
 ---@param t2 table
 ---@return boolean
-function Misc.deepCompare(t1, t2)
-  if type(t1) ~= type(t2) then return false end
-  if type(t1) ~= "table" then return t1 == t2 end
-  
-  for k, v in pairs(t1) do
-      if not Misc.deepCompare(v, t2[k]) then return false end
-  end
-  
-  for k, v in pairs(t2) do
-      if t1[k] == nil then return false end
-  end
-  
-  return true
+function Misc.deepCompare(t1, t2, visited)
+    if type(t1) ~= type(t2) then return false end
+    if type(t1) ~= "table" then return t1 == t2 end
+
+    -- Vérifier les métatables
+    if getmetatable(t1) ~= getmetatable(t2) then return false end
+
+    -- Détecter les cycles
+    visited = visited or {}
+    if visited[t1] and visited[t1] == t2 then return true end
+    visited[t1] = t2
+
+    -- Vérifier les tailles des tables
+    local function tableLength(t)
+        local count = 0
+        for _ in pairs(t) do
+            count = count + 1
+        end
+        return count
+    end
+
+    if tableLength(t1) ~= tableLength(t2) then return false end
+
+    -- Comparer les clés et les valeurs
+    for k, v in pairs(t1) do
+        if not Misc.deepCompare(v, t2[k], visited) then return false end
+    end
+
+    for k, v in pairs(t2) do
+        if t1[k] == nil then return false end
+    end
+
+    return true
 end
 
 --- shallowcopy |

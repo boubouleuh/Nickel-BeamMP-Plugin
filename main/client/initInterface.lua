@@ -26,7 +26,7 @@ function interface.init(id, managers, offset)
         serverInfos.ip =  online.getServerIP()
         serverInfos.port = utils.getBeamMPConfig().General.Port
         serverInfos.server_version = major .. "." .. minor .. "." .. patch
-
+        serverInfos.server_name = utils.getBeamMPConfig().General.Name
         
 
         interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)

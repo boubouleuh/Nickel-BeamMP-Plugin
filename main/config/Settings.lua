@@ -90,8 +90,47 @@ function Settings:GetSetting(settingKey)
     return self.config[settingKey]
 end
 
+local function convertStringsToBooleans(value)
+    if type(value) == "string" then
+        if value == "true" then
+            return true
+        elseif value == "false" then
+            return false
+        end
+    elseif type(value) == "table" then
+        -- Parcourir la table et convertir récursivement
+        for k, v in pairs(value) do
+            value[k] = convertStringsToBooleans(v)
+        end
+    end
+    return value
+end
+
 function Settings:SetSetting(settingKey, value)
-    self.config[settingKey] = value
+    -- Convertir les chaînes "true"/"false" en booléens, y compris dans les tables
+    value = convertStringsToBooleans(value)
+
+    -- Séparer les sous-clés par le séparateur "."
+    local keys = {}
+    for key in string.gmatch(settingKey, "[^%.]+") do
+        table.insert(keys, key)
+    end
+
+    -- Parcourir les sous-clés pour atteindre la bonne profondeur
+    local current = self.config
+    for i = 1, #keys - 1 do
+        local key = keys[i]
+        if current[key] == nil then
+            current[key] = {} -- Créer une table si elle n'existe pas
+        end
+        current = current[key]
+    end
+
+    -- Définir la valeur à la clé finale
+    print("Setting " .. keys[#keys] .. " to " .. tostring(value))
+    current[keys[#keys]] = value
+
+    -- Réécrire le fichier TOML
     toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
 end
 
