@@ -42,30 +42,47 @@ end
 
 
 function DatabaseManager:prepareAndExecute(query, ...)
-  local stmt = self.db:prepare(query)
-  if not stmt then
-    error("Failed to prepare statement: " .. query)
-  end
+    local max_attempts = 3
+    local delay_seconds = 100
+    local attempts = 0
+    
+    while attempts < max_attempts do
+        local stmt = self.db:prepare(query)
+        if not stmt then
+            error("Failed to prepare statement: " .. query)
+        end
 
-  -- Bind the values
-  local args = {...}
-  for i, value in ipairs(args) do
-    stmt:bind(i, value)
-  end
+        -- Bind the values
+        local args = {...}
+        for i, value in ipairs(args) do
+            stmt:bind(i, value)
+        end
 
-  -- Execute the statement
-  local result = stmt:step()
-  utils.nkprint(query, "debug")
-  utils.nkprint("Changes = " .. self.db:changes(), "debug")
-  if self.db:changes() == 0 then
-    stmt:finalize()
-    return "nickel.nochange"
-  end
+        -- Execute the statement
+        local result = stmt:step()
+        
+        utils.nkprint(query, "debug")
+        utils.nkprint("Changes = " .. self.db:changes(), "debug")
 
-  -- Finalize the statement to release resources
-  stmt:finalize()
-
-  return result
+        if result == 5 then -- SQLITE_BUSY (database locked)
+            stmt:finalize()
+            attempts = attempts + 1
+            utils.nkprint("Database locked, retrying (" .. attempts .. "/" .. max_attempts .. ")", "warn")
+            MP.Sleep(delay_seconds)
+        else
+            -- Normal processing
+            if self.db:changes() == 0 then
+                stmt:finalize()
+                return "nickel.nochange"
+            end
+            
+            stmt:finalize()
+            return result
+        end
+    end
+    
+    -- If we get here, all attempts failed
+    error("Failed to execute query after " .. max_attempts .. " attempts (database locked)")
 end
 
 
@@ -120,6 +137,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
       return self:prepareAndExecute(updateQuery, object[firstColumn])
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
+    print(table.unpack(values))
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
     
     -- Execute the query using prepareAndExecute with the values array

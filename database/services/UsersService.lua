@@ -25,7 +25,7 @@ end
 
 function Service:setWhitelisted(bool)
     local user = self:getUser()
-
+    
     user:setKey("whitelisted", bool)
    
     local result = self.dbManager:save(user, true)
