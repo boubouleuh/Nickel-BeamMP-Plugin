@@ -23,16 +23,12 @@ function syncinterfacevalues.new(managers)
 
             if not managers.permManager:hasPermissionForAction(utils.getPlayerBeamMPID(MP.GetPlayerName(id)), "editInterfaceSettings") then
                 interfaceUtils.sendTable(id, "getInterfaceValues", server_interface_values)
-                MP.Sleep(200) --need to see if it lags the server
-                interfaceUtils.sendString(-1, "clientSyncInterfaceValues", "")
                 return
             end
 
             managers.cfgManager:SetSetting("client.interfaceValues", interfaceValues)
 
             interfaceUtils.sendTable(-1, "getInterfaceValues", interfaceValues)
-            MP.Sleep(200) --need to see if it lags the server
-            interfaceUtils.sendString(-1, "clientSyncInterfaceValues", "")
             return
         end
     end
