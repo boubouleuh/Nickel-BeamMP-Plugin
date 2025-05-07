@@ -30,18 +30,13 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
+    local seeAdvancedUserInfos = permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
     dbManager:openConnection()
     local onlineplayers = MP.GetPlayers()
-    local players = dbManager:getUsersDynamically(150, offset, onlineplayers, permManager) 
+    local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos)
     dbManager:closeConnection()
 
-
-    
-
     for i, v in ipairs(players) do
-        if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
-            v.ips = {}
-        end
         utils.sendTable(receiver_id,"NKinsertPlayers", v)
     end
 

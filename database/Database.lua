@@ -466,7 +466,7 @@ end
 ---@param offset integer
 ---@param onlinePlayers table
 ---@param permManager PermissionsHandler
-function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permManager)
+function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAdvancedUserInfos)
   -- Get a set of online player beammpids
   local onlineBeammpids = {}
   for id, name in pairs(onlinePlayers) do
@@ -550,7 +550,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, permM
       end
 
       -- Insert IP if available and not already present
-      if row.ip ~= nil and not ipsHash[row.ip] then
+      if seeAdvancedUserInfos and row.ip ~= nil and not ipsHash[row.ip] then
         table.insert(onlineResults[user_id].ips, row.ip)
         ipsHash[row.ip] = true
       end

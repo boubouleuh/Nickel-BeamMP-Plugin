@@ -39,9 +39,13 @@ function legacy.importOldData(managers)
         local usersService = UsersService.new(data.beammpid, dbManager)
 
         local newUser = usersService:getUser()
+        local roles = permManager:getDefaultsRoles()
+
         if newUser == nil then
             dbManager:save(user.new(data.beammpid, data.name))
-
+            for _, role in pairs(roles) do
+                permManager:assignRole(role.roleName, data.beammpid)
+            end
 
             local statusService = StatusService.new(data.beammpid, dbManager)
             local usersIpsService = UsersIpsService.new(data.beammpid, dbManager)
