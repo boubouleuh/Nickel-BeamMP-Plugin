@@ -285,5 +285,26 @@ function Misc.timeConverter(time)
     end
 end
 
+local asyncId = 0
+local asyncTasks = {}
+
+function Misc.RunAsync(func, delay, ...)
+    asyncId = asyncId + 1
+    local id = "__async_event_" .. asyncId
+    local handlerName = "__async_handler_" .. asyncId
+    local args = {...}
+
+    _G[handlerName] = function()
+        func(table.unpack(args))
+        MP.CancelEventTimer(id)
+        _G[handlerName] = nil
+        asyncTasks[id] = nil
+    end
+
+    asyncTasks[id] = _G[handlerName]
+
+    MP.RegisterEvent(id, handlerName)
+    MP.CreateEventTimer(id, delay)
+end
 
 return Misc;

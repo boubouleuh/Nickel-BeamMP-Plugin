@@ -36,8 +36,27 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
     local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos)
     dbManager:closeConnection()
 
+    local maxPacketSize = 19500 -- 19.5 KB
+    local currentPacket = {}
+    local currentSize = 0
+
+
     for i, v in ipairs(players) do
-        utils.sendTable(receiver_id,"NKinsertPlayers", v)
+
+        local playerData = Util.JsonEncode(v) 
+        local playerSize = #playerData
+
+        if currentSize + playerSize > maxPacketSize then
+            utils.sendTable(receiver_id, "NKinsertPlayers", currentPacket)
+            currentPacket = {}
+            currentSize = 0
+        end
+        table.insert(currentPacket, v)
+        currentSize = currentSize + playerSize
+    end
+
+    if #currentPacket > 0 then
+        utils.sendTable(receiver_id,"NKinsertPlayers", currentPacket)
     end
 
     utils.resetUserInfos(receiver_id, permManager)

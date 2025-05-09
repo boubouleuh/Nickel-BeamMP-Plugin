@@ -40,6 +40,8 @@ function default.init(managers)
         managers.permManager:assignCommand("revokeaction", "Administrator")
         managers.permManager:assignCommand("listroles", "Administrator")
 
+        managers.permManager:assignCommand("forcenametags", "Moderator")
+
         managers.permManager:assignCommand("whitelist", "Moderator")
         managers.permManager:assignCommand("kick", "Moderator")
         managers.permManager:assignCommand("ban", "Moderator")
