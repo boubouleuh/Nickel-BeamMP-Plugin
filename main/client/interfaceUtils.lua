@@ -130,7 +130,6 @@ end
 ---@param permManager PermissionsHandler
 ---@param beammpid integer
 function utils.sendPlayer(receiver_id, dbManager, permManager, beammpid)
-
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
