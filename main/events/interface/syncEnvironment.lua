@@ -24,8 +24,6 @@ function syncenvironment.new(managers)
 
             if not managers.permManager:hasPermissionForAction(utils.getPlayerBeamMPID(MP.GetPlayerName(id)), "editEnvironment") then
                 interfaceUtils.sendTable(id, "receiveEnvironment", server_env)
-                MP.Sleep(200) --need to see if it lags the server
-                interfaceUtils.sendString(id, "clientSyncEnvironment", "")
 
                 return
             end
@@ -33,8 +31,6 @@ function syncenvironment.new(managers)
             managers.cfgManager:SetSetting("client.environment", environment)
     
             interfaceUtils.sendTable(-1, "receiveEnvironment", environment)
-            MP.Sleep(200) --need to see if it lags the server
-            interfaceUtils.sendString(-1, "clientSyncEnvironment", "")
 
 
 

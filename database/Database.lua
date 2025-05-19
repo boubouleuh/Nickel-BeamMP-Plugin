@@ -629,7 +629,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
     end
 
     -- Insert IP if available and not already present
-    if row.ip ~= nil and not ipsHash[row.ip] then
+    if seeAdvancedUserInfos and row.ip ~= nil and not ipsHash[row.ip] then
       table.insert(remainingResults[user_id].ips, row.ip)
       ipsHash[row.ip] = true
     end
