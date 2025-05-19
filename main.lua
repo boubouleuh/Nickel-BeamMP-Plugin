@@ -168,16 +168,17 @@ onPlayerDisconnect.new(managers)
 onChatMessage.new(cmdManager)
 onConsoleInput.new(cmdManager)
 
-onVehicleSpawn.new(managers)
-onVehicleEdited.new(managers)
-onVehicleReset.new(managers)
-
-initInterface.new(managers)
-syncEnvironment.new(managers)
-SecureValues.new(managers)
-syncInterfaceValues.new(managers)
-runCommand.new(managers)
-search.new(managers)
+if cfgManager:GetSetting("client").interface then
+    onVehicleSpawn.new(managers)
+    onVehicleEdited.new(managers)
+    onVehicleReset.new(managers)
+    initInterface.new(managers)
+    syncEnvironment.new(managers)
+    SecureValues.new(managers)
+    syncInterfaceValues.new(managers)
+    runCommand.new(managers)
+    search.new(managers)
+end
 
 utils.nkprint("Nickel successfully initialized", "info")
 local extensions = require("main.initializeExtensions")

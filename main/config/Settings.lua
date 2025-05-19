@@ -54,6 +54,7 @@ function Settings.init()
             debug = false
         },
         client = {
+            interface = false,
             environment = {
                 temperature = 20,
                 time = {10, 20},
