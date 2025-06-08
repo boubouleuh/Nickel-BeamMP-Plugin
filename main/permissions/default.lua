@@ -51,6 +51,7 @@ function default.init(managers)
         managers.permManager:assignCommand("mute", "Moderator")
         managers.permManager:assignCommand("unmute", "Moderator")
         managers.permManager:assignCommand("tempmute", "Moderator")
+        managers.permManager:assignCommand("broadcast", "Moderator")
 
         managers.permManager:assignAction("editEnvironment", "Moderator")
         managers.permManager:assignAction("seeAdvancedUserInfos", "Moderator")
