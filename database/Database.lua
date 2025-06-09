@@ -690,7 +690,7 @@ function DatabaseManager:getUserWithRoles(beammpid, permManager)
     table.insert(userIpsFinal, v.ip)
   end
 
-  playerid = utils.GetPlayerId(user.name)
+  local playerid = utils.GetPlayerId(user.name)
 
 
     local userFinal = {
