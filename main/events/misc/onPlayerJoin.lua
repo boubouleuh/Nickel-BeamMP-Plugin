@@ -6,8 +6,8 @@ local onPlayerJoin = {}
 function onPlayerJoin.new(managers) 
     function onJoin(id)
         local onlineplayers = MP.GetPlayers()
-        for id, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id, managers.dbManager, managers.permManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
+        for id2, player in pairs(onlineplayers) do
+            interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
         end
         managers.msgManager:SendMessage(id, managers.cfgManager:GetSetting("misc").join_message, {Role = managers.permManager:GetHighestRole(utils.getPlayerBeamMPID(MP.GetPlayerName(id))).roleName, Player = MP.GetPlayerName(id)})
     end
