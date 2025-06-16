@@ -9,8 +9,6 @@ function securevalues.new(managers) -- this function is used to be sure that the
     
     function SecureValues()
 
-        utils.nkprint("SecureValues", "info")
-
         local server_interface_values = managers.cfgManager:GetSetting("client").interfaceValues
         interfaceUtils.sendTableToAll("getInterfaceValues", server_interface_values)
 
