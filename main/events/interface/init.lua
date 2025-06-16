@@ -18,9 +18,9 @@ function init.new(managers)
             print("player requested interface initialization")
             lastCallTime[id] = currentTime
 
-            utils.RunAsync(interface.init, 50, id, managers, offset)
+            -- utils.RunAsync(interface.init, 50, id, managers, offset)
 
-            -- interface.init(id, managers, offset)
+            interface.init(id, managers, offset)
         end
     end
     MP.RegisterEvent("initInterface", "initInterface")
