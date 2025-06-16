@@ -29,18 +29,24 @@ function interface.init(id, managers, offset)
         serverInfos.server_name = utils.getBeamMPConfig().General.Name
         
 
-        interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
+        -- interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
+        utils.RunAsync(interfaceUtils.sendTable, 50, id, "NKgetServerInfos", serverInfos)
 
-        interfaceUtils.resetUserInfos(id, managers.permManager)
+        -- interfaceUtils.resetUserInfos(id, managers.permManager)
+        utils.RunAsync(interfaceUtils.resetUserInfos, 50, id, managers.permManager)
         
-        interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
-        interfaceUtils.sendUserCommands(id, managers.permManager, managers.cmdManager)  -- make event 'on perm change' and things to make updating, do the same for everything else
-        interfaceUtils.sendGlobalCommands(id, managers.permManager ,managers.cmdManager)
+        --interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
+        utils.RunAsync(interfaceUtils.sendRoles, 50, id, "NKgetRoles", managers.dbManager)
+
+        --interfaceUtils.sendUserCommands(id, managers.permManager, managers.cmdManager)  -- make event 'on perm change' and things to make updating, do the same for everything else
+        utils.RunAsync(interfaceUtils.sendUserCommands, 50, id, managers.permManager, managers.cmdManager)
+        --interfaceUtils.sendGlobalCommands(id, managers.permManager, managers.cmdManager)
+        utils.RunAsync(interfaceUtils.sendGlobalCommands, 50, id, managers.permManager, managers.cmdManager)
     end
  
 
-    -- utils.RunAsync(interfaceUtils.sendPlayers, 50, id, offset, managers.dbManager, managers.permManager)
-    interfaceUtils.sendPlayers(id, offset, managers.dbManager, managers.permManager)
+    utils.RunAsync(interfaceUtils.sendPlayers, 50, id, offset, managers.dbManager, managers.permManager)
+    -- interfaceUtils.sendPlayers(id, offset, managers.dbManager, managers.permManager)
     MP.TriggerLocalEvent("SyncEnvironment", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").environment), true)
     MP.TriggerLocalEvent("SyncInterfaceValues", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").interfaceValues), true)
 
