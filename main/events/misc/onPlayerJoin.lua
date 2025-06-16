@@ -1,10 +1,13 @@
 local utils = require("utils.misc")
 local interfaceUtils = require("main.client.interfaceUtils")
-
+local sessionPlayerStorage = require("main.sessionPlayerStorage")
 local onPlayerJoin = {}
 ---@param managers managers
 function onPlayerJoin.new(managers) 
     function onJoin(id)
+        local sessionStorage = sessionPlayerStorage:new(utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
+        sessionStorage:set("synced", true)
+
         local onlineplayers = MP.GetPlayers()
         for id2, player in pairs(onlineplayers) do
             interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))

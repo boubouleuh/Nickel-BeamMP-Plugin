@@ -65,7 +65,7 @@ function Service:disableStatus(status_type)
         end
     end
 
-    interfaceUtils.sendString(-1, "NKResetPlayerList", "")
+    interfaceUtils.sendNothingToAll("NKResetPlayerList")
 
     return result
     
@@ -79,7 +79,7 @@ function Service:removeStatus(status_type)
     local result = self.dbManager:deleteObject(userStatus, conditions)
     self.dbManager:closeConnection()
 
-    interfaceUtils.sendString(-1, "NKResetPlayerList", "")
+    interfaceUtils.sendNothingToAll("NKResetPlayerList")
 
     return result
 end
@@ -89,7 +89,7 @@ function Service:createStatus(status_type, reason, time)
     local userStatusClass = userStatus.new(self.beammpid, status_type, true, reason, time or nil)
 
     local result = self.dbManager:save(userStatusClass, false)
-    interfaceUtils.sendString(-1, "NKResetPlayerList", "")
+    interfaceUtils.sendNothingToAll("NKResetPlayerList")
     return result
 end
 

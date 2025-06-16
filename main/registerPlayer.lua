@@ -13,26 +13,24 @@ local interface = require("main.client.initInterface")
 local online = require("main.online")
 local registerPlayer = {}
 
-function registerPlayer.register(beammpid, name, permManager, ip, msgManager, isguest)
-
-    local cfgManager = msgManager.configManager
+function registerPlayer.register(beammpid, name, permManager, msgManager, dbManager, cfgManager, ip, isguest)
 
     -- Insérer ou mettre à jour un utilisateur
     if not isguest then
 
         online.savePlayerAvatarImg(name, 40)
 
-        local usersService = UsersService.new(beammpid, permManager.dbManager)
+        local usersService = UsersService.new(beammpid, dbManager)
 
         local newUser = usersService:getUser()
         if usersService:getUser() == nil then
             newUser = user.new(beammpid, name)
         end
 
-        permManager.dbManager:openConnection()
-        local ipClass = permManager.dbManager:getClassByBeammpId(userIp, beammpid)
-        local userRoleClass = permManager.dbManager:getClassByBeammpId(userRole, beammpid)
-        permManager.dbManager:closeConnection()
+        dbManager:openConnection()
+        local ipClass = dbManager:getClassByBeammpId(userIp, beammpid)
+        local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
+        dbManager:closeConnection()
 
         local tab1 = {}
 
@@ -62,14 +60,14 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
             ipClass.ip = ip
             ipClass.ip_id = nil
-            permManager.dbManager:save(ipClass, false)
+            dbManager:save(ipClass, false)
 
         else
             local newUserIp = userIp.new(beammpid, ip)
-            permManager.dbManager:save(newUserIp)
+            dbManager:save(newUserIp)
         end
 
-        permManager.dbManager:save(newUser)
+        dbManager:save(newUser)
 
 
 
@@ -82,8 +80,8 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
 
         --Check status
 
-    
-        local statusService = StatusService.new(beammpid, permManager.dbManager)
+
+        local statusService = StatusService.new(beammpid, dbManager)
 
         -- Vérifier les statuts de bannissement
         local bannedStatuses = statusService:getStatus("isbanned")
@@ -108,8 +106,7 @@ function registerPlayer.register(beammpid, name, permManager, ip, msgManager, is
         end
   
 
-        
-        local usersIpsService = UsersIpsService.new(beammpid, permManager.dbManager)
+        local usersIpsService = UsersIpsService.new(beammpid, dbManager)
 
         if usersIpsService:isIpBanned() then
             return "REASON" --TODO ADD REASON ?

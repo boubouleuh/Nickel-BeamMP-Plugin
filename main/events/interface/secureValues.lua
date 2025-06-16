@@ -8,16 +8,19 @@ function securevalues.new(managers) -- this function is used to be sure that the
 
     
     function SecureValues()
+
+        utils.nkprint("SecureValues", "info")
+
         local server_interface_values = managers.cfgManager:GetSetting("client").interfaceValues
-        interfaceUtils.sendTable(-1, "getInterfaceValues", server_interface_values)
+        interfaceUtils.sendTableToAll("getInterfaceValues", server_interface_values)
 
         local server_env = managers.cfgManager:GetSetting("client").environment
 
-        interfaceUtils.sendTable(-1, "receiveEnvironment", server_env)
+        interfaceUtils.sendTableToAll("receiveEnvironment", server_env)
 
     end
     MP.RegisterEvent("SecureValues", "SecureValues")
-    MP.CreateEventTimer("SecureValues", 1000)
+    MP.CreateEventTimer("SecureValues", 10000)
 end
 
 

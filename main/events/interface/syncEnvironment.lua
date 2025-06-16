@@ -29,8 +29,8 @@ function syncenvironment.new(managers)
             end
      
             managers.cfgManager:SetSetting("client.environment", environment)
-    
-            interfaceUtils.sendTable(-1, "receiveEnvironment", environment)
+
+            interfaceUtils.sendTableToAll("receiveEnvironment", environment)
 
 
 

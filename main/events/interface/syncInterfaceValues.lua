@@ -28,7 +28,7 @@ function syncinterfacevalues.new(managers)
 
             managers.cfgManager:SetSetting("client.interfaceValues", interfaceValues)
 
-            interfaceUtils.sendTable(-1, "getInterfaceValues", interfaceValues)
+            interfaceUtils.sendTableToAll("getInterfaceValues", interfaceValues)
             return
         end
     end

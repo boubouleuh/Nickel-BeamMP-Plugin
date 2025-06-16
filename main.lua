@@ -160,7 +160,7 @@ default.init(managers)
 
 onInit.new(managers)
 
-onPlayerAuth.new(permManager, msgManager)
+onPlayerAuth.new(permManager, msgManager, dbManager, cfgManager)
 
 onPlayerJoin.new(managers)
 onPlayerDisconnect.new(managers)

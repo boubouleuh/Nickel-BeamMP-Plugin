@@ -9,7 +9,7 @@ function search.new(managers)
         managers.dbManager:openConnection()
         local searchResults = managers.dbManager:likeSearchUserWithRoles(search, managers.permManager)
         managers.dbManager:closeConnection()
-        interfaceUtils.sendString(id, "NKResetSearch", "")
+        interfaceUtils.sendNothing(id, "NKResetSearch", "")
         MP.Sleep(20) --need to test if it lag
         for i, v in pairs(searchResults) do
             interfaceUtils.sendPlayer(id, managers.dbManager, managers.permManager, v.beammpid)
@@ -18,7 +18,6 @@ function search.new(managers)
     MP.RegisterEvent("searchPlayer", "searchPlayer")
 
 end
-
 
 
 

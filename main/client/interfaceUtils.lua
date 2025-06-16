@@ -1,22 +1,70 @@
 local Roles = require("objects.Role")
 local usersService = require("database.services.UsersService")
 local misc = require("utils.misc")
+local sessionPlayerStorage = require("main.sessionPlayerStorage")
+
 local utils = {}
---- send a string to the client
+--- send a string to one client (ONLY PLAYERID)
 ---@param id integer
 ---@param event_name string
 ---@param data string   
 function utils.sendString(id, event_name, data)
-    MP.TriggerClientEvent(id, event_name, data) 
+    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
+    if sessionStorage:get("synced") then
+        MP.TriggerClientEvent(id, event_name, data)
+    end 
 end
 
---- send a table to the client
+--- send a string to every clients (ONLY PLAYERID)
+---@param event_name string
+---@param data string
+function utils.sendStringToAll(event_name, data)
+    local onlineplayers = MP.GetPlayers()
+    for i, v in pairs(onlineplayers) do
+        utils.sendString(i, event_name, data)
+    end
+end
+
+--- send a table to one client (ONLY PLAYERID)
 ---@param id integer
 ---@param event_name string
 ---@param data table   
 function utils.sendTable(id, event_name, data)
-    MP.TriggerClientEventJson(id, event_name, data)
+    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
+    if sessionStorage:get("synced") then
+        MP.TriggerClientEventJson(id, event_name, data)
+    end
 end
+
+--- send a table to every clients (ONLY PLAYERID)
+---@param event_name string
+---@param data table
+function utils.sendTableToAll(event_name, data)
+    local onlineplayers = MP.GetPlayers()
+    for i, v in pairs(onlineplayers) do
+        utils.sendTable(i, event_name, data)
+    end
+end
+
+--- send nothing one client, useful to just trigger a client function when needed (ONLY PLAYERID)
+---@param id integer
+---@param event_name string
+function utils.sendNothing(id, event_name)
+    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
+    if sessionStorage:get("synced") then
+        MP.TriggerClientEvent(id, event_name, "")
+    end
+end
+
+--- send nothing to every clients, useful to just trigger a client function when needed (ONLY PLAYERID)
+---@param event_name string
+function utils.sendNothingToAll(event_name)
+    local onlineplayers = MP.GetPlayers()
+    for i, v in pairs(onlineplayers) do
+        utils.sendNothing(i, event_name)
+    end
+end
+
 --- send every players to client
 ---@param id integer
 ---@param offset integer
@@ -36,7 +84,8 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
     local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos)
     dbManager:closeConnection()
 
-    local maxPacketSize = 19500 -- 19.5 KB
+    -- local maxPacketSize = 19500 -- 19.5 KB
+    local maxPacketSize = 30000000 -- 30 MB
     local currentPacket = {}
     local currentSize = 0
 
@@ -61,7 +110,8 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
 
     utils.resetUserInfos(receiver_id, permManager)
 
-    MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
+    
+    utils.sendNothing(receiver_id, "NKgetPlayers")
 
 end
 
@@ -79,7 +129,7 @@ end
 
 function utils.resetAllUserInfos(permManager)
     local onlineplayers = MP.GetPlayers()
-    for i, v in ipairs(onlineplayers) do
+    for i, v in pairs(onlineplayers) do
         utils.resetUserInfos(i, permManager)
     end
 end
@@ -143,7 +193,8 @@ function utils.sendPlayer(receiver_id, dbManager, permManager, beammpid)
     end
     utils.resetUserInfos(receiver_id, permManager)
     utils.sendTable(receiver_id, "NKinsertPlayers", player)
-    MP.TriggerClientEvent(receiver_id, "NKgetPlayers", "") 
+
+    utils.sendNothing(receiver_id, "NKgetPlayers")
 end
 
 --- send every roles to client
