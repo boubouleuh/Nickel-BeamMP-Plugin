@@ -60,7 +60,7 @@ function Settings.init()
                 time = {10, 20},
                 gravity = -9.81,
                 wind = 0,
-                meteo = "sunny"
+                weather = "sunny"
             },
             interfaceValues = {
                 showNameplates = true
