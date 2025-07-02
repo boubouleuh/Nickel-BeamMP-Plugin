@@ -34,11 +34,14 @@
 
     "commands.unban.missing_args" : "Usage : {Prefix}unban <playername>",
     "commands.unban.success" : "{Player} successfully unbanned",
+    "commands.unban.description" : "Unban a player",
+
 
     "commands.unban.unbanip.success" : "{Count} ip of {Player} has been unbanned",
 
-    "commands.unban.description" : "Unban a player",
 
+
+    "commands.broadcast.missing_args" : "Usage : {Prefix}broadcast <message>",
 
     "commands.mute.missing_args" : "Usage : {Prefix}mute <playername> <reason>",
     "commands.mute.success" : "{Player} successfully muted for {Reason}",
@@ -56,20 +59,26 @@
     "commands.kick.success" : "{Player} successfully kicked for {Reason}",
     "commands.kick.description" : "Kick a player",
 
-
-    "commands.createrole.missing_args" : "Usage : {Prefix}createrole <rolename> <permlvl>",
-    "commands.deleterole.missing_args" : "Usage : {Prefix}deleterole <rolename>",
+    "commands.revokeaction.missing_args" : "Usage : {Prefix}revokeaction <actionname> <rolename>",
+    "commands.grantaction.missing_args" : "Usage : {Prefix}grantaction <actionname> <rolename>",
     "commands.grantcommand.missing_args" : "Usage : {Prefix}grantcommand <commandname> <rolename>",
     "commands.grantrole.missing_args" : "Usage : {Prefix}grantrole <rolename> <playername>",
     "commands.revokecommand.missing_args" : "Usage : {Prefix}revokecommand <commandname> <rolename>",
     "commands.revokerole.missing_args" : "Usage : {Prefix}revokerole <rolename> <playername>",
 
-    "commands.createrole.description" : "Create a role",
-    "commands.deleterole.description" : "Delete a role",
     "commands.grantcommand.description" : "Grant the permission of a command to a specific role",
     "commands.grantrole.description" : "Grant a role to a player",
     "commands.revokecommand.description" : "Revoke the permission of a command from a specific role",
     "commands.revokerole.description" : "Revoke a role from a player",
+
+    "commands.createrole.missing_args" : "Usage : {Prefix}createrole <rolename> <permlvl>",
+    "commands.createrole.description" : "Create a role",
+
+    "commands.deleterole.missing_args" : "Usage : {Prefix}deleterole <rolename>",
+    "commands.deleterole.description" : "Delete a role",
+
+    "commands.importLegacyData.success" : "Successfully imported legacy data",
+
 
     "commands.whitelist.missing_args": "Usage : {Prefix}whitelist <add/remove> <playername>",
     "commands.whitelist.add.success": "Successfully added {Player} to the whitelist",
@@ -85,6 +94,7 @@
     "player.not_found" : "Player {Player} not found",
 
     "moderation.not_banned" : "{Player} is not banned",
+    "moderation.not_muted" : "{Player} is not muted",
     "moderation.tempmuted" : "You have been tempmuted for {Reason} until {Date}",
     "moderation.tempbanned": "You have been tempbanned for {Reason} until {Date}",
     "moderation.ipbanned" : "You have been ip banned",
