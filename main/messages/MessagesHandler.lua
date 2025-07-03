@@ -16,8 +16,8 @@ function MessagesHandler.new(dbManager, configManager)
   end
 
   function MessagesHandler:SendMessage(sender_id, messageKey, values)
-    local chatcolor = "^l^7"  -- Couleur
-    local chatstyle = "^r^o"  -- Style
+    local chatcolor = "^l^7"
+    local chatstyle = "^r^o"
 
     local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
 
@@ -26,9 +26,43 @@ function MessagesHandler.new(dbManager, configManager)
     local consoleFormattedMessage = consolecolor .. self:GetMessage(sender_id, messageKey, values) .. "\x1b[39m\x1b[49m\x1b[0m"
 
     if sender_id == -2 then
-        print(consoleFormattedMessage)  -- Afficher dans la console
+        print(consoleFormattedMessage)
     else
-        MP.SendChatMessage(sender_id, formattedMessage)  -- Envoyer au joueur
+        MP.SendChatMessage(sender_id, formattedMessage)
+    end
+end
+
+function MessagesHandler:SendHTMLMessage(sender_id, html)
+    local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
+
+    local consoleMessage = html
+        :gsub("<h%d[^>]*>(.-)</h%d>", "\x1b[1m%1\x1b[22m")
+        :gsub("<div[^>]*>%s*(.-)</div>", "%1\n")
+        :gsub("<p[^>]*>%s*(.-)</p>", "%1\n") 
+        :gsub("<ul[^>]*>%s*", "")
+        :gsub("%s*</ul>", "\n")
+        :gsub("<li[^>]*>%s*(.-)</li>%s*", "• %1\n")
+        :gsub("<span[^>]*>(.-)</span>", "%1")
+        :gsub("<br>", "\n")
+        :gsub("<br/>", "\n")
+        :gsub("<b>(.-)</b>", "\x1b[1m%1\x1b[22m")
+        :gsub("<i>(.-)</i>", "\x1b[3m%1\x1b[23m")
+        :gsub("<u>(.-)</u>", "\x1b[4m%1\x1b[24m")
+        :gsub("<strong>(.-)</strong>", "\x1b[1m%1\x1b[22m")
+        :gsub("<em>(.-)</em>", "\x1b[3m%1\x1b[23m")
+        :gsub("<[^>]+>", "")
+        :gsub("\n\n+", "\n")
+        :gsub("^%s+", "")
+        :gsub("%s+$", "")
+        :gsub("\n%s+", "\n")
+
+    local consoleFormattedMessage = consolecolor .. consoleMessage .. "\x1b[39m\x1b[49m\x1b[0m"
+
+    if sender_id == -2 then
+        print(consoleFormattedMessage)
+    else
+        html = html:gsub("\n", "")
+        MP.SendChatMessage(sender_id, html)
     end
 end
 
@@ -58,7 +92,6 @@ function MessagesHandler:GetMessage(sender_id, key, values)
     
     local message = json[key]
     if message == nil then
-        -- Si la clé n'est pas trouvée, vérifiez si elle contient des placeholders
         message = key
         if values then
             for placeholder, value in pairs(values) do
@@ -66,7 +99,6 @@ function MessagesHandler:GetMessage(sender_id, key, values)
             end
         end
     else
-        -- Si la clé est trouvée, remplacez les placeholders par les valeurs fournies
         if values then
             for placeholder, value in pairs(values) do
                 message = message:gsub("{" .. placeholder .. "}", value)
