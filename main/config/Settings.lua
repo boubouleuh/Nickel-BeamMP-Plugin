@@ -97,17 +97,8 @@ function Settings.init()
     end
 
 if configChanged then
-    -- Créer le dossier s'il n'existe pas
-    local configPath = utils.script_path() .. "NickelConfig"
-    local configFile = configPath .. "/NickelConfig.toml"
-    
-    -- Créer le dossier s'il n'existe pas
-    if not FS.Exists(configPath) then
-        FS.CreateDirectory(configPath)
-    end
-    
     toml.encodeToFile(self.config, {
-        file = configFile,
+        file = utils.script_path() .. "NickelConfig.toml",
         overwrite = true
     })
 end
