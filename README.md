@@ -17,10 +17,8 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
     `$ cd Nickel-BeamMP-Plugin`
 
     `$ git checkout dev`
-
-    `$ chmod +x modules.sh && sudo modules.sh`
     
-    Now wait for the modules to install and head to the <a href="#first-setup">First Setup</a> section.
+    Now head to the <a href="#first-setup">First Setup</a> section.
 - ### Debian
     Go to the Resources/Server path on your server and run these commands: 
 
@@ -32,20 +30,18 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
     `$ git checkout dev`
 
-    `$ chmod +x modules.sh && sudo modules.sh`
-
-    Now wait for the modules to install and head to the <a href="#first-setup">First Setup</a> section.
+    Now head to the <a href="#first-setup">First Setup</a> section.
 - ### Windows
     If you really need to run it on Windows, you will need either WSL or Docker or an other solution to have a virtual Linux environment.
 
-    BeamMP has limitations that I can't handle on Windows yet.
+    BeamMP use Lua 5.4 for the windows version for now and i cant handle it. 
 
 <h2 id="first-setup">First setup</h2>
 
 - ### Permissions 
     You need to give you Administrator permissions, in order to do that use this command in your running server console :
 
-    `/grantrole Administrator yourUsernameHere` Yes, replace "yourUsernameHere" with your username.
+    `/grantrole administrator yourUsernameHere` Yes, replace "yourUsernameHere" with your username.
 
     You can also use this command to add Moderators and other roles.
 
@@ -67,6 +63,14 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
  - `revokerole <rolename> <targetname>` Revoke a role from a player
  - `grantcommand <commandname> <rolename>` Grant the permission of a command to a specific role
  - `revokecommand <commandname> <rolename>` Revoke the permission of a command from a specific role
+ - `listactions` List all available actions
+ - `listroles` List all roles
+ - `grantaction <actionname> <rolename>` Grant an action to a specific role
+ - `revokeaction <actionname> <rolename>` Revoke an action from a role
+ - `forcenametags` Toggle forced display of player nametags (Interface only)
+ - `broadcast <message>` Send a message to all players
+ - `whitelist <add/remove> <playername>` Add or remove a player from the whitelist
+ - `countdown <duration>` Start a countdown
 
 
 

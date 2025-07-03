@@ -6,7 +6,7 @@ local Settings = {}
 
 -- Fonction pour charger la configuration à partir d'un fichier existant
 function Settings.loadExistingConfig()
-    local existingConfigPath = utils.script_path() .. "NickelConfig/NickelConfig.toml"
+    local existingConfigPath = utils.script_path() .. "NickelConfig.toml"
     if FS.Exists(existingConfigPath) then
         return toml.decodeFromFile(existingConfigPath)
     end
@@ -96,12 +96,21 @@ function Settings.init()
         end
     end
 
-    if configChanged then
-        toml.encodeToFile(self.config, {
-            file = utils.script_path() .. "NickelConfig/NickelConfig.toml", 
-            overwrite = true
-        })
+if configChanged then
+    -- Créer le dossier s'il n'existe pas
+    local configPath = utils.script_path() .. "NickelConfig"
+    local configFile = configPath .. "/NickelConfig.toml"
+    
+    -- Créer le dossier s'il n'existe pas
+    if not FS.Exists(configPath) then
+        FS.CreateDirectory(configPath)
     end
+    
+    toml.encodeToFile(self.config, {
+        file = configFile,
+        overwrite = true
+    })
+end
 
     return new._object(Settings, self)
 end
@@ -146,7 +155,7 @@ function Settings:SetSetting(settingKey, value)
     print("Setting " .. keys[#keys] .. " to " .. tostring(value))
     current[keys[#keys]] = value
 
-    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
+    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig.toml", overwrite = true})
 end
 
 return Settings
