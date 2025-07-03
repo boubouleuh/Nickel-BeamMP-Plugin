@@ -39,8 +39,6 @@
 
     "commands.unban.unbanip.success" : "{Count} ip of {Player} has been unbanned",
 
-
-
     "commands.broadcast.missing_args" : "Usage : {Prefix}broadcast <message>",
 
     "commands.mute.missing_args" : "Usage : {Prefix}mute <playername> <reason>",
@@ -70,6 +68,16 @@
     "commands.grantrole.description" : "Grant a role to a player",
     "commands.revokecommand.description" : "Revoke the permission of a command from a specific role",
     "commands.revokerole.description" : "Revoke a role from a player",
+    "commands.revokeaction.description" : "Revoke an action from a specific role",
+    "commands.grantaction.description" : "Grant an action to a specific role",
+
+    "commands.listactions.description" : "List all actions",
+
+    "commands.forcenametags.description" : "Bypass nametags configuration",
+
+    "commands.countdown.description" : "Start a countdown",
+
+    "commands.broadcast.description" : "Broadcast a message to every players",
 
     "commands.createrole.missing_args" : "Usage : {Prefix}createrole <rolename> <permlvl>",
     "commands.createrole.description" : "Create a role",
@@ -77,7 +85,10 @@
     "commands.deleterole.missing_args" : "Usage : {Prefix}deleterole <rolename>",
     "commands.deleterole.description" : "Delete a role",
 
+    "commands.listroles.description" : "List all roles",
+
     "commands.importLegacyData.success" : "Successfully imported legacy data",
+    "commands.importLegacyData.description" : "Import legacy data from the old Nickel plugin",
 
 
     "commands.whitelist.missing_args": "Usage : {Prefix}whitelist <add/remove> <playername>",
