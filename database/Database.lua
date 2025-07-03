@@ -137,7 +137,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
       return self:prepareAndExecute(updateQuery, object[firstColumn])
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
-    print(table.unpack(values))
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
     
     -- Execute the query using prepareAndExecute with the values array
