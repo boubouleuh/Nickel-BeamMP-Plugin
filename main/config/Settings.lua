@@ -13,25 +13,25 @@ function Settings.loadExistingConfig()
     return {}
 end
 
--- Fonction pour fusionner deux tables de manière récursive
 local function mergeTables(dest, src)
     for key, value in pairs(src) do
         if type(value) == "table" then
             dest[key] = dest[key] or {}
             mergeTables(dest[key], value)
         else
-            if dest[key] == nil then -- Ne remplace que si la clé n'existe pas
+            if dest[key] == nil then 
                 dest[key] = value
             end
         end
     end
 end
 
--- Fonction pour initialiser la configuration
 function Settings.init()
     local self = {}
     self.config = Settings.loadExistingConfig()
-    local defaultConfig = {
+    local configChanged = false
+    
+   local defaultConfig = {
         misc = {
             join_message = "[{Role}] {Player} joined the server",
         },
@@ -68,25 +68,44 @@ function Settings.init()
         }
     }
 
-    --TODO IN THE DEFAULT CONFIG THINK ABOUT THE OTHER SERVERS VAR WHO WILL CONTAINS EVERY SERVERS DIRECTORY
+    local function needsMerge(existing, default)
+        if type(existing) ~= "table" or type(default) ~= "table" then
+            return true
+        end
+        for k, v in pairs(default) do
+            if existing[k] == nil then
+                return true
+            elseif type(v) == "table" then
+                if needsMerge(existing[k], v) then
+                    return true
+                end
+            end
+        end
+        return false
+    end
 
-    -- Fusionne les configurations existantes avec les valeurs par défaut
-    mergeTables(self.config, defaultConfig)
+    if needsMerge(self.config, defaultConfig) then
+        mergeTables(self.config, defaultConfig)
+        configChanged = true
+    end
 
-    -- Supprime les clés qui n'existent plus dans la configuration par défaut
     for key, _ in pairs(self.config) do
         if defaultConfig[key] == nil then
             self.config[key] = nil
+            configChanged = true
         end
     end
 
-    -- Réécrit le fichier avec les données fusionnées
-    toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
+    if configChanged then
+        toml.encodeToFile(self.config, {
+            file = utils.script_path() .. "NickelConfig/NickelConfig.toml", 
+            overwrite = true
+        })
+    end
 
     return new._object(Settings, self)
 end
 
--- Fonction pour obtenir une valeur spécifique du fichier de configuration
 function Settings:GetSetting(settingKey)
     return self.config[settingKey]
 end
@@ -99,7 +118,7 @@ local function convertStringsToBooleans(value)
             return false
         end
     elseif type(value) == "table" then
-        -- Parcourir la table et convertir récursivement
+
         for k, v in pairs(value) do
             value[k] = convertStringsToBooleans(v)
         end
@@ -108,30 +127,25 @@ local function convertStringsToBooleans(value)
 end
 
 function Settings:SetSetting(settingKey, value)
-    -- Convertir les chaînes "true"/"false" en booléens, y compris dans les tables
     value = convertStringsToBooleans(value)
 
-    -- Séparer les sous-clés par le séparateur "."
     local keys = {}
     for key in string.gmatch(settingKey, "[^%.]+") do
         table.insert(keys, key)
     end
 
-    -- Parcourir les sous-clés pour atteindre la bonne profondeur
     local current = self.config
     for i = 1, #keys - 1 do
         local key = keys[i]
         if current[key] == nil then
-            current[key] = {} -- Créer une table si elle n'existe pas
+            current[key] = {} 
         end
         current = current[key]
     end
 
-    -- Définir la valeur à la clé finale
     print("Setting " .. keys[#keys] .. " to " .. tostring(value))
     current[keys[#keys]] = value
 
-    -- Réécrire le fichier TOML
     toml.encodeToFile(self.config, {file = utils.script_path() .. "NickelConfig/NickelConfig.toml", overwrite = true})
 end
 
