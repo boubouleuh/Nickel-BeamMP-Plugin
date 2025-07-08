@@ -11,6 +11,7 @@ local utils = {}
 function utils.sendString(id, event_name, data)
     local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
     if sessionStorage:get("synced") then
+        misc.nkprint("(" .. id .. ") [" .. event_name .. "] " .. data, "debug")
         MP.TriggerClientEvent(id, event_name, data)
     end 
 end
@@ -32,6 +33,7 @@ end
 function utils.sendTable(id, event_name, data)
     local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
     if sessionStorage:get("synced") then
+        misc.nkprint("(" .. id .. ") [" .. event_name .. "] " .. data, "debug")
         MP.TriggerClientEventJson(id, event_name, data)
     end
 end
@@ -52,6 +54,7 @@ end
 function utils.sendNothing(id, event_name)
     local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
     if sessionStorage:get("synced") then
+        misc.nkprint("(" .. id .. ") [" .. event_name .. "] " .. "empty string", "debug")
         MP.TriggerClientEvent(id, event_name, "")
     end
 end
