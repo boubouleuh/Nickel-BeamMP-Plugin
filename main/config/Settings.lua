@@ -54,6 +54,7 @@ function Settings.init()
             debug = false
         },
         client = {
+            b64avatar = true,
             interface = false,
             environment = {
                 temperature = 20,

@@ -71,7 +71,7 @@ local syncEnvironment = require("main.events.interface.syncEnvironment")
 local syncInterfaceValues = require("main.events.interface.syncInterfaceValues")
 local SecureValues = require("main.events.interface.secureValues")
 local runCommand = require("main.events.interface.runCommand")
-local search = require("main.events.interface.search")
+-- local search = require("main.events.interface.search")
 local onInit = require("main.events.plugin_initialization.onInit")
 -- Miscellanous
 
@@ -178,7 +178,7 @@ if cfgManager:GetSetting("client").interface then
     SecureValues.new(managers)
     syncInterfaceValues.new(managers)
     runCommand.new(managers)
-    search.new(managers)
+    -- search.new(managers)
 end
 
 utils.nkprint("Nickel successfully initialized", "info")

@@ -75,8 +75,8 @@ end
 ---@param offset integer
 ---@param dbManager DatabaseManager
 ---@param permManager PermissionsHandler
----@
-function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
+---@param cfgManager Settings
+function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManager)
 
 
     if receiver_id < 0 then
@@ -86,7 +86,7 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager)
     local seeAdvancedUserInfos = permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
     dbManager:openConnection()
     local onlineplayers = MP.GetPlayers()
-    local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos)
+    local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos, cfgManager:GetSetting("client").b64avatar)
     dbManager:closeConnection()
 
     -- local maxPacketSize = 19500 -- 19.5 KB
@@ -183,14 +183,15 @@ end
 ---@param id integer
 ---@param dbManager DatabaseManager
 ---@param permManager PermissionsHandler
+---@param cfgManager Settings
 ---@param beammpid integer
-function utils.sendPlayer(receiver_id, dbManager, permManager, beammpid)
+function utils.sendPlayer(receiver_id, dbManager, permManager, cfgManager, beammpid)
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
     dbManager:openConnection()
-    local player = dbManager:getUserWithRoles(beammpid, permManager)
+    local player = dbManager:getUserWithRoles(beammpid, permManager, cfgManager:GetSetting("client").b64avatar)
     dbManager:closeConnection()
 
     if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then

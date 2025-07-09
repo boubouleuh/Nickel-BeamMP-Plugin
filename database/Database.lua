@@ -465,7 +465,7 @@ end
 ---@param offset integer
 ---@param onlinePlayers table
 ---@param permManager PermissionsHandler
-function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAdvancedUserInfos)
+function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAdvancedUserInfos, allowbase64)
   -- Get a set of online player beammpids
   local onlineBeammpids = {}
   for id, name in pairs(onlinePlayers) do
@@ -508,7 +508,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
           name = row.name,
           whitelisted = row.whitelisted,
           online = true, -- Mark all as online
-          b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid)
+          b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid) or nil
         }
       end
 
@@ -587,7 +587,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
         name = row.name,
         whitelisted = row.whitelisted,
         online = false, -- Mark as offline
-        b64img = "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid)
+        b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid) or nil
       }
     end
 
@@ -656,7 +656,7 @@ end
 
 
 --get an user with his roles and details like online, b64img but simple and return a json like getUsersDynamically return but only with one user
-function DatabaseManager:getUserWithRoles(beammpid, permManager)
+function DatabaseManager:getUserWithRoles(beammpid, permManager, allowbase64)
   local onlinePlayers = MP.GetPlayers()
   local user = self:getClassByBeammpId(Users, beammpid)
   local userRoles = self:getAllClassByBeammpId(UserRoles, beammpid)
@@ -700,33 +700,33 @@ function DatabaseManager:getUserWithRoles(beammpid, permManager)
       name = user.name,
       whitelisted = user.whitelisted,
       online = onlinePlayers[playerid] ~= nil,
-      b64img = "data:image/png;base64," .. online.getPlayerB64Img(beammpid)
+      b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(beammpid) or nil
     }
     return userFinal
 end
   
-function DatabaseManager:likeSearchUserWithRoles(name, permManager)
-  local users = {}
-  local query = "SELECT * FROM users WHERE name LIKE ? LIMIT 50"
-  local stmt = self.db:prepare(query)
-  if not stmt then
-      error("Failed to prepare statement: " .. query)
-  end
+-- function DatabaseManager:likeSearchUserWithRoles(name, permManager)
+--   local users = {}
+--   local query = "SELECT * FROM users WHERE name LIKE ? LIMIT 50"
+--   local stmt = self.db:prepare(query)
+--   if not stmt then
+--       error("Failed to prepare statement: " .. query)
+--   end
 
-  -- Bind the values
-  stmt:bind_values("%" .. name .. "%")
+--   -- Bind the values
+--   stmt:bind_values("%" .. name .. "%")
 
-  -- Execute the statement and iterate over the results
-  for row in stmt:nrows() do
-      local user = self:getUserWithRoles(row.beammpid, permManager)
-      table.insert(users, user)
-  end
+--   -- Execute the statement and iterate over the results
+--   for row in stmt:nrows() do
+--       local user = self:getUserWithRoles(row.beammpid, permManager)
+--       table.insert(users, user)
+--   end
 
-  -- Finalize the statement to release resources
-  stmt:finalize()
+--   -- Finalize the statement to release resources
+--   stmt:finalize()
 
-  return users
-end
+--   return users
+-- end
 
 
 

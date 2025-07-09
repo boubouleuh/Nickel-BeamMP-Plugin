@@ -11,7 +11,7 @@ function onPlayerDisconnect.new(managers)
 
         local onlineplayers = MP.GetPlayers()
         for id2, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
+            interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, managers.cfgManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
         end
     end
     MP.RegisterEvent("onPlayerDisconnect", "onDisconnect")
