@@ -84,10 +84,11 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManag
     end
 
     local seeAdvancedUserInfos = permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
-    dbManager:openConnection()
-    local onlineplayers = MP.GetPlayers()
-    local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos, cfgManager:GetSetting("client").b64avatar)
-    dbManager:closeConnection()
+    local onlineplayers, players = dbManager:withConnection(function()
+        local onlineplayers = MP.GetPlayers()
+        local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos, cfgManager:GetSetting("client").b64avatar)
+        return onlineplayers, players
+    end)
 
     -- local maxPacketSize = 19500 -- 19.5 KB
     local maxPacketSize = 30000000 -- 30 MB
@@ -114,10 +115,6 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManag
     end
 
     utils.resetUserInfos(receiver_id, permManager)
-
-    
-    utils.sendNothing(receiver_id, "NKgetPlayers")
-
 end
 
 
@@ -190,17 +187,16 @@ function utils.sendPlayer(receiver_id, dbManager, permManager, cfgManager, beamm
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    dbManager:openConnection()
-    local player = dbManager:getUserWithRoles(beammpid, permManager, cfgManager:GetSetting("client").b64avatar)
-    dbManager:closeConnection()
+    local player = dbManager:withConnection(function()
+        local player = dbManager:getUserWithRoles(beammpid, permManager, cfgManager:GetSetting("client").b64avatar)
+        return player
+    end)
 
     if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
         player.ips = {}
     end
     utils.resetUserInfos(receiver_id, permManager)
-    utils.sendTable(receiver_id, "NKinsertPlayers", player)
-
-    utils.sendNothing(receiver_id, "NKgetPlayers")
+    utils.sendTable(receiver_id, "NKinsertPlayers", {player})
 end
 
 --- send every roles to client
@@ -208,9 +204,10 @@ end
 ---@param event_name string
 ---@param dbManager DatabaseManager
 function utils.sendRoles(id, event_name, dbManager)
-    dbManager:openConnection()
-    local roles = dbManager:getAllEntry(Roles)
-    dbManager:closeConnection()
+    local roles = dbManager:withConnection(function()
+        local roles = dbManager:getAllEntry(Roles)
+        return roles
+    end)
 
     local rolesfinal = {}
     for i, v in pairs(roles) do

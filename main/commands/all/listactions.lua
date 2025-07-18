@@ -15,9 +15,9 @@ function command.init(sender_id, sender_name, managers)
     ---@type DatabaseManager
     local dbManager = managers.dbManager
     --get all actions
-    dbManager:openConnection()
-    local actions = dbManager:getAllEntry(Action)
-    dbManager:closeConnection()
+    local actions = dbManager:withConnection(function()
+        return dbManager:getAllEntry(Action)
+    end)
     --send the same way as the help command
     for _, action in pairs(actions) do
         msgManager:SendMessage(sender_id, action.actionName)

@@ -7,9 +7,9 @@ local onInit = {}
 function onInit.new(managers) 
     function onPluginInit()
         local dbManager = managers.dbManager
-        dbManager:openConnection()
-        utils.nkprint("Thanks for using Nickel version " .. dbManager:getEntry(Infos, "infoKey", "version").infoValue , "info")
-        dbManager:closeConnection()
+        dbManager:withConnection(function()
+            utils.nkprint("Thanks for using Nickel version " .. dbManager:getEntry(Infos, "infoKey", "version").infoValue , "info")
+        end)
         utils.nkprint("Please join the Nickel discord if you want to : https://discord.gg/h5P84FFw7B", "info")
     end
     MP.RegisterEvent("onInit", "onPluginInit")

@@ -13,9 +13,12 @@ function default.init(managers)
 
     ---@type DatabaseManager
     local dbManager = managers.dbManager
-    dbManager:openConnection()
+    
+    local infoValue = dbManager:withConnection(function()
+        return dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue
+    end)
 
-    if dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch").infoValue == "false" then
+    if infoValue == "false" then
 
         managers.permManager:addRole("Member", 0, true)
 
@@ -58,13 +61,14 @@ function default.init(managers)
         managers.permManager:assignAction("seeAdvancedUserInfos", "Moderator")
         managers.permManager:assignAction("editInterfaceSettings", "Administrator")
     end
-    dbManager:closeConnection()
-    dbManager:openConnection()
-    local everyCommands = dbManager:getAllEntry(Command)
-    local everyCommandBinded = dbManager:getAllEntry(RoleCommand)
-    local everyActions = dbManager:getAllEntry(Action)
-    local everyRoleActions = dbManager:getAllEntry(RoleAction)
-    dbManager:closeConnection()
+
+    local everyCommands, everyCommandBinded, everyActions, everyRoleActions = dbManager:withConnection(function()
+        local everyCommands = dbManager:getAllEntry(Command)
+        local everyCommandBinded = dbManager:getAllEntry(RoleCommand)
+        local everyActions = dbManager:getAllEntry(Action)
+        local everyRoleActions = dbManager:getAllEntry(RoleAction)
+        return everyCommands, everyCommandBinded, everyActions, everyRoleActions
+    end)
         -- Create a dictionary to store role associations
     local commandRoles = {}
 
@@ -79,7 +83,6 @@ function default.init(managers)
             utils.nkprint(string.format("Command '%s' (ID: %d) is not associated with any role. Use the command '%sgrantcommand %s <role>' to assign it to a role.", command.commandName, command.commandID, managers.cfgManager:GetSetting("commands").prefix , command.commandName), "warn")
         end
     end
-
 
     -- Create a dictionary to store role associations
     local actionRoles = {}

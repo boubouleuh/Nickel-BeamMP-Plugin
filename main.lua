@@ -92,8 +92,9 @@ else
     dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
 end
 
-
-dbManager:openConnection()
+dbManager:withConnection(function()
+    dbManager.db:exec("PRAGMA journal_mode=WAL2;")
+end)
 
 ---@type MessagesHandler
 local msgManager = messageHandlerManager.new(dbManager,cfgManager)
@@ -101,24 +102,21 @@ local msgManager = messageHandlerManager.new(dbManager,cfgManager)
 ---@type PermissionsHandler
 local permManager = PermissionsHandler.new(dbManager)
 
--- Creating tables / updating
-dbManager:createTableForClass(User.new())
-dbManager:createTableForClass(UserIp.new())
-dbManager:createTableForClass(UserStatus.new())
-
-dbManager:createTableForClass(Role.new())
-dbManager:createTableForClass(Command.new())
-dbManager:createTableForClass(UserRole.new())
-dbManager:createTableForClass(Action.new())
-dbManager:createTableForClass(RoleAction.new())
-dbManager:createTableForClass(RoleCommand.new())
-dbManager:createTableForClass(Infos.new())
-
-dbManager:closeConnection()
-
+dbManager:withConnection(function()
+    -- Creating tables / updating
+    dbManager:createTableForClass(User.new())
+    dbManager:createTableForClass(UserIp.new())
+    dbManager:createTableForClass(UserStatus.new())
+    dbManager:createTableForClass(Role.new())
+    dbManager:createTableForClass(Command.new())
+    dbManager:createTableForClass(UserRole.new())
+    dbManager:createTableForClass(Action.new())
+    dbManager:createTableForClass(RoleAction.new())
+    dbManager:createTableForClass(RoleCommand.new())
+    dbManager:createTableForClass(Infos.new())
+end)
 
 
----@type CommandsHandler
 
 
 ---@class managers
@@ -135,7 +133,7 @@ managers.cmdManager = cmdManager
 
 
 
-dbManager:openConnection()
+dbManager:withConnection(function()
 
 local entry = dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch")
 if entry == nil then
@@ -144,17 +142,12 @@ elseif entry.infoValue == "false" then
 
     local class = Infos.new("isInitialDatabaseLaunch", "true")
 
-
     dbManager:save(class, true)
 
 end
 
-
-
 dbManager:save(Infos.new("version", updater.get_git_version()), true) --set version
-
-dbManager:closeConnection()
-
+end)
 default.init(managers)
 
 -- Init Events

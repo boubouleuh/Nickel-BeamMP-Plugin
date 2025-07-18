@@ -6,9 +6,9 @@ function search.new(managers)
 
     local lastCallTime = {}
     function searchPlayer(id, search)
-        managers.dbManager:openConnection()
-        local searchResults = managers.dbManager:likeSearchUserWithRoles(search, managers.permManager)
-        managers.dbManager:closeConnection()
+        local searchResults = managers.dbManager:withConnection(function()
+            return managers.dbManager:likeSearchUserWithRoles(search, managers.permManager)
+        end)
         interfaceUtils.sendNothing(id, "NKResetSearch", "")
         MP.Sleep(20) --need to test if it lag
         for i, v in pairs(searchResults) do

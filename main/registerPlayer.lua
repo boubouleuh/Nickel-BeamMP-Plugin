@@ -27,10 +27,13 @@ function registerPlayer.register(beammpid, name, permManager, msgManager, dbMana
             newUser = user.new(beammpid, name)
         end
 
-        dbManager:openConnection()
-        local ipClass = dbManager:getClassByBeammpId(userIp, beammpid)
-        local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
-        dbManager:closeConnection()
+        local ipClass, userRoleClass = dbManager:withConnection(function()
+            local ipClass = dbManager:getClassByBeammpId(userIp, beammpid)
+            local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
+            return ipClass, userRoleClass
+        end)
+
+
 
         local tab1 = {}
 

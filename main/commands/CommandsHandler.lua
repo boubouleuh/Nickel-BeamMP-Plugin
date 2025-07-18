@@ -37,23 +37,20 @@ function CommandsHandler.init(managers)
 
 
     local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
-        self.dbManager:openConnection()
+        self.dbManager:withConnection(function()
+            local commandsFromDB = self.dbManager:getAllEntry(Command)
 
-        local commandsFromDB = self.dbManager:getAllEntry(Command)
+            -- Remove commands not present in memory from the database
+            for _, command in pairs(commandsFromDB) do
+                if not self.commands[command.commandName] then
+                    local conditions = {
+                        {"commandName", command.commandName},
+                    }
 
-        -- Remove commands not present in memory from the database
-        for _, command in pairs(commandsFromDB) do
-            if not self.commands[command.commandName] then
-                local conditions = {
-                    {"commandName", command.commandName},
-                }
-
-                self.dbManager:deleteObject(Command, conditions)
+                    self.dbManager:deleteObject(Command, conditions)
+                end
             end
-        end
-
-
-        self.dbManager:closeConnection()
+        end)
     end
 
 

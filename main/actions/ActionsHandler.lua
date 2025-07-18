@@ -32,23 +32,21 @@ function ActionsHandler.init(managers)
 
 
     local function checkActions()  --WATCH THIS IF ACTION ARE NOT HANDLED CORRECTLY
-        self.dbManager:openConnection()
+        self.dbManager:withConnection(function()
 
-        local actionsFromDB = self.dbManager:getAllEntry(Action)
+            local actionsFromDB = self.dbManager:getAllEntry(Action)
 
-        -- Remove actions not present in memory from the database
-        for _, action in pairs(actionsFromDB) do
-            if not self.actions[action.actionName] then
-                local conditions = {
-                    {"actionName", action.actionName},
-                }
+            -- Remove actions not present in memory from the database
+            for _, action in pairs(actionsFromDB) do
+                if not self.actions[action.actionName] then
+                    local conditions = {
+                        {"actionName", action.actionName},
+                    }
 
-                self.dbManager:deleteObject(Action, conditions)
+                    self.dbManager:deleteObject(Action, conditions)
+                end
             end
-        end
-
-
-        self.dbManager:closeConnection()
+        end)
     end
 
 

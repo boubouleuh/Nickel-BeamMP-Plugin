@@ -17,9 +17,9 @@ function command.init(sender_id, sender_name, managers)
     ---@type DatabaseManager
     local dbManager = managers.dbManager
     --get all roles without permManager
-    dbManager:openConnection()
-    local roles = dbManager:getAllEntry(Role)
-    dbManager:closeConnection()
+    local roles = dbManager:withConnection(function()
+        return dbManager:getAllEntry(Role)
+    end)
     table.sort(roles, function(a, b) return a.permlvl > b.permlvl end)
     --send the same way as the help command
     for _, role in pairs(roles) do

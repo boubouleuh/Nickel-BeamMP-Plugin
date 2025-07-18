@@ -19,13 +19,12 @@ end
   
 
 function Service:getAllStatus()
-    self.dbManager:openConnection()
-    local status = self.dbManager:getAllClassByBeammpId(userStatus, self.beammpid)
-
+    local status = self.dbManager:withConnection(function()
+        return self.dbManager:getAllClassByBeammpId(userStatus, self.beammpid)
+    end)
     for _, value in ipairs(status) do
-        value.tableName = userStatus.tableName
+            value.tableName = userStatus.tableName
     end
-    self.dbManager:closeConnection()
     return status
 end
 
@@ -71,13 +70,13 @@ function Service:disableStatus(status_type)
     
 end
 function Service:removeStatus(status_type)
-    self.dbManager:openConnection()
-    local conditions = {
-      {"status_type", status_type},
-      {"beammpid", self.beammpid}
-    }
-    local result = self.dbManager:deleteObject(userStatus, conditions)
-    self.dbManager:closeConnection()
+    local result = self.dbManager:withConnection(function()
+        local conditions = {
+          {"status_type", status_type},
+          {"beammpid", self.beammpid}
+        }
+        local result = self.dbManager:deleteObject(userStatus, conditions)
+    end)
 
     interfaceUtils.sendNothingToAll("NKResetPlayerList")
 

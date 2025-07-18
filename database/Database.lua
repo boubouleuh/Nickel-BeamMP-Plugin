@@ -197,10 +197,10 @@ function DatabaseManager:save(class, canupdate)
   if canupdate == nil then
     canupdate = true
   end
-  self:openConnection()
-  local tableName = class.tableName
-  local result = self:insertOrUpdateObject(tableName, class, canupdate)
-  self:closeConnection()
+  local result = self:withConnection(function()
+    local tableName = class.tableName
+    return self:insertOrUpdateObject(tableName, class, canupdate)
+  end)
   return result
 end
 
@@ -767,4 +767,19 @@ function DatabaseManager:closeConnection()
     self.db = nil
   end
 end
+
+function DatabaseManager:withConnection(callback)
+    self:openConnection()
+    local results = {pcall(callback)}
+    self:closeConnection()
+    
+    local ok = table.remove(results, 1) 
+    
+    if not ok then
+        error(results[1])  
+    end
+    
+    return table.unpack(results) 
+end
+
 return DatabaseManager

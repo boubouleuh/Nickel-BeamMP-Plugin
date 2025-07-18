@@ -17,10 +17,9 @@ end
   
 
 function Service:getAllIps()
-    self.dbManager:openConnection()
-    local ips = self.dbManager:getAllClassByBeammpId(userIp, self.beammpid)
-    self.dbManager:closeConnection()
-    return ips
+    return self.dbManager:withConnection(function()
+        return self.dbManager:getAllClassByBeammpId(userIp, self.beammpid)
+    end)
 end
 
 function Service:banip(ip)

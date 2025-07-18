@@ -71,12 +71,13 @@ function MessagesHandler:GetMessage(sender_id, key, values)
     if sender_id ~= -2 and sender_id ~= -1 then
         beamId = utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
     end
-    self.dbManager:openConnection()
-    local userLang
-    if beamId ~= nil then
-        userLang = self.dbManager:getClassByBeammpId(user, beamId)
-    end
-    self.dbManager:closeConnection()
+    local userLang = self.dbManager:withConnection(function()
+        local userLang
+        if beamId ~= nil then
+            userLang = self.dbManager:getClassByBeammpId(user, beamId)
+        end
+        return userLang
+    end)
     local langCode = self.configManager:GetSetting("langs").server_language
     local langForce = self.configManager:GetSetting("langs").force_server_language
 
