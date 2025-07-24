@@ -97,7 +97,6 @@ function online.sendDiscordMessage(webhook, message, username, avatar, embedTitl
         )
     end
 
-
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 
     local json = string.format(
@@ -113,7 +112,6 @@ function online.sendDiscordMessage(webhook, message, username, avatar, embedTitl
         timestamp
     )
 
-    -- Échapper les apostrophes pour la commande shell
     local escapedJson = shellEscapeSingleQuotes(json)
 
     local cmd
@@ -124,14 +122,11 @@ function online.sendDiscordMessage(webhook, message, username, avatar, embedTitl
             webhook, psJson
         )
     else
-        -- Utiliser apostrophes simples autour de la chaîne JSON
         cmd = string.format(
             "wget -q --header='Content-Type: application/json' --post-data='%s' '%s' -O /dev/null",
             escapedJson, webhook
         )
     end
-
-    print(cmd)
     local result = os.execute(cmd)
     return result == true or result == 0
 end
