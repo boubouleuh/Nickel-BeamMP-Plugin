@@ -78,7 +78,9 @@ function init()
 
 
 
-
+    if utils.getBeamMPConfig().General.LogChat and cfgManager:GetSetting("misc").chat_log then
+        utils.nkprint("Chat logging is enabled in the Nickel config, but also in the BeamMP config. Please disable one of them to avoid duplicate logs.", "warn")
+    end
 
 
 

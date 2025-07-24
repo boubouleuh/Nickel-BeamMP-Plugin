@@ -64,6 +64,78 @@ function online.getPlayerB64Img(beammpid)
     end
 end
 
+local function shellEscapeSingleQuotes(str)
+    return str:gsub("'", "'\\''")
+end
+
+function online.sendDiscordMessage(webhook, message, username, avatar, embedTitle, embedDescription, color, authorName, authorUrl, authorIcon, footerText, footerIcon)
+    local function escape(str)
+        return tostring(str or "")
+            :gsub('\\', '\\\\')
+            :gsub('"', '\\"')
+            :gsub('\n', '\\n')
+            :gsub('\r', '')
+            :gsub('\27', '\\u001b')
+    end
+
+    local authorJson = ""
+    if authorName then
+        authorJson = string.format(
+            '"author":{"name":"%s"%s%s},',
+            escape(authorName),
+            authorUrl and string.format(',"url":"%s"', escape(authorUrl)) or "",
+            authorIcon and string.format(',"icon_url":"%s"', escape(authorIcon)) or ""
+        )
+    end
+
+    local footerJson = ""
+    if footerText then
+        footerJson = string.format(
+            '"footer":{"text":"%s"%s},',
+            escape(footerText),
+            footerIcon and string.format(',"icon_url":"%s"', escape(footerIcon)) or ""
+        )
+    end
+
+
+    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+
+    local json = string.format(
+        '{"content":"%s","username":"%s","avatar_url":"%s","embeds":[{%s%s"title":"%s","description":"%s","color":%d,"timestamp":"%s"}]}',
+        escape(message),
+        escape(username),
+        escape(avatar),
+        authorJson,
+        footerJson,
+        escape(embedTitle),
+        escape(embedDescription),
+        tonumber(color) or 16777215,
+        timestamp
+    )
+
+    -- Échapper les apostrophes pour la commande shell
+    local escapedJson = shellEscapeSingleQuotes(json)
+
+    local cmd
+    if MP.GetOSName() == "Windows" then
+        local psJson = json:gsub('"', '""')
+        cmd = string.format(
+            'powershell -Command "Invoke-WebRequest -Uri \'%s\' -Method Post -Body \\"%s\\" -ContentType \'application/json\'"',
+            webhook, psJson
+        )
+    else
+        -- Utiliser apostrophes simples autour de la chaîne JSON
+        cmd = string.format(
+            "wget -q --header='Content-Type: application/json' --post-data='%s' '%s' -O /dev/null",
+            escapedJson, webhook
+        )
+    end
+
+    print(cmd)
+    local result = os.execute(cmd)
+    return result == true or result == 0
+end
+
 function online.savePlayerAvatarImg(playername, size)
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
 

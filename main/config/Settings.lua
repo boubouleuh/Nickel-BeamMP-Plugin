@@ -32,8 +32,12 @@ function Settings.init()
     local configChanged = false
     
    local defaultConfig = {
+        discord = {
+            chat_webhook = "",
+        },
         misc = {
             join_message = "[{Role}] {Player} joined the server",
+            chat_log = true,
         },
         langs = {
             server_language = "en_us",
@@ -97,12 +101,12 @@ function Settings.init()
         end
     end
 
-if configChanged then
-    toml.encodeToFile(self.config, {
-        file = utils.script_path() .. "NickelConfig.toml",
-        overwrite = true
-    })
-end
+    if configChanged then
+        toml.encodeToFile(self.config, {
+            file = utils.script_path() .. "NickelConfig.toml",
+            overwrite = true
+        })
+    end
 
     return new._object(Settings, self)
 end
