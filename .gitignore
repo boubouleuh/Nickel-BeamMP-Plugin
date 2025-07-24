@@ -9,3 +9,4 @@
 latest_commit.txt
 version.txt
 NickelConfig.toml
+reloader.lua
