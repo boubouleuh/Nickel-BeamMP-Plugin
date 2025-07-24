@@ -58,6 +58,7 @@ function updater.check(cfgManager)
     if FS.Exists(utils.script_path() .. ".git") then
         if cfgManager:GetSetting("advanced").autoupdate then
             local success, termType, exitCode = execute_in_dir(utils.script_path(), "git pull origin dev")
+            print("Git pull result: ", success, termType, exitCode)
             if exitCode == 0 then
                 utils.RunAsync(function()
                    utils.hotreload()

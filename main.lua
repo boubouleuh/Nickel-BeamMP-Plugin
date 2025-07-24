@@ -1,14 +1,7 @@
 
 function init()
 
-    --create reloader.lua if not exist
-    local reloaderPath = utils.script_path() .. "reloader.lua"
-    if not utils.file_exists(reloaderPath) then
-        local file = io.open(reloaderPath, "w")
-        file:write("return " .. tostring(math.random(1, 1000000)))
-        file:close()
-        utils.nkprint("Created reloader.lua for manual hot-reload", "info")
-    end
+
 
     local initializeModules = require("main.initializeModules")
 
@@ -16,6 +9,15 @@ function init()
 
 
     local utils = require("utils.misc")
+
+    --create reloader.lua if not exist
+    local reloaderPath = utils.script_path() .. "reloader.lua"
+    if not FS.Exists(reloaderPath) then
+        local file = io.open(reloaderPath, "w")
+        file:write("return " .. tostring(math.random(1, 1000000)))
+        file:close()
+        utils.nkprint("Created reloader.lua for manual hot-reload", "info")
+    end
 
     local rootDirectory = utils.script_path()
     package.path = rootDirectory .. "objects/?.lua"
