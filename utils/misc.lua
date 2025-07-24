@@ -307,4 +307,14 @@ function Misc.RunAsync(func, delay, ...)
     MP.CreateEventTimer(id, delay)
 end
 
+function Misc.hotreload()
+    Misc.nkprint("Manually hot-reloading Nickel BeamMP Plugin...", "info")
+    local path = Misc.script_path() .. "reloader.lua"
+    local file = io.open(path, "w")
+    if file then
+        file:write("return " .. tostring(math.random(1, 1000000)))
+        file:close()
+    end
+end
+
 return Misc;

@@ -24,36 +24,30 @@ function updater.get_git_version()
         return nil
     end
 
-    -- Récupère tous les tags contenant le commit actuel
     local command = "git tag --contains HEAD " .. redirect .. " > " .. temp_file
     execute_in_dir(script_path, command)
     local version = read_file(script_path .. temp_file)
 
-    -- Si aucun tag n'est trouvé, on utilise le hash du dernier commit
     if not version or version == "" then
         command = "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file
         execute_in_dir(script_path, command)
         version = read_file(script_path .. temp_file) or "unknown"
     end
 
-    -- Récupère la branche actuelle
     command = "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file
     execute_in_dir(script_path, command)
     local branch = read_file(script_path .. temp_file) or "unknown"
 
-    -- Vérifie s'il y a des modifications non commit
     command = "git status --porcelain " .. redirect .. " > " .. temp_file
     execute_in_dir(script_path, command)
     local status = read_file(script_path .. temp_file)
     local dirty = status and #status > 0 and "-dirty" or ""
 
-    os.remove(script_path .. temp_file) -- Nettoie le fichier temporaire
+    os.remove(script_path .. temp_file) 
 
-    -- Retourne une chaîne combinée avec version, branche et état
     return string.format("%s (%s)%s", version, branch, dirty)
 end
 
--- 📌 Vérifie si le projet est déjà un dépôt Git
 function updater.check(cfgManager)
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
@@ -63,7 +57,12 @@ function updater.check(cfgManager)
     end
     if FS.Exists(utils.script_path() .. ".git") then
         if cfgManager:GetSetting("advanced").autoupdate then
-            execute_in_dir(utils.script_path(), "git pull origin dev")
+            local success, termType, exitCode = execute_in_dir(utils.script_path(), "git pull origin dev")
+            if exitCode == 0 then
+                utils.RunAsync(function()
+                   utils.hotreload()
+                end, 2000)
+            end
         else
             utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
         end
@@ -74,7 +73,6 @@ function updater.check(cfgManager)
     end
 end
 
--- 🚀 Initialise un dépôt Git si besoin
 function updater.init_git()
     execute_in_dir(utils.script_path(), "git init")
     execute_in_dir(utils.script_path(), "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
