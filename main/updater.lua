@@ -9,6 +9,22 @@ local function execute_in_dir(dir, command)
     return os.execute(full_command)
 end
 
+local function execute_in_dir_return(dir, command)
+    local temp_file = os.tmpname()
+    local full_command = "cd " .. dir .. " && " .. command .. " > " .. temp_file .. " 2>&1"
+    local success, termType, exitCode = os.execute(full_command)
+    
+    local file = io.open(temp_file, "r")
+    local output = ""
+    if file then
+        output = file:read("*a")
+        file:close()
+        os.remove(temp_file)
+    end
+    
+    return success, termType, exitCode, output
+end
+
 function updater.get_git_version()
     local temp_file = "git_version.txt"
     local script_path = utils.script_path()
@@ -57,9 +73,9 @@ function updater.check(cfgManager)
     end
     if FS.Exists(utils.script_path() .. ".git") then
         if cfgManager:GetSetting("advanced").autoupdate then
-            local success, termType, exitCode = execute_in_dir(utils.script_path(), "git pull origin dev")
-            print("Git pull result: ", success, termType, exitCode)
-            if exitCode == 0 then
+            local success, termType, exitCode, output = execute_in_dir_return(utils.script_path(), "git pull origin dev")
+            print("Git pull result: ", success, termType, exitCode, output)
+            if exitCode == 0 and not output:find("Already up to date.") then
                 utils.RunAsync(function()
                    utils.hotreload()
                 end, 2000)
