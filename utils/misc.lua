@@ -192,6 +192,16 @@ function Misc.getBeamMPConfig()
   end
 end
 
+function Misc.getMapName()
+    local map = Misc.getBeamMPConfig().General.Map -- /levels/west_coast_usa/info.json example
+    if map then
+        local mapName = map:match("levels/(.+)/info.json")
+        if mapName then
+            return mapName:gsub("_", " "):gsub("^%l", string.upper) -- Capitalize the first letter
+        end
+    end
+end
+
 ---GetPlayerId
 ---@param player_name string
 ---@return number

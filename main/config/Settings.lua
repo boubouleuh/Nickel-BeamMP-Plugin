@@ -34,6 +34,8 @@ function Settings.init()
    local defaultConfig = {
         discord = {
             chat_webhook = "",
+            vehicle_webhook = "",
+            player_webhook = "",
         },
         misc = {
             join_message = "[{Role}] {Player} joined the server",
