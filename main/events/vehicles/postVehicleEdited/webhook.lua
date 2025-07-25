@@ -16,7 +16,7 @@ return function(NotRejected, player_id, vehicle_id, data, managers)
             "",                     
             username,
             avatar,
-            "Edit",
+            utils.getMapName(),
             embedDescription,
             color,
             name,

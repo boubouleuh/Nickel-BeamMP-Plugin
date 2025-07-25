@@ -8,7 +8,7 @@ return function(player_id, vehicle_id, managers)
         local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
 
 
-        local embedDescription = "**Edited car " .. vehicle_id .. "**"
+        local embedDescription = "**Deleted car " .. vehicle_id .. "**"
         local color = 0x00FF00
         local name = MP.GetPlayerName(player_id) or "Unknown Player"
         online.sendDiscordMessage(
@@ -16,7 +16,7 @@ return function(player_id, vehicle_id, managers)
             "",                     
             username,
             avatar,
-            "Edit",
+            utils.getMapName(),
             embedDescription,
             color,
             name,

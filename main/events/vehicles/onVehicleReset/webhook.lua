@@ -16,7 +16,7 @@ return function(player_id, vehicle_id, data, managers)
             "",                     
             username,
             avatar,
-            "Reset",
+            utils.getMapName(),
             embedDescription,
             color,
             name,
