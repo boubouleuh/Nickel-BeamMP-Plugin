@@ -158,9 +158,9 @@ function init()
     dispatcher.load("players", managers)
     dispatcher.load("chat", managers)
     dispatcher.load("console", managers)
+    dispatcher.load("vehicles", managers)
 
     if cfgManager:GetSetting("client").interface then
-        dispatcher.load("vehicles", managers)
         dispatcher.load("interface", managers)
         -- search.new(managers)
     end

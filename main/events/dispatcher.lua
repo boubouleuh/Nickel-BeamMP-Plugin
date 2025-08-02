@@ -35,7 +35,7 @@ function dispatch.load(eventCategory, managers)
             end
         end
 
-        local funcName = "nickel_dispatch_" .. eventCategory .. "_" .. eventName
+        local funcName = "nickel_" .. eventCategory .. "_" .. eventName
         _G[funcName] = function(...)
             local args = {...}
             table.insert(args, managers)

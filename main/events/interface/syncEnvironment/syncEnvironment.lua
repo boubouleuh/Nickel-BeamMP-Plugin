@@ -4,7 +4,7 @@ local interfaceUtils = require("main.client.interfaceUtils")
 local utils = require("utils.misc")
 local syncenvironment = {}
 ---@param managers managers
-return function(id, environment, force, managers)
+return function(id, environment, managers, force)
     local environment = Util.JsonDecode(environment)
 
     if force == nil then

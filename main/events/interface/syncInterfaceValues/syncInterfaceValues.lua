@@ -2,9 +2,8 @@ local interfaceUtils = require("main.client.interfaceUtils")
 local utils = require("utils.misc")
 local syncinterfacevalues = {}
 ---@param managers managers
-return function(id, interfaceValues, force, managers)
+return function(id, interfaceValues, managers, force)
     local interfaceValues = Util.JsonDecode(interfaceValues)
-
     if force == nil then
         force = false
     end
