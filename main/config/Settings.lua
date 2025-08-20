@@ -49,7 +49,13 @@ function Settings.init()
             prefix = "/"
         },
         sync = {
-           database_file = ""
+           database_file = "",
+           database_type = "sqlite",
+           mysql_host = "localhost",
+           mysql_port = 3306,
+           mysql_database = "nickel",
+           mysql_username = "",
+           mysql_password = ""
         },
         conditions = {
             whitelist = false,

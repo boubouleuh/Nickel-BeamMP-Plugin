@@ -1,10 +1,7 @@
-local sqlite3 = require("lsqlite3")
-
 local new = require("objects.New")
-
 local utils = require("utils.misc")
-
 local online = require("main.online")
+local DatabaseFactory = require("database.adapters.DatabaseFactory")
 
 local UserRoles = require("objects.UserRole")
 local UsersStatus = require("objects.UserStatus")
@@ -16,10 +13,41 @@ local UserIp = require("objects.UserIp")
 ---@class DatabaseManager
 local DatabaseManager = {}
 
-function DatabaseManager.new(databaseName)
+function DatabaseManager.new(databasePath, databaseConfig)
   local self = {}
-  -- self.db = sqlite3.open(databaseName)
-  self.dbname = databaseName
+  
+  -- Support both old and new initialization methods for backward compatibility
+  if type(databasePath) == "string" and not databaseConfig then
+    -- Legacy mode: just a database file path (SQLite)
+    self.config = {
+      database_type = "sqlite",
+      database_file = databasePath
+    }
+  elseif type(databasePath) == "table" then
+    -- New mode: full configuration object
+    self.config = databasePath
+  else
+    -- New mode: database path + config
+    self.config = databaseConfig or {}
+    if not self.config.database_file then
+      self.config.database_file = databasePath
+    end
+    if not self.config.database_type then
+      self.config.database_type = "sqlite"
+    end
+  end
+  
+  -- Validate configuration
+  if not DatabaseFactory.validateConfig(self.config) then
+    error("Invalid database configuration")
+  end
+  
+  -- Create the appropriate database adapter
+  self.adapter = DatabaseFactory.createAdapter(self.config)
+  
+  -- Keep legacy property for backward compatibility
+  self.dbname = self.config.database_file or "database"
+  
   return new._object(DatabaseManager, self)
 end
 
@@ -732,13 +760,19 @@ end
 
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)
-
-
   local existingColumns = {}
-  local query = string.format("PRAGMA table_info(%s)", tableName)
-
-  for row in self.db:nrows(query) do
-    existingColumns[row.name] = true
+  local query
+  
+  if self.config.database_type == "sqlite" then
+    query = string.format("PRAGMA table_info(%s)", tableName)
+    for row in self.db:nrows(query) do
+      existingColumns[row.name] = true
+    end
+  elseif self.config.database_type == "mysql" then
+    query = string.format("SHOW COLUMNS FROM %s", tableName)
+    for row in self.db:nrows(query) do
+      existingColumns[row.Field] = true
+    end
   end
 
   return existingColumns
@@ -746,24 +780,36 @@ end
 
 -- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumnsName(tableName)
-
   local columns = {}
-  for row in self.db:nrows("PRAGMA table_info(" .. tableName .. ")") do
-    table.insert(columns, row.name)
+  local query
+  
+  if self.config.database_type == "sqlite" then
+    query = "PRAGMA table_info(" .. tableName .. ")"
+    for row in self.db:nrows(query) do
+      table.insert(columns, row.name)
+    end
+  elseif self.config.database_type == "mysql" then
+    query = "SHOW COLUMNS FROM " .. tableName
+    for row in self.db:nrows(query) do
+      table.insert(columns, row.Field)
+    end
   end
+  
   return columns
 end
 
 
 function DatabaseManager:openConnection()
   utils.nkprint("Database opened", "debug")
-  self.db = sqlite3.open(self.dbname)
+  self.adapter:connect()
+  -- For backward compatibility, expose the adapter as self.db
+  self.db = self.adapter
 end
 
 function DatabaseManager:closeConnection()
-  if self.db then
+  if self.adapter and self.adapter:isConnected() then
     utils.nkprint("Database closed", "debug")
-    self.db:close()
+    self.adapter:disconnect()
     self.db = nil
   end
 end

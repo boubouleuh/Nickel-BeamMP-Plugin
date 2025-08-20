@@ -86,17 +86,34 @@ function init()
 
     ---@type DatabaseManager
     local dbManager
-    local configDatabaseFile = cfgManager:GetSetting("sync").database_file
-
-    if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
-        dbManager = databaseManager.new(configDatabaseFile) --Keep the connection
-    else
-        utils.nkprint("No database set in config, now using default path", "info")
-        dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
+    local syncConfig = cfgManager:GetSetting("sync")
+    
+    -- Create database configuration with both old and new settings
+    local dbConfig = {
+        database_type = syncConfig.database_type or "sqlite",
+        database_file = syncConfig.database_file,
+        mysql_host = syncConfig.mysql_host,
+        mysql_port = syncConfig.mysql_port,
+        mysql_database = syncConfig.mysql_database,
+        mysql_username = syncConfig.mysql_username,
+        mysql_password = syncConfig.mysql_password
+    }
+    
+    -- Use default SQLite path if no database file is specified
+    if (not dbConfig.database_file or dbConfig.database_file == "") and dbConfig.database_type == "sqlite" then
+        utils.nkprint("No database file set in config, using default SQLite path", "info")
+        dbConfig.database_file = utils.script_path() .. "database/db.sqlite"
     end
 
+    -- Create database manager with new configuration
+    dbManager = databaseManager.new(dbConfig)
+
     dbManager:withConnection(function()
-        dbManager.db:exec("PRAGMA journal_mode=WAL2;")
+        -- Apply database-specific optimizations
+        if dbConfig.database_type == "sqlite" then
+            dbManager.db:exec("PRAGMA journal_mode=WAL2;")
+        end
+        -- MySQL doesn't need PRAGMA statements
     end)
 
     ---@type MessagesHandler
