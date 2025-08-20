@@ -18,32 +18,37 @@ function MySQLAdapter.new(connectionConfig)
     self.connection = nil
     self.env = nil
     self.changesCount = 0
+    self.libraryAvailable = false
     
     -- Try to load luasql-mysql
     local success, luasql = pcall(require, "luasql.mysql")
     if success then
         self.luasql = luasql
         self.mysql = luasql.mysql()
+        self.libraryAvailable = true
+        utils.nkprint("MySQL library loaded successfully", "info")
     else
-        utils.nkprint("MySQL support requires luasql-mysql library. Please install it to use MySQL database.", "error")
-        error("MySQL library not available. Please install luasql-mysql.")
+        utils.nkprint("MySQL library not available. Error: " .. tostring(luasql), "warn")
+        -- Don't error here, let the caller handle it
     end
     
     return new._object(MySQLAdapter, self)
 end
 
 function MySQLAdapter:connect()
+    if not self.libraryAvailable then
+        error("MySQL library not available. Please install luasql-mysql to use MySQL database.")
+    end
+    
     if not self.mysql then
-        error("MySQL library not initialized")
+        error("MySQL environment not initialized")
     end
     
     if not self.connection then
-        local connection_string = string.format("%s:%s@%s:%d/%s",
-            self.username, self.password, self.host, self.port, self.database)
         self.connection = self.mysql:connect(self.database, self.username, self.password, self.host, self.port)
         
         if not self.connection then
-            error("Failed to connect to MySQL database")
+            error("Failed to connect to MySQL database at " .. self.host .. ":" .. self.port .. "/" .. self.database)
         end
         
         utils.nkprint("Connected to MySQL database: " .. self.host .. ":" .. self.port .. "/" .. self.database, "info")
