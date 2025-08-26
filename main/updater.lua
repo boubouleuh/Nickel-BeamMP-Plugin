@@ -73,12 +73,34 @@ function updater.check(cfgManager)
     end
     if FS.Exists(utils.script_path() .. ".git") then
         if cfgManager:GetSetting("advanced").autoupdate then
-            local success, termType, exitCode, output = execute_in_dir_return(utils.script_path(), "git pull origin dev")
-            print("Git pull result: ", success, termType, exitCode, output)
-            if exitCode == 0 and not output:find("Already up to date.") then
-                utils.RunAsync(function()
-                   utils.hotreload()
-                end, 2000)
+            local repo_path = utils.script_path()
+            local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin dev")
+            print("Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
+            if fetchExit == 0 then
+                local _, _, _, localHash = execute_in_dir_return(repo_path, "git rev-parse HEAD")
+                local _, _, _, remoteHash = execute_in_dir_return(repo_path, "git rev-parse origin/dev")
+                localHash = localHash and localHash:gsub("%s+", "") or nil
+                remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
+                if localHash and remoteHash then
+                    if localHash ~= remoteHash then
+                        utils.nkprint("New remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
+                        local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin dev")
+                        print("Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
+                        if pullExit == 0 then
+                            utils.RunAsync(function()
+                                utils.hotreload()
+                            end, 2000)
+                        else
+                            utils.nkprint("Update failed: " .. (pullOut or ""), "error")
+                        end
+                    else
+                        utils.nkprint("No update available (HEAD == origin/dev).", "info")
+                    end
+                else
+                    utils.nkprint("Could not read local/remote hashes.", "warn")
+                end
+            else
+                utils.nkprint("Remote fetch failed: " .. (fetchOut or ""), "error")
             end
         else
             utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
