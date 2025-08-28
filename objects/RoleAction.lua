@@ -28,8 +28,7 @@ function RoleAction:getColumns()
         "actionID INTEGER",
         "PRIMARY KEY (roleID, actionID)",
         "FOREIGN KEY (roleID) REFERENCES Roles(roleID)",
-        "FOREIGN KEY (actionID) REFERENCES Actions(actionID) ON DELETE CASCADE"
-      -- Ajoutez d'autres colonnes si nécessaire
+    "FOREIGN KEY (actionID) REFERENCES Actions(actionID) ON DELETE CASCADE"
     }
   end
   

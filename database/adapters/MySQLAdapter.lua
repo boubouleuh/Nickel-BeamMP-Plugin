@@ -16,22 +16,26 @@ function MySQLAdapter.new(connectionConfig)
     self.username = connectionConfig.mysql_username or ""
     self.password = connectionConfig.mysql_password or ""
     self.connection = nil
-    self.env = nil
+    self.env = nil -- LuaSQL environment
     self.changesCount = 0
     self.libraryAvailable = false
-    
-    -- Try to load luasql-mysql
-    local success, luasql = pcall(require, "luasql.mysql")
-    if success then
+    self.hasLoggedConnection = false
+
+    local ok, luasql = pcall(require, "luasql.mysql")
+    if ok then
         self.luasql = luasql
-        self.mysql = luasql.mysql()
-        self.libraryAvailable = true
-        utils.nkprint("MySQL library loaded successfully", "info")
+        local env, envErr = luasql.mysql()
+        if env then
+            self.env = env
+            self.libraryAvailable = true
+            utils.nkprint("MySQL library loaded (client " .. tostring(luasql._CLIENTVERSION or '?') .. ")", "info")
+        else
+            utils.nkprint("MySQL env creation failed: " .. tostring(envErr), "error")
+        end
     else
         utils.nkprint("MySQL library not available. Error: " .. tostring(luasql), "warn")
-        -- Don't error here, let the caller handle it
     end
-    
+
     return new._object(MySQLAdapter, self)
 end
 
@@ -39,19 +43,19 @@ function MySQLAdapter:connect()
     if not self.libraryAvailable then
         error("MySQL library not available. Please install luasql-mysql to use MySQL database.")
     end
-    
-    if not self.mysql then
-        error("MySQL environment not initialized")
+    if not self.env then
+        error("MySQL environment not initialized (luasql.mysql() failed earlier)")
     end
-    
     if not self.connection then
-        self.connection = self.mysql:connect(self.database, self.username, self.password, self.host, self.port)
-        
-        if not self.connection then
-            error("Failed to connect to MySQL database at " .. self.host .. ":" .. self.port .. "/" .. self.database)
+        local conn, connErr = self.env:connect(self.database, self.username, self.password, self.host, self.port)
+        if not conn then
+            error("Failed to connect to MySQL database at " .. self.host .. ":" .. self.port .. "/" .. self.database .. " (" .. tostring(connErr) .. ")")
         end
-        
-        utils.nkprint("Connected to MySQL database: " .. self.host .. ":" .. self.port .. "/" .. self.database, "info")
+        self.connection = conn
+        if not self.hasLoggedConnection then
+            utils.nkprint("Connected to MySQL database: " .. self.host .. ":" .. self.port .. "/" .. self.database, "info")
+            self.hasLoggedConnection = true
+        end
     end
 end
 
@@ -60,33 +64,34 @@ function MySQLAdapter:disconnect()
         self.connection:close()
         self.connection = nil
     end
-    if self.mysql then
-        self.mysql:close()
-        self.mysql = nil
-    end
 end
 
 function MySQLAdapter:exec(query)
     if not self.connection then
         error("Not connected to database")
     end
-    
+    if query:match("^%s*CREATE%s+TABLE") then
+        utils.nkprint("EXEC DDL: " .. query, "info")
+    end
     local cursor, error_msg = self.connection:execute(query)
     if not cursor then
-        error("MySQL query failed: " .. (error_msg or "Unknown error"))
+        error("MySQL query failed: " .. (error_msg or "Unknown error") .. " | QUERY= " .. query)
     end
-    
-    -- For non-SELECT queries, cursor might be a number indicating affected rows
+
     if type(cursor) == "number" then
         self.changesCount = cursor
-        return cursor
+        if cursor > 0 then
+            return 0 -- succès normalisé
+        else
+            return "nickel.nochange"
+        end
     else
-        -- For SELECT queries, close the cursor
         if cursor and cursor.close then
+            -- SELECT: we do not want to close immediately if nrows() will iterate; here exec() used for non-SELECT only.
             cursor:close()
         end
         self.changesCount = 0
-        return cursor
+        return 0
     end
 end
 

@@ -2,7 +2,7 @@
 local new = require("objects.New")
 
 local userClass = require("objects.User")
-
+local utils = require("utils.misc")
 
 local Service = {}
 
@@ -37,11 +37,7 @@ function Service:isWhitelisted()
 
     local b = user:getKey("whitelisted")
 
-    if b == 0 then
-        return false
-    elseif b == 1 then
-        return true
-    end
+    return utils.isTruthy(b)
 
 end
 

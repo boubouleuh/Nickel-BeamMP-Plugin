@@ -29,7 +29,7 @@ function Infos:getColumns()
       "infoID INTEGER PRIMARY KEY AUTOINCREMENT",
       "infoKey TEXT UNIQUE NOT NULL",
       "infoValue TEXT UNIQUE NOT NULL",
-      -- Ajoutez d'autres colonnes si nécessaire
+      
     }
   end
   

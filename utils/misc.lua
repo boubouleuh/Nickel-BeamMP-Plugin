@@ -5,7 +5,7 @@ local Misc = {}
 ---script_path
 ---@return string --get the script path
 function Misc.script_path()
-  local separator = package.config:sub(1, 1) -- Obtient le séparateur de chemin d'accès ("/" ou "\")
+  local separator = package.config:sub(1, 1)
   local scriptPath = debug.getinfo(1, "S").source:sub(2):gsub("[\\/][^\\/]+$", separator)
   local scriptDir = scriptPath:gsub(separator .. "utils" .. separator .. "$", separator)
   return scriptDir
@@ -56,15 +56,12 @@ function Misc.deepCompare(t1, t2, visited)
     if type(t1) ~= type(t2) then return false end
     if type(t1) ~= "table" then return t1 == t2 end
 
-    -- Vérifier les métatables
     if getmetatable(t1) ~= getmetatable(t2) then return false end
 
-    -- Détecter les cycles
     visited = visited or {}
     if visited[t1] and visited[t1] == t2 then return true end
     visited[t1] = t2
 
-    -- Vérifier les tailles des tables
     local function tableLength(t)
         local count = 0
         for _ in pairs(t) do
@@ -75,7 +72,6 @@ function Misc.deepCompare(t1, t2, visited)
 
     if tableLength(t1) ~= tableLength(t2) then return false end
 
-    -- Comparer les clés et les valeurs
     for k, v in pairs(t1) do
         if not Misc.deepCompare(v, t2[k], visited) then return false end
     end
@@ -222,7 +218,6 @@ end
 ---@param color string Can be "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "gray"
 ---@return string
 function Misc.print_color(message, color)
-    -- Les codes de couleur ANSI pour différentes couleurs
     local colors = {
         black = "\27[30m",
         red = "\27[31m",
@@ -235,12 +230,10 @@ function Misc.print_color(message, color)
         gray = "\27[90m",
     }
 
-    -- Vérifie si la couleur spécifiée est valide
     if not colors[color] then
         color = "white"
     end
 
-    -- Affiche le message dans la couleur spécifiée
     return colors[color] .. message .. "\27[0m"
 end
 
@@ -266,7 +259,36 @@ function Misc.nkprint(message, type)
       end
     end
 end
----timeConverter
+-- isTruthy / isFalsy helpers
+function Misc.isTruthy(val)
+  if val == nil then return false end
+  local vt = type(val)
+  if vt == "boolean" then return val end
+  if vt == "number" then return val ~= 0 end
+  if vt == "string" then
+    local s = val:lower()
+    if s == "1" or s == "true" or s == "yes" or s == "on" or s == "y" or s == "t" then
+      return true
+    end
+    if s == "0" or s == "false" or s == "no" or s == "off" or s == "n" or s == "f" or s == "" then
+      return false
+    end
+  end
+  return false
+end
+
+function Misc.isFalsy(val)
+  if val == nil then return true end
+  return not Misc.isTruthy(val)
+end
+
+-- toBit
+-- Normalise une valeur quelconque en 1 ou 0 (entier) pour stockage DB
+function Misc.toBit(val)
+  if Misc.isTruthy(val) then return 1 end
+  return 0
+end
+-- timeConverter
 ---@param time string 1d 1s 1m 1h
 ---@return nil | number
 function Misc.timeConverter(time)

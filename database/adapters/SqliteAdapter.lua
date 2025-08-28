@@ -14,8 +14,13 @@ function SqliteAdapter.new(connectionConfig)
 end
 
 function SqliteAdapter:connect()
+    if self.db then return end
+    if not self.dbPath or self.dbPath == "" then
+        error("SqliteAdapter: dbPath is missing")
+    end
+    self.db = sqlite3.open(self.dbPath)
     if not self.db then
-        self.db = sqlite3.open(self.dbPath)
+        error("SqliteAdapter: failed to open database at path: " .. tostring(self.dbPath))
     end
 end
 
@@ -27,14 +32,23 @@ function SqliteAdapter:disconnect()
 end
 
 function SqliteAdapter:exec(query)
+    if not self.db then
+        error("SqliteAdapter: exec called while database not connected")
+    end
     return self.db:exec(query)
 end
 
 function SqliteAdapter:prepare(query)
+    if not self.db then
+        error("SqliteAdapter: prepare called while database not connected")
+    end
     return self.db:prepare(query)
 end
 
 function SqliteAdapter:nrows(query)
+    if not self.db then
+        error("SqliteAdapter: nrows called while database not connected")
+    end
     return self.db:nrows(query)
 end
 

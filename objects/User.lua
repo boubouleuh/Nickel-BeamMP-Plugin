@@ -30,8 +30,7 @@ function User:getColumns()
       "beammpid INTEGER PRIMARY KEY",
       "name TEXT NOT NULL",
       "whitelisted BOOLEAN NOT NULL",
-      "language TEXT"
-      -- Ajoutez d'autres colonnes si nécessaire
+  "language TEXT"
     }
   end
   

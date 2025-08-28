@@ -50,7 +50,6 @@ function init()
     updater.check(cfgManager)
 
 
-    -- Démarrer la traversée à partir du répertoire racine de votre projet
     --Objects used to make the tables
     local UserIp = require("objects.UserIp")
     local UserStatus = require("objects.UserStatus")
@@ -86,25 +85,24 @@ function init()
 
     ---@type DatabaseManager
     local dbManager
-    local syncConfig = cfgManager:GetSetting("sync")
-    
-    -- Create database configuration with both old and new settings
+    local dbSection = cfgManager:GetSetting("database") or {}
     local dbConfig = {
-        database_type = syncConfig.database_type or "sqlite",
-        database_file = syncConfig.database_file,
-        mysql_host = syncConfig.mysql_host,
-        mysql_port = syncConfig.mysql_port,
-        mysql_database = syncConfig.mysql_database,
-        mysql_username = syncConfig.mysql_username,
-        mysql_password = syncConfig.mysql_password
+        database_type = dbSection.type or "sqlite",
+        database_file = dbSection.file,
+        mysql_host = dbSection.host,
+        mysql_port = dbSection.port,
+        mysql_database = dbSection.name,
+        mysql_username = dbSection.username,
+        mysql_password = dbSection.password,
+        mysql_ssl = dbSection.ssl
     }
-    
     -- Use default SQLite path if no database file is specified
     if (not dbConfig.database_file or dbConfig.database_file == "") and dbConfig.database_type == "sqlite" then
-        utils.nkprint("No database file set in config, using default SQLite path", "info")
         dbConfig.database_file = utils.script_path() .. "database/db.sqlite"
+        utils.nkprint("No database file set; using default SQLite path: " .. dbConfig.database_file, "info")
+    else
+        dbConfig.database_file = utils.script_path() .. dbConfig.database_file
     end
-
     -- Create database manager with new configuration
     dbManager = databaseManager.new(dbConfig)
 

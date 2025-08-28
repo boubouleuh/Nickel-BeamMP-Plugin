@@ -48,14 +48,15 @@ function Settings.init()
         commands = {
             prefix = "/"
         },
-        sync = {
-           database_file = "",
-           database_type = "sqlite",
-           mysql_host = "localhost",
-           mysql_port = 3306,
-           mysql_database = "nickel",
-           mysql_username = "",
-           mysql_password = ""
+        database = {
+            type = "sqlite",
+            file = "database/nickel.sqlite",
+            host = "localhost",
+            port = 3306,
+            name = "nickel",
+            username = "",
+            password = "",
+            ssl = false
         },
         conditions = {
             whitelist = false,
@@ -101,6 +102,24 @@ function Settings.init()
         mergeTables(self.config, defaultConfig)
         configChanged = true
     end
+
+        -- Backward compatibility: migrate old sync DB settings to new database section if present
+        if self.config.sync then
+            local s = self.config.sync
+            local d = self.config.database
+            -- Prefer explicit database section values if user already changed them
+            if (not d or d.type == defaultConfig.database.type) and s.database_type and s.database_type ~= "" then
+                self.config.database.type = s.database_type
+            end
+            if (not d or d.file == defaultConfig.database.file) and s.database_file and s.database_file ~= "" then
+                self.config.database.file = s.database_file
+            end
+            if s.mysql_host and s.mysql_host ~= "" then self.config.database.host = s.mysql_host end
+            if s.mysql_port and s.mysql_port ~= "" then self.config.database.port = s.mysql_port end
+            if s.mysql_database and s.mysql_database ~= "" then self.config.database.name = s.mysql_database end
+            if s.mysql_username and s.mysql_username ~= "" then self.config.database.username = s.mysql_username end
+            if s.mysql_password and s.mysql_password ~= "" then self.config.database.password = s.mysql_password end
+        end
 
     for key, _ in pairs(self.config) do
         if defaultConfig[key] == nil then

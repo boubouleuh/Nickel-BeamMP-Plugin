@@ -37,7 +37,6 @@ function UserStatus:getColumns()
         "reason TEXT",
         "expiry_time DATETIME",
         "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
-      -- Ajoutez d'autres colonnes si nécessaire
     }
   end
   

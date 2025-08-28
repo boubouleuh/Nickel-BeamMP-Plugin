@@ -28,9 +28,8 @@ function UserRole:getColumns()
         "beammpid INTEGER",
         "roleID INTEGER",
         "PRIMARY KEY (beammpid, roleID)",
-        "FOREIGN KEY (beammpid) REFERENCES Users(beammpid)",
-        "FOREIGN KEY (roleID) REFERENCES Roles(roleID) ON DELETE CASCADE"
-      -- Ajoutez d'autres colonnes si nécessaire
+        "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE",
+    "FOREIGN KEY (roleID) REFERENCES Roles(roleID) ON DELETE CASCADE"
     }
   end
   

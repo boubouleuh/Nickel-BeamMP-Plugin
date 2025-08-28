@@ -31,7 +31,7 @@ function Role:getColumns()
       "roleName TEXT UNIQUE NOT NULL",
       "permlvl INT NOT NULL",
       "is_default BOOLEAN NOT NULL",
-      -- Ajoutez d'autres colonnes si nécessaire
+      
     }
   end
   

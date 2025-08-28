@@ -30,7 +30,6 @@ function RoleCommand:getColumns()
         "PRIMARY KEY (roleID, commandID)",
         "FOREIGN KEY (roleID) REFERENCES Roles(roleID)",
         "FOREIGN KEY (commandID) REFERENCES Commands(commandID) ON DELETE CASCADE"
-      -- Ajoutez d'autres colonnes si nécessaire
     }
   end
   

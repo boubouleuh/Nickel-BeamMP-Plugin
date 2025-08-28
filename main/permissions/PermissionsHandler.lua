@@ -6,6 +6,7 @@ local sqlcodes = require("database.sqlresultcode")
 local RoleCommand = require("objects.RoleCommand")
 local RoleAction = require("objects.RoleAction")
 local Action = require("objects.Action")
+local utils = require("utils.misc")
 ---@class PermissionsHandler
 PermissionsHandler = {}
 
@@ -37,8 +38,18 @@ end
 
 function PermissionsHandler:assignRole(rolename, beammpid)
     return self.dbManager:withConnection(function()
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
-
+        local roleEntry = self.dbManager:getEntry(Role, "roleName", rolename)
+        if not roleEntry then
+            return 12 -- table/record not found
+        end
+        local roleid = roleEntry.roleID
+        local existing = self.dbManager:getAllEntry(UserRole, {
+            {"beammpid", beammpid},
+            {"roleID", roleid}
+        })
+        if existing and #existing > 0 then
+            return "nickel.nochange"
+        end
         local newUserRole = UserRole.new(beammpid, roleid)
         return self.dbManager:save(newUserRole, false)
     end)
@@ -48,7 +59,7 @@ end
 function PermissionsHandler:unassignRole(rolename, beammpid)
     return self.dbManager:withConnection(function()
         local role = self.dbManager:getEntry(Role, "roleName", rolename)
-        if role.is_default == 1 then
+        if role and utils.isTruthy(role.is_default) then
             return 516
         end
         local roleid = role.roleID
@@ -67,7 +78,7 @@ function PermissionsHandler:getDefaultsRoles()
     end)
     local defaultroles = {}
     for _, role in pairs(roles) do
-        if role.is_default == 1 then
+        if utils.isTruthy(role.is_default) then
           table.insert(defaultroles, role)
         end
     end
@@ -78,12 +89,10 @@ end
 function PermissionsHandler:getCommands(beammpid)
     local commands = {}
 
-    -- Récupérer toutes les commandes possibles
     local allCommands = self.dbManager:withConnection(function()
         return self.dbManager:getAllEntry(Command)
     end)
     for _, command in ipairs(allCommands) do
-        -- Vérifier si l'utilisateur a la permission pour cette commande
         if self:hasPermission(beammpid, command.commandName) then
             table.insert(commands, command)
         end
@@ -98,10 +107,17 @@ function PermissionsHandler:assignCommand(commandname, rolename)
         local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
         return commandid, roleid
     end)
+    local existing = self.dbManager:withConnection(function()
+        return self.dbManager:getAllEntry(RoleCommand, {
+            {"roleID", roleid},
+            {"commandID", commandid}
+        })
+    end)
+    if existing and #existing > 0 then
+        return "nickel.nochange"
+    end
     local newRoleCommand = RoleCommand.new(roleid, commandid)
-    local result = self.dbManager:save(newRoleCommand, false)
-
-    return result
+    return self.dbManager:save(newRoleCommand, false)
 end
 
 function PermissionsHandler:assignAction(actionname, rolename)
@@ -110,11 +126,17 @@ function PermissionsHandler:assignAction(actionname, rolename)
         local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
         return actionid, roleid
     end)
-
+    local existing = self.dbManager:withConnection(function()
+        return self.dbManager:getAllEntry(RoleAction, {
+            {"roleID", roleid},
+            {"actionID", actionid}
+        })
+    end)
+    if existing and #existing > 0 then
+        return "nickel.nochange"
+    end
     local newRoleAction = RoleAction.new(roleid, actionid)
-    local result = self.dbManager:save(newRoleAction, false)
-
-    return result
+    return self.dbManager:save(newRoleAction, false)
 end
 
 function PermissionsHandler:unassignAction(actionname, rolename)
@@ -138,13 +160,11 @@ function PermissionsHandler:getActions(beammpid)
 
     local actions = {}
 
-    -- Récupérer toutes les actions possibles
     local allActions = self.dbManager:withConnection(function()
         return self.dbManager:getAllEntry(Action)
     end)
 
     for _, action in ipairs(allActions) do
-        -- Vérifier si l'utilisateur a la permission pour cette action
         if self:hasPermissionForAction(beammpid, action.actionName) then
             table.insert(actions, action)
         end
@@ -171,7 +191,6 @@ end
 
 function PermissionsHandler:getRoles(beammpid)
 
-    -- Récupérer tous les rôles de l'utilisateur avec l'ID beammpid
     local roles = self.dbManager:withConnection(function()
         local roles = {}
         local userRoles = self.dbManager:getAllEntry(UserRole, {{"beammpid", beammpid}})
@@ -199,14 +218,11 @@ function PermissionsHandler:GetHighestRole(beammpid)
 end
 
 function PermissionsHandler:canManageRole(manager_beammpid, rolename)
-    -- Obtenir tous les rôles du gestionnaire
     local managerRoles = self:getRoles(manager_beammpid)
     if #managerRoles == 0 then
-        -- Si le gestionnaire n'a pas de rôles, il ne peut pas ajouter de rôles
         return false
     end
 
-    -- Vérifier si le gestionnaire a la permission d'ajouter le rôle spécifié
     local rolePermLvl = self.dbManager:withConnection(function()
         return self.dbManager:getEntry(Role, "roleName", rolename).permlvl
     end)
@@ -220,21 +236,16 @@ function PermissionsHandler:canManageRole(manager_beammpid, rolename)
 end
 
 function PermissionsHandler:canManage(manager_beammpid, managed_beammpid)
-    -- Obtenir tous les rôles du gestionnaire
     local managerRoles = self:getRoles(manager_beammpid)
     if #managerRoles == 0 then
-        -- Si le gestionnaire n'a pas de rôles, il ne peut pas gérer
         return false
     end
 
-    -- Obtenir tous les rôles du géré
     local managedRoles = self:getRoles(managed_beammpid)
     if #managedRoles == 0 then
-        -- Si le géré n'a pas de rôles, le gestionnaire ne peut pas le gérer
         return false
     end
 
-    -- Déterminer le niveau de permission le plus élevé parmi les rôles du géré
     local maxManagedRoleLevel = 0
     for _, managedRole in ipairs(managedRoles) do
         if managedRole.permlvl > maxManagedRoleLevel then
@@ -242,7 +253,6 @@ function PermissionsHandler:canManage(manager_beammpid, managed_beammpid)
         end
     end
 
-    -- Vérifier si le gestionnaire a un rôle avec un niveau de permission supérieur à celui du géré
     for _, managerRole in ipairs(managerRoles) do
         if managerRole.permlvl > maxManagedRoleLevel then
             return true
@@ -261,7 +271,6 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
         return true     -- if it's the console, give full permission
     end
 
-    -- Obtenir tous les rôles de l'utilisateur
     local userRoles = self:getRoles(beammpid)
     local actionId = self.dbManager:withConnection(function()
             return self.dbManager:getEntry(Action, "actionName", action).actionID
@@ -269,7 +278,6 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
 
     local roleActionEntries = self.dbManager:withConnection(function()
         local entries = {}
-        -- Vérifier si l'un des rôles de l'utilisateur a la permission pour l'action
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
             local conditions = {
@@ -287,7 +295,6 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
         return true
     end
 
-    -- Si l'utilisateur n'a pas la permission avec ses rôles actuels, vérifier les niveaux de permission inférieurs
     local bool = self.dbManager:withConnection(function()
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
@@ -321,14 +328,12 @@ function PermissionsHandler:hasPermission(beammpid, commandname)
         return true     -- if it's the console, give full permission
     end
 
-    -- Obtenir tous les rôles de l'utilisateur
     local userRoles = self:getRoles(beammpid)
 
     local commandId = self.dbManager:withConnection(function()
         return self.dbManager:getEntry(Command, "commandName", commandname).commandID
     end)
 
-    -- Vérifier si l'un des rôles de l'utilisateur a la permission pour la commande
     local roleCommandEntries = self.dbManager:withConnection(function()
         local entries = {}
         for _, userRole in ipairs(userRoles) do
@@ -345,7 +350,6 @@ function PermissionsHandler:hasPermission(beammpid, commandname)
     if #roleCommandEntries > 0 then
         return true
     end
-    -- Si l'utilisateur n'a pas la permission avec ses rôles actuels, vérifier les niveaux de permission inférieurs
     local bool = self.dbManager:withConnection(function()
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID

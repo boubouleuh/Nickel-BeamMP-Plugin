@@ -32,7 +32,7 @@ function command.init(sender_id, sender_name, managers, addORremove, playername)
 
 
     local register = require("main.registerPlayer")
-    local user = register.register(beammpid, playername, permManager, nil, msgManager, false)
+    local user = register.register(beammpid, playername, permManager, msgManager, dbManager, cfgManager, nil, false)
     if addORremove == "add" then
         usersService:setWhitelisted(true)
         msgManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})

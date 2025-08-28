@@ -3,7 +3,7 @@ local new = require("objects.New")
 
 local userIp = require("objects.UserIp")
 
-
+local utils = require("utils.misc")
 local Service = {}
 
 
@@ -37,7 +37,7 @@ function Service:banAllIps()
     local ips = self:getAllIps()
     local count = 0
     for _, value in ipairs(ips) do
-        if value.is_banned == 0 then
+        if utils.isFalsy(value.is_banned) then
             count = count + 1
             value.is_banned = true
             self.dbManager:save(value, true)
@@ -54,7 +54,7 @@ function Service:unbanAllIps()
     local count = 0
     for _, value in ipairs(ips) do
 
-        if value.is_banned == 1 then
+        if utils.isTruthy(value.is_banned) then
             count = count + 1
             value.is_banned = false
             self.dbManager:save(value, true)
@@ -67,7 +67,7 @@ end
 function Service:isIpBanned()
     local ips = self:getAllIps()
     for _, value in ipairs(ips) do
-        if value.is_banned == 1 then
+        if utils.isTruthy(value.is_banned) then
             return true
         end
     end

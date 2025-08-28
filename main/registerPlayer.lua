@@ -14,8 +14,6 @@ local online = require("main.online")
 local registerPlayer = {}
 
 function registerPlayer.register(beammpid, name, permManager, msgManager, dbManager, cfgManager, ip, isguest)
-
-    -- Insérer ou mettre à jour un utilisateur
     if not isguest then
 
         online.savePlayerAvatarImg(name, 40)
@@ -35,42 +33,45 @@ function registerPlayer.register(beammpid, name, permManager, msgManager, dbMana
 
 
 
-        local tab1 = {}
+        
+        dbManager:save(newUser)
 
+        
         local roles = permManager:getDefaultsRoles()
-        for role in pairs(roles) do
-            tab1[role] = role
-
+        local tab1 = {}
+        for _, role in pairs(roles) do
+            tab1[role.roleID] = true
         end
 
-        local default = false
+        local needAssignDefaults = false
         if userRoleClass ~= nil then
-            for role in pairs(userRoleClass) do
-                if tab1[role.roleID] == nil then
-                    default = true
+            for _, existing in pairs(userRoleClass) do
+                if not tab1[existing.roleID] then
+                    needAssignDefaults = true
+                    break
                 end
             end
+        else
+            needAssignDefaults = true
         end
-        if default or userRoleClass == nil then
-
+        if needAssignDefaults and #roles > 0 then
             for _, role in pairs(roles) do
                 permManager:assignRole(role.roleName, beammpid)
             end
         end
 
-
-        if ipClass ~= nil then
-
-            ipClass.ip = ip
-            ipClass.ip_id = nil
-            dbManager:save(ipClass, false)
-
+        
+        if ipClass ~= nil and ip and ip ~= "" then
+            if ipClass.ip ~= ip then
+                ipClass.ip = ip
+                ipClass.ip_id = nil
+                dbManager:save(ipClass, false)
+            end
         else
+            
             local newUserIp = userIp.new(beammpid, ip)
             dbManager:save(newUserIp)
         end
-
-        dbManager:save(newUser)
 
 
 
@@ -86,7 +87,7 @@ function registerPlayer.register(beammpid, name, permManager, msgManager, dbMana
 
         local statusService = StatusService.new(beammpid, dbManager)
 
-        -- Vérifier les statuts de bannissement
+        
         local bannedStatuses = statusService:getStatus("isbanned")
         if #bannedStatuses > 0 then
             for _, status in ipairs(bannedStatuses) do
@@ -96,14 +97,15 @@ function registerPlayer.register(beammpid, name, permManager, msgManager, dbMana
             end
         end
         
-        -- Vérifier les statuts de bannissement temporaire
+        
         local tempBannedStatuses = statusService:getStatus("istempbanned")
         if #tempBannedStatuses > 0 then
             for _, status in ipairs(tempBannedStatuses) do
                 if statusService:checkStatusTime("istempbanned") then
+                    print("Temp ban active")
                     return status.reason
                 else
-                    statusService:removeStatus("istempbanned")
+                    statusService:disableStatus("istempbanned")
                 end
             end
         end
