@@ -1009,17 +1009,32 @@ function DatabaseManager:closeConnection()
 end
 
 function DatabaseManager:withConnection(callback)
-    self:openConnection()
-    local results = {pcall(callback)}
+  local keepOpen = (self.config.database_type == "mysql")
+  -- Always ensure connection before executing callback
+  self:openConnection()
+  local results = {pcall(callback)}
+  -- For SQLite (and others) close immediately; for MySQL keep persistent
+  if not keepOpen then
     self:closeConnection()
-    
-    local ok = table.remove(results, 1) 
-    
-    if not ok then
-        error(results[1])  
+  end
+  local ok = table.remove(results, 1)
+  if not ok then
+    -- If MySQL callback failed due to connection loss, attempt one retry
+    local err = results[1]
+    if keepOpen and type(err) == 'string' and (err:match("gone away") or err:match("Lost connection")) then
+      utils.nkprint("MySQL connection lost. Reconnecting and retrying once...", "warn")
+      self:closeConnection() -- ensure clean state
+      self:openConnection()
+      results = {pcall(callback)}
+      ok = table.remove(results, 1)
+      if not ok then
+        error(results[1])
+      end
+      return table.unpack(results)
     end
-    
-    return table.unpack(results) 
+    error(err)
+  end
+  return table.unpack(results)
 end
 
 return DatabaseManager
