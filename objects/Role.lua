@@ -28,7 +28,7 @@ end
 function Role:getColumns()
     return {
       "roleID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "roleName TEXT UNIQUE NOT NULL",
+      "roleName VARCHAR(191) UNIQUE NOT NULL",
       "permlvl INT NOT NULL",
       "is_default BOOLEAN NOT NULL",
       

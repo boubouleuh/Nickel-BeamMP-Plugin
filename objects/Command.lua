@@ -26,7 +26,7 @@ end
 function Command:getColumns()
     return {
       "commandID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "commandName TEXT UNIQUE NOT NULL",
+      "commandName VARCHAR(191) UNIQUE NOT NULL",
       -- Ajoutez d'autres colonnes si nécessaire
     }
   end

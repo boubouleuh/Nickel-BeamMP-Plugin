@@ -26,7 +26,7 @@ end
 function Action:getColumns()
     return {
       "actionID INTEGER PRIMARY KEY AUTOINCREMENT",
-  "actionName TEXT UNIQUE NOT NULL",
+	"actionName VARCHAR(191) UNIQUE NOT NULL",
     }
   end
   

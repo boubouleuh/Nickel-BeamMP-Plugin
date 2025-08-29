@@ -27,8 +27,8 @@ end
 function Infos:getColumns()
     return {
       "infoID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "infoKey TEXT UNIQUE NOT NULL",
-      "infoValue TEXT UNIQUE NOT NULL",
+      "infoKey VARCHAR(191) UNIQUE NOT NULL",
+      "infoValue VARCHAR(191) UNIQUE NOT NULL",
       
     }
   end

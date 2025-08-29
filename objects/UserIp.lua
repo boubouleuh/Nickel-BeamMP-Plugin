@@ -29,7 +29,7 @@ function UserIp:getColumns()
   return {
     "ip_id INTEGER PRIMARY KEY AUTOINCREMENT",
     "beammpid INTEGER",
-    "ip TEXT",
+    "ip VARCHAR(191)",
     "is_banned BOOLEAN NOT NULL",
   "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
   }
