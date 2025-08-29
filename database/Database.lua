@@ -55,7 +55,8 @@ function DatabaseManager:createTableIfNotExists(tableName, columns)
       for _, raw in ipairs(columns) do
         local line = (raw or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if line ~= "" then
-          table.insert(sqliteParts, line:gsub(",+$", ""))
+          local cleaned = line:gsub(",+$", "") -- gsub returns (str, count); avoid passing count to table.insert
+          table.insert(sqliteParts, cleaned)
         end
       end
       local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(sqliteParts, ", "))
