@@ -22,14 +22,14 @@ function command.init(sender_id, sender_name, managers)
         return false
     end
 
-    local sessionStorage = sessionPlayerStorage:new(utils.getPlayerBeamMPID(sender_name))
-    local currentValue = sessionStorage:get("bypassNametags")
+    local beammpid = utils.getPlayerBeamMPID(sender_name)
+    local currentValue = sessionPlayerStorage.get(beammpid, "bypassNametags")
     if currentValue == nil or currentValue == "off" then
-        sessionStorage:set("bypassNametags", "on")
+        sessionPlayerStorage.set(beammpid, "bypassNametags", "on")
     elseif currentValue == "on" then
-        sessionStorage:set("bypassNametags", "off")
+        sessionPlayerStorage.set(beammpid, "bypassNametags", "off")
     end
-    local currentValue = sessionStorage:get("bypassNametags")
+    currentValue = sessionPlayerStorage.get(beammpid, "bypassNametags")
 
     interfaceUtils.sendString(sender_id, "bypassNametags", currentValue)
     msgManager:SendMessage(sender_id, "commands.nametags.success", {Prefix = cfgManager.config.commands.prefix, On_Off = currentValue})

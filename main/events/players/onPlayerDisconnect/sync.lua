@@ -2,6 +2,6 @@ local utils = require("utils.misc")
 local sessionPlayerStorage = require("main.sessionPlayerStorage")
 
 return function(id, managers)
-        local sessionStorage = sessionPlayerStorage:new(utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
-        sessionStorage:set("synced", false)
+        local beammpid = utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+        sessionPlayerStorage.set(beammpid, "synced", false)
 end

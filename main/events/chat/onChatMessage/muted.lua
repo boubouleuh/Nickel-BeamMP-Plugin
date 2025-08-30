@@ -8,11 +8,6 @@ return function(player_id, player_name, message, managers)
         local beammpid = utils.getPlayerBeamMPID(player_name)
         local statusService = StatusService.new(beammpid, dbManager)
         if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
-
-            if statusService:checkStatusTime("istempmuted") then
-                statusService:removeStatus("istempmuted")
-            end
-
             return 1
         end
 

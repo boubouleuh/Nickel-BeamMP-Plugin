@@ -1,38 +1,51 @@
-local new = require("objects.New")
+local store = {}
 
-local sessionPlayerStorage = {}
-local instances = {} 
+local M = {}
 
-function sessionPlayerStorage:new(beammpid)
-    if instances[beammpid] then
-        return instances[beammpid]
+
+local function ensure(beammpid)
+    if beammpid == nil then return nil end
+    local t = store[beammpid]
+    if not t then
+        t = {}
+        store[beammpid] = t
     end
-
-    local self = {
-        beammpid = beammpid
-    }
-    self = new._object(sessionPlayerStorage, self)
-
-    instances[beammpid] = self
-    return self
+    return t
 end
 
-function sessionPlayerStorage:set(key, value)
-    self[key] = value
+function M.set(beammpid, key, value)
+    local t = ensure(beammpid)
+    if not t then return end
+    t[key] = value
 end
 
-function sessionPlayerStorage:get(key)
-    return self[key]
+function M.get(beammpid, key)
+    local t = store[beammpid]
+    if not t then return nil end
+    return t[key]
 end
 
-function sessionPlayerStorage:remove(key)
-    self[key] = nil
+function M.remove(beammpid, key)
+    local t = store[beammpid]
+    if not t then return end
+    t[key] = nil
 end
 
-function sessionPlayerStorage:clear()
-    for k in pairs(self) do
-        self[k] = nil
-    end
+function M.clear(beammpid)
+    if beammpid == nil then return end
+    store[beammpid] = {}
 end
 
-return sessionPlayerStorage
+function M.clearAll()
+    for k in pairs(store) do store[k] = nil end
+end
+
+function M.dump(beammpid)
+    local t = store[beammpid]
+    if not t then return {} end
+    local copy = {}
+    for k,v in pairs(t) do copy[k]=v end
+    return copy
+end
+
+return M
