@@ -16,23 +16,6 @@ local function init()
 
     local rootDirectory = utils.script_path()
     
-    -- Create reloader file for hot-reload functionality
-    local function createReloader()
-        local reloaderPath = rootDirectory .. "reloader.lua"
-        if FS.Exists(reloaderPath) then
-            return
-        end
-        
-        local file = io.open(reloaderPath, "w")
-        if not file then
-            return
-        end
-        
-        file:write("return " .. tostring(math.random(1, 1000000)))
-        file:close()
-        utils.nkprint("Created reloader.lua for manual hot-reload", "info")
-    end
-
     -- Setup Lua package paths for modules and libraries
     local function setupPackagePaths()
         package.path = rootDirectory .. "objects/?.lua"
@@ -162,7 +145,6 @@ local function init()
     end
 
     -- Main initialization sequence
-    createReloader()
     setupPackagePaths()
     initializeModules.initialize()
     
