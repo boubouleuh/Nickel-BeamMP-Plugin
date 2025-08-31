@@ -1,15 +1,12 @@
-
 local utils = require("utils.misc")
 
 local updater = {}
 
--- Execute command in specific directory
 local function executeInDir(dir, command)
     local fullCommand = "cd " .. dir .. " && " .. command
     return os.execute(fullCommand)
 end
 
--- Execute command in specific directory and return output
 local function executeInDirReturn(dir, command)
     local tempFile = os.tmpname()
     local fullCommand = "cd " .. dir .. " && " .. command .. " > " .. tempFile .. " 2>&1"
@@ -26,7 +23,6 @@ local function executeInDirReturn(dir, command)
     return success, termType, exitCode, output
 end
 
--- Read file content and clean it
 local function readFile(filePath)
     local file = io.open(filePath, "r")
     if not file then
@@ -38,7 +34,6 @@ local function readFile(filePath)
     return content
 end
 
--- Get git version information
 function updater.getGitVersion()
     local tempFile = "git_version.txt"
     local scriptPath = utils.script_path()
@@ -72,7 +67,6 @@ function updater.getGitVersion()
     return string.format("%s (%s)%s", version, branch, dirty)
 end
 
--- Check for updates
 function updater.check(cfgManager)
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     
@@ -141,7 +135,6 @@ function updater.check(cfgManager)
     end, 2000)
 end
 
--- Initialize git repository
 function updater.initGit()
     local scriptPath = utils.script_path()
     

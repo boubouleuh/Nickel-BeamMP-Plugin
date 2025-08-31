@@ -1,6 +1,5 @@
 
 local function init()
-    -- Load all required modules
     local utils = require("utils.misc")
     local config = require("main.config.Settings")
     local updater = require("main.updater")
@@ -37,7 +36,6 @@ local function init()
         package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.3/ssl/?.lua"
     end
 
-    -- Load all object classes used for database tables
     local function loadObjectClasses()
         local UserIp = require("objects.UserIp")
         local UserStatus = require("objects.UserStatus")
@@ -64,7 +62,6 @@ local function init()
         }
     end
 
-    -- Check for chat logging conflicts between Nickel and BeamMP
     local function checkChatLoggingConflict(cfgManager)
         if not utils.getBeamMPConfig().General.LogChat then
             return
@@ -97,7 +94,6 @@ local function init()
         return dbManager
     end
 
-    -- Create all database tables for the application
     local function createDatabaseTables(dbManager, objectClasses)
         dbManager:withConnection(function()
             dbManager:createTableForClass(objectClasses.User.new())
@@ -143,7 +139,6 @@ local function init()
         end
     end
 
-    -- Main initialization sequence
     setupPackagePaths()
     
     local cfgManager = config.init()
@@ -158,7 +153,6 @@ local function init()
     
     createDatabaseTables(dbManager, objectClasses)
     
-    -- Create managers table for dependency injection
     local managers = {
         dbManager = dbManager,
         cfgManager = cfgManager,
