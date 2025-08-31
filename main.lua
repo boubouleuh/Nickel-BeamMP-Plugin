@@ -1,173 +1,205 @@
 
-function init()
-
-
-
+local function init()
+    -- Load all required modules
     local initializeModules = require("main.initializeModules")
-
-
-
-
     local utils = require("utils.misc")
-
-    --create reloader.lua if not exist
-    local reloaderPath = utils.script_path() .. "reloader.lua"
-    if not FS.Exists(reloaderPath) then
-        local file = io.open(reloaderPath, "w")
-        file:write("return " .. tostring(math.random(1, 1000000)))
-        file:close()
-        utils.nkprint("Created reloader.lua for manual hot-reload", "info")
-    end
-
-    local rootDirectory = utils.script_path()
-    package.path = rootDirectory .. "objects/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "?.lua"
-    if MP.GetOSName() == "Windows" then
-        package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.dll"
-        package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.dll"
-    else
-        package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.3/?.so"
-        package.cpath = package.cpath .. ";" .. rootDirectory  .. "lib/lua/5.4/?.so"
-    end
-
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/socket/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.4/ssl/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/socket/?.lua"
-    package.path = package.path .. ";" .. rootDirectory  .. "share/lua/5.3/ssl/?.lua"
-    initializeModules.initialize() 
-
-
-
     local config = require("main.config.Settings")
-
-    ---@type Settings
-    local cfgManager = config.init()
-
     local updater = require("main.updater")
-
-    updater.check(cfgManager)
-
-
-    -- Démarrer la traversée à partir du répertoire racine de votre projet
-    --Objects used to make the tables
-    local UserIp = require("objects.UserIp")
-    local UserStatus = require("objects.UserStatus")
-    local User = require("objects.User")
-    local UserRole = require("objects.UserRole")
-    local Role = require("objects.Role")
-    local RoleCommand = require("objects.RoleCommand")
-    local Command = require("objects.Command")
-    local Action = require("objects.Action")
-    local RoleAction = require("objects.RoleAction")
-    local Infos = require("objects.Infos")
-
     local dispatcher = require("main.events.dispatcher")
-
-
-    -- Events / Database / Events handler
     local databaseManager = require("database.Database")
     local messageHandlerManager = require("main.messages.MessagesHandler")
     local PermissionsHandler = require("main.permissions.PermissionsHandler")
     local commandHandler = require("main.commands.CommandsHandler")
     local actionHandler = require("main.actions.ActionsHandler")
     local default = require("main.permissions.default")
-    -- local search = require("main.events.interface.search")
-    -- Miscellanous
+    local extensions = require("main.initializeExtensions")
 
+    local rootDirectory = utils.script_path()
+    
+    -- Create reloader file for hot-reload functionality
+    local function createReloader()
+        local reloaderPath = rootDirectory .. "reloader.lua"
+        if FS.Exists(reloaderPath) then
+            return
+        end
+        
+        local file = io.open(reloaderPath, "w")
+        if not file then
+            return
+        end
+        
+        file:write("return " .. tostring(math.random(1, 1000000)))
+        file:close()
+        utils.nkprint("Created reloader.lua for manual hot-reload", "info")
+    end
 
+    -- Setup Lua package paths for modules and libraries
+    local function setupPackagePaths()
+        package.path = rootDirectory .. "objects/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "?.lua"
+        
+        -- Add platform-specific library paths
+        if MP.GetOSName() == "Windows" then
+            package.cpath = package.cpath .. ";" .. rootDirectory .. "lib/lua/5.4/?.dll"
+            package.cpath = package.cpath .. ";" .. rootDirectory .. "lib/lua/5.3/?.dll"
+        else
+            package.cpath = package.cpath .. ";" .. rootDirectory .. "lib/lua/5.3/?.so"
+        end
+        
+        -- Add shared library paths for socket and SSL
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.4/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.3/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.4/socket/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.4/ssl/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.3/socket/?.lua"
+        package.path = package.path .. ";" .. rootDirectory .. "share/lua/5.3/ssl/?.lua"
+    end
 
-    if utils.getBeamMPConfig().General.LogChat and cfgManager:GetSetting("misc").chat_log then
+    -- Load all object classes used for database tables
+    local function loadObjectClasses()
+        local UserIp = require("objects.UserIp")
+        local UserStatus = require("objects.UserStatus")
+        local User = require("objects.User")
+        local UserRole = require("objects.UserRole")
+        local Role = require("objects.Role")
+        local RoleCommand = require("objects.RoleCommand")
+        local Command = require("objects.Command")
+        local Action = require("objects.Action")
+        local RoleAction = require("objects.RoleAction")
+        local Infos = require("objects.Infos")
+        
+        return {
+            UserIp = UserIp,
+            UserStatus = UserStatus,
+            User = User,
+            UserRole = UserRole,
+            Role = Role,
+            RoleCommand = RoleCommand,
+            Command = Command,
+            Action = Action,
+            RoleAction = RoleAction,
+            Infos = Infos
+        }
+    end
+
+    -- Check for chat logging conflicts between Nickel and BeamMP
+    local function checkChatLoggingConflict(cfgManager)
+        if not utils.getBeamMPConfig().General.LogChat then
+            return
+        end
+        
+        if not cfgManager:GetSetting("misc").chat_log then
+            return
+        end
+        
         utils.nkprint("Chat logging is enabled in the Nickel config, but also in the BeamMP config. Please disable one of them to avoid duplicate logs.", "warn")
     end
 
-
-
-    ---@type DatabaseManager
-    local dbManager
-    local configDatabaseFile = cfgManager:GetSetting("sync").database_file
-
-    if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
-        dbManager = databaseManager.new(configDatabaseFile) --Keep the connection
-    else
-        utils.nkprint("No database set in config, now using default path", "info")
-        dbManager = databaseManager.new(utils.script_path() .. "database/db.sqlite") --Keep the connection
+    -- Initialize database connection and setup
+    local function initializeDatabase(cfgManager)
+        local configDatabaseFile = cfgManager:GetSetting("sync").database_file
+        local dbManager
+        
+        if configDatabaseFile and configDatabaseFile ~= "" then
+            dbManager = databaseManager.new(configDatabaseFile)
+        else
+            utils.nkprint("No database set in config, now using default path", "info")
+            dbManager = databaseManager.new(rootDirectory .. "database/db.sqlite")
+        end
+        
+        -- Enable WAL2 mode for better performance
+        dbManager:withConnection(function()
+            dbManager.db:exec("PRAGMA journal_mode=WAL2;")
+        end)
+        
+        return dbManager
     end
 
-    dbManager:withConnection(function()
-        dbManager.db:exec("PRAGMA journal_mode=WAL2;")
-    end)
+    -- Create all database tables for the application
+    local function createDatabaseTables(dbManager, objectClasses)
+        dbManager:withConnection(function()
+            dbManager:createTableForClass(objectClasses.User.new())
+            dbManager:createTableForClass(objectClasses.UserIp.new())
+            dbManager:createTableForClass(objectClasses.UserStatus.new())
+            dbManager:createTableForClass(objectClasses.Role.new())
+            dbManager:createTableForClass(objectClasses.Command.new())
+            dbManager:createTableForClass(objectClasses.UserRole.new())
+            dbManager:createTableForClass(objectClasses.Action.new())
+            dbManager:createTableForClass(objectClasses.RoleAction.new())
+            dbManager:createTableForClass(objectClasses.RoleCommand.new())
+            dbManager:createTableForClass(objectClasses.Infos.new())
+        end)
+    end
 
-    ---@type MessagesHandler
-    local msgManager = messageHandlerManager.new(dbManager,cfgManager)
+    -- Initialize database with version and launch info
+    local function initializeDatabaseInfo(dbManager, objectClasses, updater)
+        dbManager:withConnection(function()
+            local entry = dbManager:getEntry(objectClasses.Infos, "infoKey", "isInitialDatabaseLaunch")
+            
+            if not entry then
+                dbManager:save(objectClasses.Infos.new("isInitialDatabaseLaunch", "false"), true)
+            elseif entry.infoValue == "false" then
+                local class = objectClasses.Infos.new("isInitialDatabaseLaunch", "true")
+                dbManager:save(class, true)
+            end
+            
+            dbManager:save(objectClasses.Infos.new("version", updater.get_git_version()), true)
+        end)
+    end
 
-    ---@type PermissionsHandler
+    -- Load all event dispatchers for different game events
+    local function loadEventDispatchers(dispatcher, managers, cfgManager)
+        dispatcher.load("init", managers)
+        dispatcher.load("players", managers)
+        dispatcher.load("chat", managers)
+        dispatcher.load("console", managers)
+        dispatcher.load("vehicles", managers)
+        
+        -- Load interface dispatcher if enabled
+        if cfgManager:GetSetting("client").interface then
+            dispatcher.load("interface", managers)
+        end
+    end
+
+    -- Main initialization sequence
+    createReloader()
+    setupPackagePaths()
+    initializeModules.initialize()
+    
+    local cfgManager = config.init()
+    updater.check(cfgManager)
+    
+    local objectClasses = loadObjectClasses()
+    checkChatLoggingConflict(cfgManager)
+    
+    local dbManager = initializeDatabase(cfgManager)
+    local msgManager = messageHandlerManager.new(dbManager, cfgManager)
     local permManager = PermissionsHandler.new(dbManager)
-
-    dbManager:withConnection(function()
-        -- Creating tables / updating
-        dbManager:createTableForClass(User.new())
-        dbManager:createTableForClass(UserIp.new())
-        dbManager:createTableForClass(UserStatus.new())
-        dbManager:createTableForClass(Role.new())
-        dbManager:createTableForClass(Command.new())
-        dbManager:createTableForClass(UserRole.new())
-        dbManager:createTableForClass(Action.new())
-        dbManager:createTableForClass(RoleAction.new())
-        dbManager:createTableForClass(RoleCommand.new())
-        dbManager:createTableForClass(Infos.new())
-    end)
-
-
-
-
-    ---@class managers
+    
+    createDatabaseTables(dbManager, objectClasses)
+    
+    -- Create managers table for dependency injection
     local managers = {
         dbManager = dbManager,
         cfgManager = cfgManager,
         msgManager = msgManager,
-        permManager = permManager,
+        permManager = permManager
     }
+    
     local cmdManager = commandHandler.init(managers)
     local actManager = actionHandler.init(managers)
     managers.actManager = actManager
     managers.cmdManager = cmdManager
-
-
-
-    dbManager:withConnection(function()
-
-    local entry = dbManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch")
-    if entry == nil then
-        dbManager:save(Infos.new("isInitialDatabaseLaunch", "false"), true)
-    elseif entry.infoValue == "false" then
-
-        local class = Infos.new("isInitialDatabaseLaunch", "true")
-
-        dbManager:save(class, true)
-
-    end
-
-    dbManager:save(Infos.new("version", updater.get_git_version()), true) --set version
-    end)
+    
+    initializeDatabaseInfo(dbManager, objectClasses, updater)
     default.init(managers)
-
-    -- Init Events
-    dispatcher.load("init", managers)
-    dispatcher.load("players", managers)
-    dispatcher.load("chat", managers)
-    dispatcher.load("console", managers)
-    dispatcher.load("vehicles", managers)
-
-    if cfgManager:GetSetting("client").interface then
-        dispatcher.load("interface", managers)
-        -- search.new(managers)
-    end
-
+    
+    loadEventDispatchers(dispatcher, managers, cfgManager)
+    
     utils.nkprint("Nickel successfully initialized", "info")
-    local extensions = require("main.initializeExtensions")
     extensions.initialize(managers)
     utils.nkprint("Extensions successfully initialized", "info")
 end
+
+-- Register the init function to be called when the server starts
 MP.RegisterEvent("onInit", "init")

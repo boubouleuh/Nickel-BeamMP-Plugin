@@ -3,16 +3,52 @@ local utils = require("utils.misc")
 
 local init = {}
 
-
-function init.initialize(managers)
-    local files = FS.ListFiles(utils.script_path() .. "extensions")
+-- Initialize all extension modules
+local function initialize(managers)
+    -- Check if managers parameter exists
+    if not managers then
+        return
+    end
+    
+    -- Get the path to extensions directory
+    local extensionsPath = utils.script_path() .. "extensions"
+    local files = FS.ListFiles(extensionsPath)
+    
+    -- Check if files list exists
+    if not files then
+        return
+    end
+    
+    -- Loop through each file in extensions directory
     for _, file in pairs(files) do
-
-        if file:sub(-#".lua") == ".lua" then
-            require("extensions." .. file:match("(.+)%..+$")).start(managers)
+        -- Skip if file is nil
+        if not file then
+            goto continue
         end
-
+        
+        -- Check if file is a Lua file
+        local isLuaFile = file:sub(-#".lua") == ".lua"
+        if not isLuaFile then
+            goto continue
+        end
+        
+        -- Extract extension name without .lua extension
+        local extensionName = file:match("(.+)%..+$")
+        if not extensionName then
+            goto continue
+        end
+        
+        -- Load the extension module
+        local extension = require("extensions." .. extensionName)
+        -- Check if extension exists and has start method
+        if extension and extension.start then
+            extension.start(managers)
+        end
+        
+        ::continue::
     end
 end
+
+init.initialize = initialize
 
 return init
