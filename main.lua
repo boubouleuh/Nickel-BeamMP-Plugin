@@ -1,7 +1,6 @@
 
 local function init()
     -- Load all required modules
-    local initializeModules = require("main.initializeModules")
     local utils = require("utils.misc")
     local config = require("main.config.Settings")
     local updater = require("main.updater")
@@ -146,7 +145,6 @@ local function init()
 
     -- Main initialization sequence
     setupPackagePaths()
-    initializeModules.initialize()
     
     local cfgManager = config.init()
     updater.check(cfgManager)
@@ -183,5 +181,4 @@ local function init()
     utils.nkprint("Extensions successfully initialized", "info")
 end
 
--- Register the init function to be called when the server starts
 MP.RegisterEvent("onInit", "init")

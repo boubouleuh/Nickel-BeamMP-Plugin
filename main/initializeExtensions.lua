@@ -27,13 +27,13 @@ local function initialize(managers)
         end
         
         -- Check if file is a Lua file
-        local isLuaFile = file:sub(-#".lua") == ".lua"
-        if not isLuaFile then
+        local fileExtension = FS.GetExtension(file)
+        if fileExtension ~= "lua" then
             goto continue
         end
         
         -- Extract extension name without .lua extension
-        local extensionName = file:match("(.+)%..+$")
+        local extensionName = FS.GetFilename(file, false)
         if not extensionName then
             goto continue
         end
