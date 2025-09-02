@@ -1,59 +1,64 @@
 
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
+
 local command = {
+    type = "user",
     args = {
         {name = "rolename", type = "string"},
         {name = "playername", type = "string"}
     }
 }
+
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, rolename, playername)
-
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-
+function command.init(sender_id, sender_name, _, rolename, playername)
     if rolename == nil or playername == nil then
-        msgManager:SendMessage(sender_id, "commands.grantrole.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.grantrole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
+    rolename = Utils.capitalize(rolename)
 
-    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
-        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+    if MP.IsPlayerGuest(Utils.GetPlayerId(playername)) then
+        MessagesManager:SendMessage(sender_id, "commands.guest_not_compatible")
         return false
     end
 
-
-    local beammpid = utils.getPlayerBeamMPID(playername) --TODO check if the player does not exist and check permissions to run this command on users who is below the sender
+    local beammpid = Utils.getPlayerBeamMPID(playername)
 
     if beammpid ~= nil then
-
         if sender_id ~= -2 then
-            if not permManager:canManage(utils.getPlayerBeamMPID(sender_name), utils.getPlayerBeamMPID(playername)) then
-                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
+            local senderBeammpid = Utils.getPlayerBeamMPID(sender_name)
+            if not PermissionsManager:canManage(senderBeammpid, beammpid) then
+                MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
                 return false
             end
-            if not permManager:canManageRole(utils.getPlayerBeamMPID(sender_name), rolename) then
-                msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
+            if not PermissionsManager:canManageRole(senderBeammpid, rolename) then
+                MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
                 return false
             end
         end
-        local result = permManager:assignRole(rolename, beammpid)
-        msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-        local onlineplayers = MP.GetPlayers()
-        for id, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id, managers.dbManager, permManager, cfgManager, beammpid)
-        end
+
+        DatabaseManager:withConnection(function()
+            local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+            if not role then
+                MessagesManager:SendMessage(sender_id, "commands.grantrole.role_not_found", {Role = rolename})
+                return
+            end
+            
+            local existingUserRole = DatabaseManager:getEntry(UserRole, {{"beammpid", beammpid}, {"roleID", role.roleID}})
+            if existingUserRole then
+                MessagesManager:SendMessage(sender_id, "commands.grantrole.already_has_role", {Player = playername, Role = rolename})
+            else
+                local userRole = UserRole.new(beammpid, role.roleID)
+                DatabaseManager:save(userRole)
+                MessagesManager:SendMessage(sender_id, "commands.grantrole.success", {Player = playername, Role = rolename})
+            end
+        end)
+        
         return true
     else
-
-        
-        msgManager:SendMessage(sender_id, string.format("player.not_found", {Player = playername}))
+        MessagesManager:SendMessage(sender_id, "player.not_found", {Player = playername})
+        return false
     end
 end
 
-return command
+RegisterNickelCommand("grantrole", command)

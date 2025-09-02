@@ -1,25 +1,22 @@
 
-local utils = require("utils.misc")
+
 local command = {
     type="global",
     args = {
     }
 }
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
-    local commands = managers.commands
-    
-    local prefix = cfgManager:GetSetting("commands").prefix
+function command.init(sender_id, sender_name)
+    print("[Help Command] Starting help command execution")
+    local prefix = ConfigManager.GetSetting("commands").prefix
 
     local li = ""
     
-    for command in pairs(commands) do
-        li = li .. "<li style='color: #A1A1A1; font-weight: bold; font-decoration: underline;'>" .. prefix .. command .. " | <span style='color: #F27D16; font-style: italic;'>" .. commands[command].description .. "</span></li>"
+    print("[Help Command] Available commands in NickelCommands:")
+    for commandName in pairs(NickelCommands or {}) do
+        print("[Help Command] - " .. commandName)
+        local description = NickelCommands[commandName].description or "No description"
+        li = li .. "<li style='color: #A1A1A1; font-weight: bold; font-decoration: underline;'>" .. prefix .. commandName .. " | <span style='color: #F27D16; font-style: italic;'>" .. description .. "</span></li>"
     end
 
     local html = [[
@@ -31,11 +28,9 @@ function command.init(sender_id, sender_name, managers)
         </div>
     ]]
 
-
-
-    msgManager:SendHTMLMessage(sender_id, html)
+    MessagesManager:SendHTMLMessage(sender_id, html)
 
     return true
 end
 
-return command
+RegisterNickelCommand("help", command)

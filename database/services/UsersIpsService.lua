@@ -1,28 +1,23 @@
 
-local new = require("objects.New")
+UsersIpsService = {}
 
-local userIp = require("objects.UserIp")
-
-
-local Service = {}
-
-
-
-function Service.new(beammpid, dbManager)
-    local self = {}
-    self.dbManager = dbManager  -- You can set this to a specific value if needed
-    self.beammpid = beammpid
-    return new._object(Service, self)
+function UsersIpsService.new(beammpid, dbManager)
+    local self = {
+        dbManager = dbManager,
+        beammpid = beammpid
+    }
+    setmetatable(self, { __index = UsersIpsService })
+    return self
 end
   
 
-function Service:getAllIps()
+function UsersIpsService:getAllIps()
     return self.dbManager:withConnection(function()
-        return self.dbManager:getAllClassByBeammpId(userIp, self.beammpid)
+        return self.dbManager:getAllClassByBeammpId(UserIp, self.beammpid)
     end)
 end
 
-function Service:banip(ip)
+function UsersIpsService:banip(ip)
     local ips = self:getAllIps()
     for _, value in ipairs(ips) do
         if value.ip == ip then
@@ -33,7 +28,7 @@ function Service:banip(ip)
     end
 end
 
-function Service:banAllIps()
+function UsersIpsService:banAllIps()
     local ips = self:getAllIps()
     local count = 0
     for _, value in ipairs(ips) do
@@ -49,7 +44,7 @@ function Service:banAllIps()
 end
 
 
-function Service:unbanAllIps()
+function UsersIpsService:unbanAllIps()
     local ips = self:getAllIps()
     local count = 0
     for _, value in ipairs(ips) do
@@ -64,7 +59,7 @@ function Service:unbanAllIps()
     return count
 end
 
-function Service:isIpBanned()
+function UsersIpsService:isIpBanned()
     local ips = self:getAllIps()
     for _, value in ipairs(ips) do
         if value.is_banned == 1 then
@@ -74,4 +69,4 @@ function Service:isIpBanned()
     return false
 end
 
-return Service
+return UsersIpsService

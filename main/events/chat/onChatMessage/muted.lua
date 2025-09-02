@@ -1,20 +1,22 @@
-local userStatus = require("objects.UserStatus")
-local utils = require("utils.misc")
-local StatusService = require("database.services.StatusService")
 
-return function(player_id, player_name, message, managers)
-        local dbManager = managers.dbManager
-        local cmdManager = managers.cmdManager
-        local beammpid = utils.getPlayerBeamMPID(player_name)
-        local statusService = StatusService.new(beammpid, dbManager)
-        if statusService:checkStatus("ismuted") or statusService:checkStatus("istempmuted") then
-
-            if statusService:checkStatusTime("istempmuted") then
-                statusService:removeStatus("istempmuted")
-            end
-
-            return 1
-        end
-
-        return cmdManager:CreateCommand(player_id, message, true)
+return function(player_id, player_name, message)
+    local beammpid = Utils.getPlayerBeamMPID(player_name)
+    if not beammpid then
+        return CommandsManager:CreateCommand(player_id, message, true)
+    end
+    
+    if StatusService.canPlayerSpeak(beammpid) then
+        return CommandsManager:CreateCommand(player_id, message, true)
+    end
+    
+    local muteReason = StatusService.getStatusReason(beammpid, "ismuted") or 
+                      StatusService.getStatusReason(beammpid, "istempmuted")
+    
+    if muteReason and muteReason ~= "" then
+        MP.SendChatMessage(player_id, "[MUTED] You are muted. Reason: " .. muteReason)
+    else
+        MP.SendChatMessage(player_id, "[MUTED] You are muted.")
+    end
+    
+    return false
 end

@@ -1,107 +1,75 @@
+local StatusService = {}
 
-local new = require("objects.New")
-
-local userStatus = require("objects.UserStatus")
-
-local interfaceUtils = require("main.client.interfaceUtils")
-
----@class StatusService
-local Service = {}
-
-
-
-function Service.new(beammpid, dbManager)
-    local self = {}
-    self.dbManager = dbManager  -- You can set this to a specific value if needed
-    self.beammpid = beammpid
-    return new._object(Service, self)
-end
-  
-
-function Service:getAllStatus()
-    local status = self.dbManager:withConnection(function()
-        return self.dbManager:getAllClassByBeammpId(userStatus, self.beammpid)
-    end)
-    for _, value in ipairs(status) do
-            value.tableName = userStatus.tableName
-    end
-    return status
-end
-
-
-function Service:getStatus(status_type)
-    local status = self:getAllStatus()
-    local result = {}
-    for _, value in ipairs(status) do
-        if value.status_type == status_type then
-            table.insert(result, value)
-        end
-    end
-    return result
-end
-
-function Service:checkStatus(status_type)
-    local status = self:getAllStatus()
-    for _, value in ipairs(status) do
-        if value.status_type == status_type and value.is_status_value == 1 then
-            return true
-        end
-    end
-    return false
-end
-
-function Service:disableStatus(status_type)
-    local status = self:getStatus(status_type)
-
-    if status == nil then
-        return "nickel.nochange"
-    end
-
-    for _, value in ipairs(status) do
-        if value.is_status_value == 1 then
-            value.is_status_value = 0
-            self.dbManager:save(value, true)
-        end
-    end
-
-    interfaceUtils.sendNothingToAll("NKResetPlayerList")
-
-    return result
+function StatusService.hasActiveStatus(beammpid, statusType)
+    if not DatabaseManager then return false end
     
-end
-function Service:removeStatus(status_type)
-    local result = self.dbManager:withConnection(function()
-        local conditions = {
-          {"status_type", status_type},
-          {"beammpid", self.beammpid}
-        }
-        local result = self.dbManager:deleteObject(userStatus, conditions)
-    end)
-
-    interfaceUtils.sendNothingToAll("NKResetPlayerList")
-
-    return result
-end
-
-function Service:createStatus(status_type, reason, time)
-
-    local userStatusClass = userStatus.new(self.beammpid, status_type, true, reason, time or nil)
-
-    local result = self.dbManager:save(userStatusClass, false)
-    interfaceUtils.sendNothingToAll("NKResetPlayerList")
-    return result
-end
-
-function Service:checkStatusTime(status_type)
-    local status = self:getAllStatus()
-    
-    for _, value in ipairs(status) do
-        if value.status_type == status_type and value.is_status_value == 1 then
-            return value.expiry_time >= os.time()
+    return DatabaseManager:withConnection(function()
+        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        if not status or not status.is_status_value then
+            return false
         end
-    end
-    return false
+        
+        -- Check expiry for temporary statuses
+        if status.expiry_time and os.time() > status.expiry_time then
+            DatabaseManager:delete(UserStatus, {{"id", status.id}})
+            return false
+        end
+        
+        return true
+    end)
 end
 
+function StatusService.isPlayerBanned(beammpid)
+    return StatusService.hasActiveStatus(beammpid, "isbanned")
+end
 
-return Service
+function StatusService.isPlayerTempBanned(beammpid)
+    return StatusService.hasActiveStatus(beammpid, "istempbanned")
+end
+
+function StatusService.isPlayerMuted(beammpid)
+    return StatusService.hasActiveStatus(beammpid, "ismuted")
+end
+
+function StatusService.isPlayerTempMuted(beammpid)
+    return StatusService.hasActiveStatus(beammpid, "istempmuted")
+end
+
+function StatusService.getStatusReason(beammpid, statusType)
+    if not DatabaseManager then return nil end
+    
+    return DatabaseManager:withConnection(function()
+        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        return status and status.reason or nil
+    end)
+end
+
+function StatusService.canPlayerSpeak(beammpid)
+    return not (StatusService.isPlayerMuted(beammpid) or StatusService.isPlayerTempMuted(beammpid))
+end
+
+function StatusService.canPlayerConnect(beammpid)
+    return not (StatusService.isPlayerBanned(beammpid) or StatusService.isPlayerTempBanned(beammpid))
+end
+
+function StatusService.createStatus(beammpid, status_type, reason, expiry_time)
+    local statusEntry = UserStatus.new(beammpid, status_type, true, reason, expiry_time)
+    return DatabaseManager:withConnection(function()
+        return DatabaseManager:save(statusEntry, true)
+    end)
+end
+
+function StatusService.removeStatus(beammpid, status_type)
+    return DatabaseManager:withConnection(function()
+        local conditions = {{"beammpid", beammpid}, {"status_type", status_type}}
+        return DatabaseManager:delete(UserStatus, conditions)
+    end)
+end
+
+function StatusService.getStatusDetails(beammpid, status_type)
+    return DatabaseManager:withConnection(function()
+        return DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", status_type}})
+    end)
+end
+
+return StatusService

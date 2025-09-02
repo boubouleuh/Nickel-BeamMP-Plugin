@@ -1,26 +1,12 @@
-local sqlite3 = require("lsqlite3")
-
-local new = require("objects.New")
-
-local utils = require("utils.misc")
-
-local online = require("main.online")
-
-local UserRoles = require("objects.UserRole")
-local UsersStatus = require("objects.UserStatus")
-local Users = require("objects.User")
-local Roles = require("objects.Role")
-local UserIp = require("objects.UserIp")
-
 -- Database Management Class
----@class DatabaseManager
-local DatabaseManager = {}
+DatabaseManager = {}
 
 function DatabaseManager.new(databaseName)
-  local self = {}
-  -- self.db = sqlite3.open(databaseName)
-  self.dbname = databaseName
-  return new._object(DatabaseManager, self)
+  local self = {
+    dbname = databaseName
+  }
+  setmetatable(self, { __index = DatabaseManager })
+  return self
 end
 
 function DatabaseManager:createTableIfNotExists(tableName, columns)
@@ -32,8 +18,8 @@ end
 
 function DatabaseManager:returnQuery(query)
   local msg = self.db:exec(query)
-  utils.nkprint(query, "debug")
-  utils.nkprint("Changes = " .. self.db:changes(), "debug")
+  Utils.nkprint(query, "debug")
+  Utils.nkprint("Changes = " .. self.db:changes(), "debug")
   if self.db:changes() == 0 then
     return "nickel.nochange"
   end
@@ -61,13 +47,13 @@ function DatabaseManager:prepareAndExecute(query, ...)
         -- Execute the statement
         local result = stmt:step()
         
-        utils.nkprint(query, "debug")
-        utils.nkprint("Changes = " .. self.db:changes(), "debug")
+        Utils.nkprint(query, "debug")
+        Utils.nkprint("Changes = " .. self.db:changes(), "debug")
 
         if result == 5 then -- SQLITE_BUSY (database locked)
             stmt:finalize()
             attempts = attempts + 1
-            utils.nkprint("Database locked, retrying (" .. attempts .. "/" .. max_attempts .. ")", "warn")
+            Utils.nkprint("Database locked, retrying (" .. attempts .. "/" .. max_attempts .. ")", "warn")
             MP.Sleep(delay_seconds)
         else
             -- Normal processing
@@ -88,14 +74,13 @@ end
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
-  utils.nkprint("TABLENAME = " .. tableName, "debug")
+  Utils.nkprint("TABLENAME = " .. tableName, "debug")
   object.tableName = nil
   local columns = {}
   local values = {}
   local updateColumns = {}
   local columnsOrder = self:getTableColumnsName(tableName)
   local firstColumn
-  -- Recherchez la première colonne non nulle et non vide
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
       firstColumn = columnName
@@ -106,7 +91,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(columns, key)
     if type(value) == "table" then
       -- Convert table to a string representation
-      value = utils.table_to_string(value)
+      value = Utils.table_to_string(value)
     elseif type(value) == "boolean" then
       if value then
         value = 1
@@ -119,7 +104,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
-  utils.nkprint(selectQuery, "debug")
+  Utils.nkprint(selectQuery, "debug")
   local count = 0
   local stmt = self.db:prepare(selectQuery)
   stmt:bind(1, object[firstColumn])
@@ -129,7 +114,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   stmt:finalize()
   if count > 0 and canupdate then
 
-      -- Suppose que le nom de la colonne qui identifie de manière unique la ligne est 'beammpid'.
       -- Update query with a placeholder for the WHERE clause
       local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
 
@@ -172,7 +156,7 @@ function DatabaseManager:deleteObject(class, conditions)
   local tableName = class.tableName
 
   if not conditions or #conditions == 0 then
-      utils.nkprint("No conditions provided for deletion.", "error")
+      Utils.nkprint("No conditions provided for deletion.", "error")
       return
   end
 
@@ -204,7 +188,6 @@ function DatabaseManager:save(class, canupdate)
   return result
 end
 
--- Dans la classe DatabaseManager
 
 function DatabaseManager:createTableForClass(class)
 
@@ -212,7 +195,6 @@ function DatabaseManager:createTableForClass(class)
   local columns = class:getColumns()
   local existingColumns = self:getTableColumns(tableName)
 
-  -- Si la table n'existe pas, créez-la
   if not next(existingColumns) then
     self:createTableIfNotExists(tableName, columns)
   else
@@ -225,13 +207,12 @@ function DatabaseManager:createTableForClass(class)
 
       for key, column in ipairs(columns) do
         local colName = column:match("^(%S+)")
-        local finalKey = utils.get_key_for_value(existingColumnsFinal, colName)
+        local finalKey = Utils.get_key_for_value(existingColumnsFinal, colName)
         if finalKey ~= nil then
           columnsFinal[finalKey] = colName
         end
       end
 
-      -- Si la colonne de la table ne correspond à aucune colonne de la classe, supprimez-la
       for key, column in ipairs(existingColumnsFinal) do
 
         if columnsFinal[key] == nil then
@@ -278,7 +259,6 @@ function DatabaseManager:getAllEntry(class, conditions)
   local tableName = class.tableName
   local query = "SELECT * FROM " .. tableName
 
-  -- Ajouter des conditions à la requête si elles sont fournies
   if conditions and #conditions > 0 then
     local whereClauses = {}
     for i, condition in ipairs(conditions) do
@@ -297,10 +277,10 @@ function DatabaseManager:getAllEntry(class, conditions)
 
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = utils.string_to_table(value)
-        result:setKey(key, parsedList)
+        local parsedList = Utils.string_to_table(value)
+        result[key] = parsedList
       else
-          result:setKey(key, value)
+          result[key] = value
       end
     end
 
@@ -323,11 +303,9 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
 
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = utils.string_to_table(value)
+        local parsedList = Utils.string_to_table(value)
         result:setKey(key, parsedList)
       else
-        -- Utilisez une méthode set ou affectez directement les valeurs aux propriétés de la classe
-        result:setKey(key, value)  -- Assurez-vous que votre classe a une méthode set appropriée
       end
     end
 
@@ -350,11 +328,9 @@ function DatabaseManager:getAllClassByBeammpId(class, beammpid)
   
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = utils.string_to_table(value)
+        local parsedList = Utils.string_to_table(value)
         result[i]:setKey(key, parsedList)
       else
-        -- Utilisez une méthode set ou affectez directement les valeurs aux propriétés de la classe
-        result[i]:setKey(key, value)  -- Assurez-vous que votre classe a une méthode set appropriée
       end
     end
     i = i + 1
@@ -377,7 +353,7 @@ end
 --   local onlineBeammpids = {}
 --   for id, name in pairs(onlinePlayers) do
 --     if not MP.IsPlayerGuest(id) then
---       local beammpid = tostring(utils.getPlayerBeamMPID(name))
+--       local beammpid = tostring(Utils.getPlayerBeamMPID(name))
 --       onlineBeammpids[beammpid] = true
 --     end
 --   end
@@ -470,7 +446,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
   local onlineBeammpids = {}
   for id, name in pairs(onlinePlayers) do
     if not MP.IsPlayerGuest(id) then
-      local beammpid = tostring(utils.getPlayerBeamMPID(name))
+      local beammpid = tostring(Utils.getPlayerBeamMPID(name))
       onlineBeammpids[beammpid] = true
     end
   end
@@ -508,7 +484,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
           name = row.name,
           whitelisted = row.whitelisted,
           online = true, -- Mark all as online
-          b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid) or nil
+          b64img = allowbase64 and "data:image/png;base64," .. Online.getPlayerB64Img(row.user_beammpid) or nil
         }
       end
 
@@ -587,7 +563,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
         name = row.name,
         whitelisted = row.whitelisted,
         online = false, -- Mark as offline
-        b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(row.user_beammpid) or nil
+        b64img = allowbase64 and "data:image/png;base64," .. Online.getPlayerB64Img(row.user_beammpid) or nil
       }
     end
 
@@ -658,16 +634,15 @@ end
 --get an user with his roles and details like online, b64img but simple and return a json like getUsersDynamically return but only with one user
 function DatabaseManager:getUserWithRoles(beammpid, permManager, allowbase64)
   local onlinePlayers = MP.GetPlayers()
-  local user = self:getClassByBeammpId(Users, beammpid)
-  local userRoles = self:getAllClassByBeammpId(UserRoles, beammpid)
-  local userStatus = self:getAllClassByBeammpId(UsersStatus, beammpid)
+  local user = self:getClassByBeammpId(User, beammpid)
+  local userRoles = self:getAllClassByBeammpId(UserRole, beammpid)
+  local userStatus = self:getAllClassByBeammpId(UserStatus, beammpid)
   local userIps = self:getAllClassByBeammpId(UserIp, beammpid)
   local userRolesFinal = {}
   local userStatusFinal = {}
   local userIpsFinal = {}
 
   for i, v in ipairs(userRoles) do
-    local role = self:getEntry(Roles, "roleID", v.roleID) -- Utilisation de getClassByBeammpId pour obtenir les détails du rôle
     table.insert(userRolesFinal, {
       name = role.roleName,
       permlvl = role.permlvl
@@ -689,7 +664,7 @@ function DatabaseManager:getUserWithRoles(beammpid, permManager, allowbase64)
     table.insert(userIpsFinal, v.ip)
   end
 
-  local playerid = utils.GetPlayerId(user.name)
+  local playerid = Utils.GetPlayerId(user.name)
 
 
     local userFinal = {
@@ -700,7 +675,7 @@ function DatabaseManager:getUserWithRoles(beammpid, permManager, allowbase64)
       name = user.name,
       whitelisted = user.whitelisted,
       online = onlinePlayers[playerid] ~= nil,
-      b64img = allowbase64 and "data:image/png;base64," .. online.getPlayerB64Img(beammpid) or nil
+      b64img = allowbase64 and "data:image/png;base64," .. Online.getPlayerB64Img(beammpid) or nil
     }
     return userFinal
 end
@@ -730,7 +705,6 @@ end
 
 
 
--- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumns(tableName)
 
 
@@ -744,7 +718,6 @@ function DatabaseManager:getTableColumns(tableName)
   return existingColumns
 end
 
--- Méthode pour obtenir les colonnes existantes de la table
 function DatabaseManager:getTableColumnsName(tableName)
 
   local columns = {}
@@ -756,13 +729,12 @@ end
 
 
 function DatabaseManager:openConnection()
-  utils.nkprint("Database opened", "debug")
-  self.db = sqlite3.open(self.dbname)
+  self.db = SQLITE3.open(self.dbname)
 end
 
 function DatabaseManager:closeConnection()
   if self.db then
-    utils.nkprint("Database closed", "debug")
+    Utils.nkprint("Database closed", "debug")
     self.db:close()
     self.db = nil
   end

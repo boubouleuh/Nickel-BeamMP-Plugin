@@ -1,35 +1,35 @@
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
 
 local command = {
+    type = "user",
     args = {
-        {name = "rolename", type = "string"},
+        {name = "rolename", type = "string"}
     }
 }
---- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, rolename)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
 
+--- command
+function command.init(sender_id, sender_name, _, rolename)
     if rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.deleterole.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.deleterole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
+    rolename = Utils.capitalize(rolename)
 
-
-    local result = permManager:removeRole(rolename)
-    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-
-    local onlineplayers = MP.GetPlayers()
-    for id, player in pairs(onlineplayers) do
-        interfaceUtils.sendPlayers(id, 0, managers.dbManager, managers.permManager, managers.cfgManager)
-    end
+    DatabaseManager:withConnection(function()
+        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        if role then
+            DatabaseManager:delete(role)
+            MessagesManager:SendMessage(sender_id, "commands.deleterole.success", {Role = rolename})
+            
+            local onlineplayers = MP.GetPlayers()
+            for id, player in pairs(onlineplayers) do
+            end
+        else
+            MessagesManager:SendMessage(sender_id, "commands.deleterole.not_found", {Role = rolename})
+        end
+    end)
     
     return true
 end
 
-return command
+RegisterNickelCommand("deleterole", command)

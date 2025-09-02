@@ -1,30 +1,38 @@
 
-local utils = require("utils.misc")
 
 local command = {
+    type = "user",
     args = {
         {name = "rolename", type = "string"},
-        {name = "permlvl", type = "integer"}
+        {name = "permlvl", type = "string"}
     }
 }
---- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, rolename, permlvl)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
 
-    if permlvl == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.createrole.missing_args", {Prefix = cfgManager.config.commands.prefix})
+--- command
+function command.init(sender_id, sender_name, _, rolename, permlvl)
+    if rolename == nil or permlvl == nil then
+        MessagesManager:SendMessage(sender_id, "commands.createrole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
+    local permlvl_num = tonumber(permlvl)
+    if not permlvl_num then
+        MessagesManager:SendMessage(sender_id, "commands.createrole.invalid_permlvl")
+        return false
+    end
 
-
-    local result = permManager:addRole(rolename, permlvl, false)
-    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    DatabaseManager:withConnection(function()
+        local existingRole = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        if existingRole then
+            MessagesManager:SendMessage(sender_id, "commands.createrole.already_exists", {Role = rolename})
+        else
+            local newRole = Role.new(rolename, permlvl_num)
+            DatabaseManager:save(newRole)
+            MessagesManager:SendMessage(sender_id, "commands.createrole.success", {Role = rolename, PermLevel = permlvl})
+        end
+    end)
+    
     return true
 end
 
-return command
+RegisterNickelCommand("createrole", command)

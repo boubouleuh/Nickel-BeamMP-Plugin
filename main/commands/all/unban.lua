@@ -1,7 +1,4 @@
 
-local utils = require("utils.misc")
-local StatusService = require("database.services.StatusService")
-local UsersIpsService = require("database.services.UsersIpsService")
 
 local command = {
     type = "user",
@@ -9,44 +6,52 @@ local command = {
         {name = "playername", type = "string"},
     }
 }
+
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, playername)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
+function command.init(sender_id, sender_name, _, playername)
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.unban.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.unban.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    local beammpid = utils.getPlayerBeamMPID(playername)
+    local beammpid = Utils.getPlayerBeamMPID(playername)
+    local unbanned = false
 
-    local statusService = StatusService.new(beammpid, dbManager)
-    local usersIpsService = UsersIpsService.new(beammpid, dbManager)
-
- 
-    if statusService:checkStatus("isbanned") or statusService:checkStatus("istempbanned") then
-
+    DatabaseManager:withConnection(function()
+        local banStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "isbanned"}})
+        local tempBanStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempbanned"}})
         
-        statusService:disableStatus("isbanned")
-        statusService:disableStatus("istempbanned")
-
-        msgManager:SendMessage(sender_id, "commands.unban.success", {Player = playername})
-
-    elseif not usersIpsService:isIpBanned() then
-        msgManager:SendMessage(sender_id, "moderation.not_banned", {Player = playername})
-    end
-
-
-    if usersIpsService:isIpBanned() then
-        local result = usersIpsService:unbanAllIps()
-        msgManager:SendMessage(sender_id, "commands.unban.unbanip.success", {Count = result, Player = playername})
-    end
-
+        if banStatus then
+            DatabaseManager:delete(banStatus)
+            unbanned = true
+        end
+        
+        if tempBanStatus then
+            DatabaseManager:delete(tempBanStatus)
+            unbanned = true
+        end
+        
+        local userIps = DatabaseManager:getEntries(UserIp, {{"beammpid", beammpid}, {"is_banned", true}})
+        local ipCount = 0
+        
+        for _, userIp in ipairs(userIps) do
+            userIp.is_banned = false
+            DatabaseManager:save(userIp)
+            ipCount = ipCount + 1
+        end
+        
+        if unbanned then
+            MessagesManager:SendMessage(sender_id, "commands.unban.success", {Player = playername})
+        elseif ipCount == 0 then
+            MessagesManager:SendMessage(sender_id, "moderation.not_banned", {Player = playername})
+        end
+        
+        if ipCount > 0 then
+            MessagesManager:SendMessage(sender_id, "commands.unban.unbanip.success", {Count = ipCount, Player = playername})
+        end
+    end)
 
     return true
 end
 
-return command
+RegisterNickelCommand("unban", command)

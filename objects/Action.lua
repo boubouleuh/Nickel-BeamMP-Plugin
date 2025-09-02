@@ -1,36 +1,17 @@
-
-local new = require("objects.New")
-
----@class Action
-local Action = {}
-
+Action = {}
 Action.tableName = "Actions"
 
 function Action.new(actname)
   local self = {}
+  self.tableName = Action.tableName
   self.actionID = nil
   self.actionName = actname
-  return new._object(Action, self)
+  return self
 end
 
-
-function Action:getKey(key)
-  return self[key]
-end
-
-function Action:setKey(key, value)
-  self[key] = value
-end
-
--- Dans la classe User
-function Action:getColumns()
+function Action.getColumns()
     return {
       "actionID INTEGER PRIMARY KEY AUTOINCREMENT",
       "actionName TEXT UNIQUE NOT NULL",
-      -- Ajoutez d'autres colonnes si nécessaire
     }
-  end
-  
-
-
-return Action
+end

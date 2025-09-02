@@ -1,29 +1,26 @@
-local interfaceUtils = require("main.client.interfaceUtils")
-local utils = require("utils.misc")
-local syncinterfacevalues = {}
----@param managers managers
-return function(id, interfaceValues, managers, force)
+return function(id, interfaceValues, force)
     local interfaceValues = Util.JsonDecode(interfaceValues)
     if force == nil then
         force = false
     end
     if interfaceValues == nil then
-        utils.nkprint("INTERFACE VALUES IS NIL", "error")
+        Utils.nkprint("INTERFACE VALUES IS NIL", "error")
         return
     end
-    local server_interface_values = managers.cfgManager:GetSetting("client").interfaceValues
+    
+    local clientConfig = Settings.GetSetting("client")
+    local server_interface_values = clientConfig and clientConfig.interfaceValues
 
-    if not utils.deepCompare(interfaceValues, server_interface_values) or force then
-
-        if not managers.permManager:hasPermissionForAction(utils.getPlayerBeamMPID(MP.GetPlayerName(id)), "editInterfaceSettings") then
-            interfaceUtils.sendTable(id, "getInterfaceValues", server_interface_values)
+    if not Utils.deepCompare(interfaceValues, server_interface_values) or force then
+        local playerName = MP.GetPlayerName(id)
+        local beammpid = Utils.getPlayerBeamMPID(playerName)
+        
+        if not PermissionsManager:hasPermissionForAction(beammpid, "editInterfaceSettings") then
+            MP.TriggerClientEventJson(id, "getInterfaceValues", server_interface_values)
             return
         end
 
-        managers.cfgManager:SetSetting("client.interfaceValues", interfaceValues)
-
-        interfaceUtils.sendTableToAll("getInterfaceValues", interfaceValues)
-        return
+        Settings.SetSetting("client.interfaceValues", interfaceValues)
+        MP.TriggerClientEventJson(-1, "getInterfaceValues", interfaceValues)
     end
-
 end

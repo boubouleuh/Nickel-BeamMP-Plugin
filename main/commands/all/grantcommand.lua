@@ -1,40 +1,54 @@
 
-local utils = require("utils.misc")
 
 local command = {
+    type = "user",
     args = {
         {name = "commandName", type = "string"},
         {name = "rolename", type = "string"}
     }
 }
+
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, commandName, rolename)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-
-
+function command.init(sender_id, sender_name, _, commandName, rolename)
     if commandName == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.grantcommand.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.grantcommand.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
-
+    rolename = Utils.capitalize(rolename)
 
     if sender_id ~= -2 then
-        if not permManager:canManageRole(utils.getPlayerBeamMPID(sender_name), rolename) then
-            msgManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
+        local senderBeammpid = Utils.getPlayerBeamMPID(sender_name)
+        if not PermissionsManager:canManageRole(senderBeammpid, rolename) then
+            MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
             return false
         end
     end
 
+    DatabaseManager:withConnection(function()
+        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        if not role then
+            MessagesManager:SendMessage(sender_id, "commands.grantcommand.role_not_found", {Role = rolename})
+            return
+        end
+        
+        local cmd = DatabaseManager:getEntry(Command, {{"commandName", commandName}})
+        if not cmd then
+            MessagesManager:SendMessage(sender_id, "commands.grantcommand.command_not_found", {Command = commandName})
+            return
+        end
+        
+        local existingRoleCommand = DatabaseManager:getEntry(RoleCommand, {{"roleID", role.roleID}, {"commandID", cmd.commandID}})
+        if existingRoleCommand then
+            MessagesManager:SendMessage(sender_id, "commands.grantcommand.already_has_command", {Role = rolename, Command = commandName})
+        else
+            local roleCommand = RoleCommand.new(role.roleID, cmd.commandID)
+            DatabaseManager:save(roleCommand)
+            MessagesManager:SendMessage(sender_id, "commands.grantcommand.success", {Role = rolename, Command = commandName})
+        end
+    end)
 
-
-    local result = permManager:assignCommand(commandName, rolename)
-    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
     return true
 end
 
-return command
+RegisterNickelCommand("grantcommand", command)

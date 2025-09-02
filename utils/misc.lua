@@ -1,29 +1,28 @@
 
 
--- Database Management Class
-local Misc = {}
+Utils = {}
 ---script_path
 ---@return string --get the script path
-function Misc.script_path()
-  local separator = package.config:sub(1, 1) -- Obtient le séparateur de chemin d'accès ("/" ou "\")
+function Utils.script_path()
+  local separator = package.config:sub(1, 1)
   local scriptPath = debug.getinfo(1, "S").source:sub(2):gsub("[\\/][^\\/]+$", separator)
   local scriptDir = scriptPath:gsub(separator .. "utils" .. separator .. "$", separator)
   return scriptDir
 end
 
-function Misc.capitalize(str)
+function Utils.capitalize(str)
   return (str:gsub("^%l", string.upper))
 end
 
 
-function Misc.getLinuxVersion()
+function Utils.getLinuxVersion()
     local handle = io.popen("lsb_release -ds")
     local result = handle:read("*a")
     handle:close()
     return result
 end
 
-function Misc.get_key_for_value( t, value )
+function Utils.get_key_for_value( t, value )
     for k,v in pairs(t) do
       if v==value then return k end
     end
@@ -35,7 +34,7 @@ end
 ---@param element string
 ---@param list table
 ---@return boolean
-function Misc.element_exist_in_table(element, list)
+function Utils.element_exist_in_table(element, list)
   -- Check if the element exists in the list
   if type(list) == "table" then
     for key, value in next, list do
@@ -52,19 +51,16 @@ end
 ---@param t1 table
 ---@param t2 table
 ---@return boolean
-function Misc.deepCompare(t1, t2, visited)
+function Utils.deepCompare(t1, t2, visited)
     if type(t1) ~= type(t2) then return false end
     if type(t1) ~= "table" then return t1 == t2 end
 
-    -- Vérifier les métatables
     if getmetatable(t1) ~= getmetatable(t2) then return false end
 
-    -- Détecter les cycles
     visited = visited or {}
     if visited[t1] and visited[t1] == t2 then return true end
     visited[t1] = t2
 
-    -- Vérifier les tailles des tables
     local function tableLength(t)
         local count = 0
         for _ in pairs(t) do
@@ -75,9 +71,8 @@ function Misc.deepCompare(t1, t2, visited)
 
     if tableLength(t1) ~= tableLength(t2) then return false end
 
-    -- Comparer les clés et les valeurs
     for k, v in pairs(t1) do
-        if not Misc.deepCompare(v, t2[k], visited) then return false end
+        if not Utils.deepCompare(v, t2[k], visited) then return false end
     end
 
     for k, v in pairs(t2) do
@@ -91,7 +86,7 @@ end
 -- Clone a table
 ---@param orig table
 ---@return table
-function Misc.shallowCopy(orig)
+function Utils.shallowCopy(orig)
   local orig_type = type(orig)
   local copy
   if orig_type == 'table' then
@@ -110,7 +105,7 @@ end
 ---@param table1 table
 ---@param table2 table
 ---@return table
-function Misc.mergeTables(table1, table2)
+function Utils.mergeTables(table1, table2)
   for i = 1, #table2 do
       table1[#table1 + 1] = table2[i]
   end
@@ -122,7 +117,7 @@ end
 -- Invert of string_to_table()
 ---@param tbl table
 ---@return string
-function Misc.table_to_string( tbl )
+function Utils.table_to_string( tbl )
   local result, done = {}, {}
   for k, v in ipairs( tbl ) do
     table.insert( result, v )
@@ -142,7 +137,7 @@ end
 -- Convert string like "{a,a,a}" to a table
 ---@param text string
 ---@return table
-function Misc.string_to_table(text)
+function Utils.string_to_table(text)
   text = text:gsub("[{}]", "")
 
   local ipTable = {}
@@ -153,7 +148,7 @@ function Misc.string_to_table(text)
   return ipTable
 end
 
-function Misc.split(input, delimiter)
+function Utils.split(input, delimiter)
     local result = {}
     for match in (input .. delimiter):gmatch("(.-)" .. delimiter) do
         table.insert(result, match)
@@ -164,18 +159,19 @@ end
 ---getPlayerBeamMPID
 ---@param player_name string
 ---@return number
-function Misc.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+function Utils.getPlayerBeamMPID(player_name) --Playername only used when using the web api
 
-  local online = require "main.online"
-  local player_id = Misc.GetPlayerId(player_name)
+  local player_id = Utils.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
-        local playerJson = online.getPlayerJson(player_name)
-        local beamid
-        if playerJson ~= nil then
-            beamid = playerJson.user.id
-        end
-        return beamid
+        -- Note: online functionality needs to be migrated
+        -- local playerJson = online.getPlayerJson(player_name)
+        -- local beamid
+        -- if playerJson ~= nil then
+        --     beamid = playerJson.user.id
+        -- end
+        -- return beamid
+        return -1
   end
   local player_beammp_id = identifiers['beammp']
   if player_beammp_id == nil then
@@ -184,16 +180,15 @@ function Misc.getPlayerBeamMPID(player_name) --Playername only used when using t
   return player_beammp_id
 end
 
-function Misc.getBeamMPConfig() 
-  local toml = require("toml")
+function Utils.getBeamMPConfig() 
   local existingConfigPath = "ServerConfig.toml"
   if FS.Exists(existingConfigPath) then
-      return toml.decodeFromFile(existingConfigPath)
+      return TOML.decodeFromFile(existingConfigPath)
   end
 end
 
-function Misc.getMapName()
-    local map = Misc.getBeamMPConfig().General.Map -- /levels/west_coast_usa/info.json example
+function Utils.getMapName()
+    local map = Utils.getBeamMPConfig().General.Map -- /levels/west_coast_usa/info.json example
     if map then
         local mapName = map:match("levels/(.+)/info.json")
         if mapName then
@@ -205,7 +200,7 @@ end
 ---GetPlayerId
 ---@param player_name string
 ---@return number
-function Misc.GetPlayerId(player_name)
+function Utils.GetPlayerId(player_name)
   local players = MP.GetPlayers()
   for key, value in pairs(players) do
       if value == player_name then
@@ -221,8 +216,7 @@ end
 ---@param message string
 ---@param color string Can be "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "gray"
 ---@return string
-function Misc.print_color(message, color)
-    -- Les codes de couleur ANSI pour différentes couleurs
+function Utils.print_color(message, color)
     local colors = {
         black = "\27[30m",
         red = "\27[31m",
@@ -235,12 +229,10 @@ function Misc.print_color(message, color)
         gray = "\27[90m",
     }
 
-    -- Vérifie si la couleur spécifiée est valide
     if not colors[color] then
         color = "white"
     end
 
-    -- Affiche le message dans la couleur spécifiée
     return colors[color] .. message .. "\27[0m"
 end
 
@@ -248,28 +240,25 @@ end
 ---@param message string
 ---@param type string Can be "warn", "error", "info" or "debug"
 ---@return nil
-function Misc.nkprint(message, type)
+function Utils.nkprint(message, type)
   
     if type == "warn" then
-        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|WARN] " .. message, "yellow"))
+        print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|WARN] " .. message, "yellow"))
     elseif type == "error" then
-        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|ERROR] " .. message, "red"))
+        print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|ERROR] " .. message, "red"))
     elseif type == "info" then
-        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|INFO] " .. message, "blue"))
+        print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|INFO] " .. message, "blue"))
     elseif type == "debug" then
       -- Miscellanous
-      local config = require("main.config.Settings")
-      -- Instances
-      local cfgManager = config.init()
-      if cfgManager:GetSetting("advanced").debug then
-        print(Misc.print_color("[NICKEL", "gray") .. Misc.print_color("|DEBUG] " .. message, "cyan"))
+      if Settings and Settings.GetSetting and Settings.GetSetting("advanced") and Settings.GetSetting("advanced").debug then
+        print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|DEBUG] " .. message, "cyan"))
       end
     end
 end
 ---timeConverter
 ---@param time string 1d 1s 1m 1h
 ---@return nil | number
-function Misc.timeConverter(time)
+function Utils.timeConverter(time)
     local oldtime = time
 
     local time = time:lower()
@@ -298,7 +287,7 @@ end
 local asyncId = 0
 local asyncTasks = {}
 
-function Misc.RunAsync(func, delay, ...)
+function Utils.RunAsync(func, delay, ...)
     asyncId = asyncId + 1
     local id = "__async_event_" .. asyncId
     local handlerName = "__async_handler_" .. asyncId
@@ -317,9 +306,9 @@ function Misc.RunAsync(func, delay, ...)
     MP.CreateEventTimer(id, delay)
 end
 
-function Misc.hotreload()
-    Misc.nkprint("Manually hot-reloading Nickel BeamMP Plugin...", "info")
-    local path = Misc.script_path() .. "reloader.lua"
+function Utils.hotreload()
+    Utils.nkprint("Manually hot-reloading Nickel BeamMP Plugin...", "info")
+    local path = Utils.script_path() .. "reloader.lua"
     local file = io.open(path, "w")
     if file then
         file:write("return " .. tostring(math.random(1, 1000000)))
@@ -328,5 +317,55 @@ function Misc.hotreload()
 end
 
 
+-- ===== STATUS MANAGEMENT UTILITIES =====
 
-return Misc;
+function Utils.hasActiveStatus(beammpid, statusType)
+    if not DatabaseManager then return false end
+    
+    return DatabaseManager:withConnection(function()
+        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        if not status or not status.is_status_value then
+            return false
+        end
+        
+        if status.expiry_time and os.time() > status.expiry_time then
+            DatabaseManager:delete(UserStatus, {{"id", status.id}})
+            return false
+        end
+        
+        return true
+    end)
+end
+
+function Utils.isPlayerBanned(beammpid)
+    return Utils.hasActiveStatus(beammpid, "isbanned")
+end
+
+function Utils.isPlayerTempBanned(beammpid)
+    return Utils.hasActiveStatus(beammpid, "istempbanned")
+end
+
+function Utils.isPlayerMuted(beammpid)
+    return Utils.hasActiveStatus(beammpid, "ismuted")
+end
+
+function Utils.isPlayerTempMuted(beammpid)
+    return Utils.hasActiveStatus(beammpid, "istempmuted")
+end
+
+function Utils.getStatusReason(beammpid, statusType)
+    if not DatabaseManager then return nil end
+    
+    return DatabaseManager:withConnection(function()
+        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        return status and status.reason or nil
+    end)
+end
+
+function Utils.canPlayerSpeak(beammpid)
+    return not (Utils.isPlayerMuted(beammpid) or Utils.isPlayerTempMuted(beammpid))
+end
+
+function Utils.canPlayerConnect(beammpid)
+    return not (Utils.isPlayerBanned(beammpid) or Utils.isPlayerTempBanned(beammpid))
+end

@@ -1,58 +1,49 @@
 
-local utils = require("utils.misc")
-local userStatus = require("objects.UserStatus")
-local StatusService = require("database.services.StatusService")
+
 local command = {
     type = "user",
     args = {
         {name = "playername", type = "string"},
         {name = "reason", type = "string"}
     }
-    -- usefull for the interface
 }
 
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, playername, reason)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
-
+function command.init(sender_id, sender_name, _, playername, reason)
     if playername == nil then
-        msgManager:SendMessage(sender_id, "commands.ban.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.ban.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     elseif reason == nil then
-        reason = msgManager:GetMessage(sender_id, "moderation.default_reason")
+        reason = MessagesManager:GetMessage(sender_id, "moderation.default_reason")
     end
 
-    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
-        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+    if MP.IsPlayerGuest(Utils.GetPlayerId(playername)) then
+        MessagesManager:SendMessage(sender_id, "commands.guest_not_compatible")
         return false
     end
     
-    local beammpid = utils.getPlayerBeamMPID(playername)
+    local beammpid = Utils.getPlayerBeamMPID(playername)
 
-    local statusService = StatusService.new(beammpid, dbManager)
-
-
-        if statusService:checkStatus("isbanned") or statusService:checkStatus("istempbanned") then
-            msgManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
+    DatabaseManager:withConnection(function()
+        local existingStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "isbanned"}})
+        local existingTempBan = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempbanned"}})
+        
+        if existingStatus or existingTempBan then
+            MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
         else
-
-            local result = statusService:createStatus("isbanned", reason)
-
-            local target_id = utils.GetPlayerId(playername)
+            local userStatus = UserStatus.new(-1, beammpid, "isbanned", reason)
+            DatabaseManager:save(userStatus)
+            
+            local target_id = Utils.GetPlayerId(playername)
 
             if target_id ~= -1 then
-                MP.DropPlayer(target_id, msgManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
+                MP.DropPlayer(target_id, MessagesManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
             end
-            msgManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
-            msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-
+            MessagesManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
         end
+    end)
    
     return true
 end
 
-return command
+RegisterNickelCommand("ban", command)

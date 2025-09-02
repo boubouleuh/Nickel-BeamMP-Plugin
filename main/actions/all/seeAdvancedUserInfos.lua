@@ -1,5 +1,17 @@
-return {
-    actionName = "seeAdvancedUserInfos",
+local action = {
+    type="user",
+    args = {
+        "beammpId"
+    }
 }
 
---it can be empty it will still work, maybe will feature additionnal things
+function action.init(sender_id, sender_name, beammpId)
+    MessagesManager:SendMessage(sender_id, "Advanced user info for user ID: " .. beammpId)
+    return true
+end
+
+if RegisterNickelAction then
+    RegisterNickelAction("seeAdvancedUserInfos", action)
+end
+
+return action

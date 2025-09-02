@@ -1,16 +1,25 @@
-local interface = require("main.client.initInterface")
-local utils = require("utils.misc")
 local lastCallTime = {}
 local cooldown = 2
----@param managers managers
-return function (id, offset, managers)
 
+return function (id, offset)
     local currentTime = os.time()
     if lastCallTime[id] == nil or currentTime - lastCallTime[id] >= cooldown then
         lastCallTime[id] = currentTime
-        -- utils.RunAsync(interface.init, 50, id, managers, offset)
-        interface.init(id, managers, offset)
+        
+        local playerName = MP.GetPlayerName(id)
+        local beammpid = Utils.getPlayerBeamMPID(playerName)
+        
+        if beammpid then
+            local playerData = Utils.playerDataToJson(beammpid)
+            if playerData then
+                MP.TriggerClientEventJson(id, "initInterface", playerData)
+            end
+            
+            local clientConfig = Settings.GetSetting("client")
+            if clientConfig and clientConfig.interfaceValues then
+                MP.TriggerClientEventJson(id, "getInterfaceValues", clientConfig.interfaceValues)
+            end
+        end
     end
-
 end
 

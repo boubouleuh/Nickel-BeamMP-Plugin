@@ -1,50 +1,50 @@
 
-local utils = require("utils.misc")
-local UsersService = require("database.services.UsersService")
+
 local command = {
-    --TODO need type user but the command layout doesnt support it yet, need to think about a better way to handle args for the interface
+    type = "user",
     args = {
         {name = "addORremove", type = "string"},
         {name = "playername", type = "string"}
     }
 }
+
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers, addORremove, playername)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
-
-
-    if playername == nil or not utils.element_exist_in_table(addORremove, {"add", "remove"}) then
-        msgManager:SendMessage(sender_id, "commands.whitelist.missing_args", {Prefix = cfgManager.config.commands.prefix})
+function command.init(sender_id, sender_name, _, addORremove, playername)
+    if playername == nil or not Utils.element_exist_in_table(addORremove, {"add", "remove"}) then
+        MessagesManager:SendMessage(sender_id, "commands.whitelist.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    if MP.IsPlayerGuest(utils.GetPlayerId(playername)) then
-        msgManager:SendMessage(sender_id, "commands.guest_not_compatible")
+    if MP.IsPlayerGuest(Utils.GetPlayerId(playername)) then
+        MessagesManager:SendMessage(sender_id, "commands.guest_not_compatible")
         return false
-    end
-    local beammpid = utils.getPlayerBeamMPID(playername)
-
-    local usersService = UsersService.new(beammpid, dbManager)
-
-
-    local register = require("main.registerPlayer")
-    local user = register.register(beammpid, playername, permManager, nil, msgManager, false)
-    if addORremove == "add" then
-        usersService:setWhitelisted(true)
-        msgManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
-    elseif addORremove == "remove" then
-        usersService:setWhitelisted(false)
-        msgManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
     end
     
+    local beammpid = Utils.getPlayerBeamMPID(playername)
+    if not beammpid then
+        MessagesManager:SendMessage(sender_id, "player.not_found", {Player = playername})
+        return false
+    end
 
+    DatabaseManager:withConnection(function()
+        local user = DatabaseManager:getEntry(User, {{"beamMPID", beammpid}})
+        if not user then
+            user = User.new(beammpid, playername)
+            DatabaseManager:save(user)
+        end
 
+        if addORremove == "add" then
+            user.whitelisted = 1
+            DatabaseManager:save(user)
+            MessagesManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
+        elseif addORremove == "remove" then
+            user.whitelisted = 0
+            DatabaseManager:save(user)
+            MessagesManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
+        end
+    end)
 
     return true
 end
 
-return command
+RegisterNickelCommand("whitelist", command)

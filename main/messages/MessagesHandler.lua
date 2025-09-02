@@ -1,19 +1,10 @@
-
-local utils = require("utils.misc")
-local new = require("objects.New")
-
-local user = require("objects.User")
-
----@class MessagesHandler
 MessagesHandler = {}
 
-function MessagesHandler.new(dbManager, configManager)
+function MessagesHandler.new()
     local self = {}
-
-    self.dbManager = dbManager
-    self.configManager = configManager
-    return new._object(MessagesHandler, self)
-  end
+    setmetatable(self, { __index = MessagesHandler })
+    return self
+end
 
   function MessagesHandler:SendMessage(sender_id, messageKey, values)
     local chatcolor = "^l^7"
@@ -69,23 +60,23 @@ end
 function MessagesHandler:GetMessage(sender_id, key, values)
     local beamId
     if sender_id ~= -2 and sender_id ~= -1 then
-        beamId = utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
+        beamId = Utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
     end
-    local userLang = self.dbManager:withConnection(function()
+    local userLang = DatabaseManager:withConnection(function()
         local userLang
         if beamId ~= nil then
-            userLang = self.dbManager:getClassByBeammpId(user, beamId)
+            userLang = DatabaseManager:getClassByBeammpId(User, beamId)
         end
         return userLang
     end)
-    local langCode = self.configManager:GetSetting("langs").server_language
-    local langForce = self.configManager:GetSetting("langs").force_server_language
+    local langCode = ConfigManager.GetSetting("langs").server_language
+    local langForce = ConfigManager.GetSetting("langs").force_server_language
 
-    if userLang ~= nil and userLang.language ~= nil and not langForce then
+    if userLang ~= nil and userLang ~= false and userLang.language ~= nil and not langForce then
         langCode = userLang.language
     end
 
-    local jsonFile = io.open(utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")
+    local jsonFile = io.open(Utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")
     local jsonFileContent = jsonFile:read("a")
     jsonFile:close()
 

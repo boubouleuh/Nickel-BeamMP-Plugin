@@ -1,29 +1,11 @@
 
 
-local utils = require("utils.misc")
-local UsersService = require("database.services.UsersService")
-local user = require("objects.User")
-
-local register = require("main.registerPlayer")
-
-local StatusService = require("database.services.StatusService")
-
-local UsersIpsService = require("database.services.UsersIpsService")
-
 
 local legacy = {}
 
-function legacy.importOldData(managers)
+function legacy.importOldData()
 
-    local dbManager = managers.dbManager
-
-    local permManager = managers.permManager
-
-    local msgManager = managers.msgManager
-
-
-
-    local path = utils.script_path() .. "data/users/"
+    local path = Utils.script_path() .. "data/users/"
 
     local files = FS.ListFiles(path)
 
@@ -32,23 +14,23 @@ function legacy.importOldData(managers)
         local file = io.open(path .. value, "r")
         local content = file:read("*all")
         file:close()
-        local data = Util.JsonDecode(content)
+        local data = Utils.JsonDecode(content)
 
         -- register.register(data.beammpid, data.name, permManager, data.ip, msgManager, false)
 
-        local usersService = UsersService.new(data.beammpid, dbManager)
+        local usersService = UsersService.new(data.beammpid)
 
         local newUser = usersService:getUser()
-        local roles = permManager:getDefaultsRoles()
+        local roles = PermissionsManager:getDefaultsRoles()
 
         if newUser == nil then
-            dbManager:save(user.new(data.beammpid, data.name))
+            DatabaseManager:save(User.new(data.beammpid, data.name))
             for _, role in pairs(roles) do
-                permManager:assignRole(role.roleName, data.beammpid)
+                PermissionsManager:assignRole(role.roleName, data.beammpid)
             end
 
-            local statusService = StatusService.new(data.beammpid, dbManager)
-            local usersIpsService = UsersIpsService.new(data.beammpid, dbManager)
+            local statusService = StatusService.new(data.beammpid)
+            local usersIpsService = UsersIpsService.new(data.beammpid)
 
 
             if data.banned.bool then
@@ -74,7 +56,7 @@ function legacy.importOldData(managers)
                 usersIpsService:banip(data.ip)
             end
         end
-        utils.nkprint("Importing user: " .. data.name .. " (" .. data.beammpid .. ")", "info")
+        Utils.nkprint("Importing user: " .. data.name .. " (" .. data.beammpid .. ")", "info")
 
         -- for key, object in pairs(data) do
         --     print(key .. " -> ", object)

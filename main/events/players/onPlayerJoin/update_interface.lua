@@ -1,11 +1,13 @@
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
-
-return function(id, managers)
-    if managers.cfgManager:GetSetting("client").interface then
-        local onlineplayers = MP.GetPlayers()
-        for id2, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, managers.cfgManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
+return function(id)
+    if ConfigManager.GetSetting("client").interface then
+        local playerName = MP.GetPlayerName(id)
+        local beammpid = Utils.getPlayerBeamMPID(playerName)
+        
+        if beammpid then
+            local onlineplayers = MP.GetPlayers()
+            for player_id, _ in pairs(onlineplayers) do
+                MP.TriggerClientEventJson(player_id, "updatePlayerData", Utils.playerDataToJson(beammpid))
+            end
         end
     end
 end

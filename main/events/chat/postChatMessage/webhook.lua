@@ -1,5 +1,3 @@
-local online = require("main.online")
-
 
 return function(NotRejected, id, name, message, managers)
 
@@ -12,7 +10,7 @@ return function(NotRejected, id, name, message, managers)
         local embedDescription = "**" .. message .. "**"
         local color = NotRejected and 0x00FF00 or 0xFF0000
 
-        online.sendDiscordMessage(
+        Online.sendDiscordMessage(
             webhook,
             "",                     
             username,

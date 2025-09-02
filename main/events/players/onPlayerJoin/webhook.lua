@@ -1,30 +1,30 @@
-local online = require("main.online")
-local utils = require("utils.misc")
-return function(player_id, managers)
-
-    local webhook = managers.cfgManager:GetSetting("discord").player_webhook
+return function(player_id)
+    local webhook = ConfigManager.GetSetting("discord").player_webhook
     if webhook and webhook ~= "" then
-        local username = "Nickel Player Logger"
-        local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
+        local playerName = MP.GetPlayerName(player_id)
+        local beammpid = Utils.getPlayerBeamMPID(playerName)
+        
+        if beammpid then
+            local username = "Nickel Player Logger"
+            local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
 
-        local embedDescription = "**" .. MP.GetPlayerName(player_id) ..  " joined " .. utils.getMapName() .. " **"
-        local color =  0x00FF00
-        local name = MP.GetPlayerName(player_id) or "Unknown Player"
-        online.sendDiscordMessage(
-            webhook,
-            "",                     
-            username,
-            avatar,
-            "",
-            embedDescription,
-            color,
-            name,
-            "",
-            "https://forum.beammp.com/user_avatar/forum.beammp.com/"..name.."/120/58506_2.png",
-            "Nickel",
-            "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
+            local embedDescription = "**" .. playerName ..  " joined " .. Utils.getMapName() .. " **"
+            local color = 0x00FF00
             
-        )
-
+            Online.sendDiscordMessage(
+                webhook,
+                "",                     
+                username,
+                avatar,
+                "",
+                embedDescription,
+                color,
+                playerName,
+                "",
+                "https://forum.beammp.com/user_avatar/forum.beammp.com/"..playerName.."/120/58506_2.png",
+                "Nickel",
+                "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
+            )
+        end
     end
 end

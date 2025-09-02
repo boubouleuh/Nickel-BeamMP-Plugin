@@ -1,5 +1,4 @@
-local online = require("main.online")
-local utils = require("utils.misc")
+
 return function(player_id, vehicle_id, managers)
 
     local webhook = managers.cfgManager:GetSetting("discord").vehicle_webhook
@@ -11,12 +10,12 @@ return function(player_id, vehicle_id, managers)
         local embedDescription = "**Deleted car " .. vehicle_id .. "**"
         local color = 0x00FF00
         local name = MP.GetPlayerName(player_id) or "Unknown Player"
-        online.sendDiscordMessage(
+        Online.sendDiscordMessage(
             webhook,
             "",                     
             username,
             avatar,
-            utils.getMapName(),
+            Utils.getMapName(),
             embedDescription,
             color,
             name,

@@ -1,11 +1,8 @@
 
+
 local interfaceUtils = require("main.client.interfaceUtils")
-local utils = require("utils.misc")
-local StatusService = require("database.services.StatusService")
-local Roles = require("objects.Role")
 local interface = {}
-local Users = require("objects.User")
-local online = require "main.online"
+
 --- initialize the interface for a given player
 ---@param id integer
 ---@param managers managers
@@ -16,39 +13,30 @@ function interface.init(id, managers, offset)
     else
         offset = tonumber(offset)
     end
-    utils.nkprint("offset is " .. offset,"debug")
-    utils.nkprint("id is " .. id,"debug")
+    
+    Utils.nkprint("offset is " .. offset, "debug")
+    Utils.nkprint("id is " .. id, "debug")
+    
     if offset == 0 then
         local major, minor, patch = MP.GetServerVersion()
 
-
         local serverInfos = {}
-        serverInfos.ip =  online.getServerIP()
-        serverInfos.port = utils.getBeamMPConfig().General.Port
+        serverInfos.ip = Online.getServerIP()
+        serverInfos.port = Utils.getBeamMPConfig().General.Port
         serverInfos.server_version = major .. "." .. minor .. "." .. patch
-        serverInfos.server_name = utils.getBeamMPConfig().General.Name
+        serverInfos.server_name = Utils.getBeamMPConfig().General.Name
         
-
-        -- interfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos)
-        utils.RunAsync(interfaceUtils.sendTable, 50, id, "NKgetServerInfos", serverInfos)
-
-        -- interfaceUtils.resetUserInfos(id, managers.permManager)
-        utils.RunAsync(interfaceUtils.resetUserInfos, 50, id, managers.permManager)
-        
-        --interfaceUtils.sendRoles(id, "NKgetRoles", managers.dbManager)
-        utils.RunAsync(interfaceUtils.sendRoles, 50, id, "NKgetRoles", managers.dbManager)
-
-        --interfaceUtils.sendUserCommands(id, managers.permManager, managers.cmdManager)  -- make event 'on perm change' and things to make updating, do the same for everything else
-        utils.RunAsync(interfaceUtils.sendUserCommands, 50, id, managers.permManager, managers.cmdManager)
-        --interfaceUtils.sendGlobalCommands(id, managers.permManager, managers.cmdManager)
-        utils.RunAsync(interfaceUtils.sendGlobalCommands, 50, id, managers.permManager, managers.cmdManager)
+        Utils.RunAsync(interfaceUtils.sendTable, 50, id, "NKgetServerInfos", serverInfos)
+        Utils.RunAsync(interfaceUtils.resetUserInfos, 50, id, PermissionsManager)
+        Utils.RunAsync(interfaceUtils.sendRoles, 50, id, "NKgetRoles", DatabaseManager)
+        Utils.RunAsync(interfaceUtils.sendUserCommands, 50, id, PermissionsManager, CommandsManager)
+        Utils.RunAsync(interfaceUtils.sendGlobalCommands, 50, id, PermissionsManager, CommandsManager)
     end
- 
 
-    utils.RunAsync(interfaceUtils.sendPlayers, 50, id, offset, managers.dbManager, managers.permManager, managers.cfgManager)
-    -- interfaceUtils.sendPlayers(id, offset, managers.dbManager, managers.permManager)
-    MP.TriggerLocalEvent("syncEnvironment", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").environment), managers, true)
-    MP.TriggerLocalEvent("syncInterfaceValues", id, Util.JsonEncode(managers.cfgManager:GetSetting("client").interfaceValues), managers, true)
+    Utils.RunAsync(interfaceUtils.sendPlayers, 50, id, offset, DatabaseManager, PermissionsManager, ConfigManager)
+    
+    MP.TriggerLocalEvent("syncEnvironment", id, Util.JsonEncode(Settings.GetSetting("client").environment), managers, true)
+    MP.TriggerLocalEvent("syncInterfaceValues", id, Util.JsonEncode(Settings.GetSetting("client").interfaceValues), managers, true)
 
 end
 

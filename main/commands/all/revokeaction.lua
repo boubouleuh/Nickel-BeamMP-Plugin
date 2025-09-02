@@ -1,38 +1,47 @@
 
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
-local action = {
+
+local command = {
+    type = "user",
     args = {
         {name = "actionName", type = "string"},
         {name = "rolename", type = "string"}
     }
 }
+
 --- command
----@param managers managers
-function action.init(sender_id, sender_name, managers, actionName, rolename)
-
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-
+function command.init(sender_id, sender_name, _, actionName, rolename)
     if actionName == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.revokeaction.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.revokeaction.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
+    rolename = Utils.capitalize(rolename)
 
+    DatabaseManager:withConnection(function()
+        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        if not role then
+            MessagesManager:SendMessage(sender_id, "commands.revokeaction.role_not_found", {Role = rolename})
+            return
+        end
+        
+        local action = DatabaseManager:getEntry(Action, {{"actionName", actionName}})
+        if not action then
+            MessagesManager:SendMessage(sender_id, "commands.revokeaction.action_not_found", {Action = actionName})
+            return
+        end
+        
+        local existingRoleAction = DatabaseManager:getEntry(RoleAction, {{"roleID", role.roleID}, {"actionID", action.actionID}})
+        if not existingRoleAction then
+            MessagesManager:SendMessage(sender_id, "commands.revokeaction.does_not_have_action", {Role = rolename, Action = actionName})
+        else
+            DatabaseManager:delete(RoleAction, {{"roleID", role.roleID}, {"actionID", action.actionID}})
+            MessagesManager:SendMessage(sender_id, "commands.revokeaction.success", {Role = rolename, Action = actionName})
+        end
+    end)
 
-    local result = permManager:unassignAction(actionName, rolename)
-    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-    interfaceUtils.sendNothingToAll("NKResetPlayerList")
-    -- local onlineplayers = MP.GetPlayers()
-    -- for id, player in pairs(onlineplayers) do
-    --     interfaceUtils.sendPlayers(id, 0,  managers.dbManager, permManager)
-    -- end
     return true
 end
 
-return action
+RegisterNickelCommand("revokeaction", command)
 
 

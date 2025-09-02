@@ -1,37 +1,46 @@
 
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
-local action = {
+
+local command = {
+    type = "user",
     args = {
         {name = "actionName", type = "string"},
         {name = "rolename", type = "string"}
     }
 }
---- action
----@param managers managers
-function action.init(sender_id, sender_name, managers, actionName, rolename)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
 
-
+--- command
+function command.init(sender_id, sender_name, _, actionName, rolename)
     if actionName == nil or rolename == nil then
-        msgManager:SendMessage(sender_id, "commands.grantaction.missing_args", {Prefix = cfgManager.config.commands.prefix})
+        MessagesManager:SendMessage(sender_id, "commands.grantaction.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
 
-    rolename = utils.capitalize(rolename)
+    rolename = Utils.capitalize(rolename)
 
-
-    local result = permManager:assignAction(actionName, rolename)
-    msgManager:SendMessage(sender_id, string.format("database.code.%s", result))
-    interfaceUtils.sendNothingToAll("NKResetPlayerList")
-    -- local onlineplayers = MP.GetPlayers()
-    -- for id, player in pairs(onlineplayers) do
-    --     interfaceUtils.sendPlayers(id, 0, managers.dbManager, managers.permManager)
-    -- end
+    DatabaseManager:withConnection(function()
+        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        if not role then
+            MessagesManager:SendMessage(sender_id, "commands.grantaction.role_not_found", {Role = rolename})
+            return
+        end
+        
+        local action = DatabaseManager:getEntry(Action, {{"actionName", actionName}})
+        if not action then
+            MessagesManager:SendMessage(sender_id, "commands.grantaction.action_not_found", {Action = actionName})
+            return
+        end
+        
+        local existingRoleAction = DatabaseManager:getEntry(RoleAction, {{"roleID", role.roleID}, {"actionID", action.actionID}})
+        if existingRoleAction then
+            MessagesManager:SendMessage(sender_id, "commands.grantaction.already_has_action", {Role = rolename, Action = actionName})
+        else
+            local roleAction = RoleAction.new(role.roleID, action.actionID)
+            DatabaseManager:save(roleAction)
+            MessagesManager:SendMessage(sender_id, "commands.grantaction.success", {Role = rolename, Action = actionName})
+        end
+    end)
 
     return true
 end
 
-return action
+RegisterNickelCommand("grantaction", command)

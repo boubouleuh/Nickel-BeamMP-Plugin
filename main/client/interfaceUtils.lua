@@ -1,18 +1,15 @@
-local Roles = require("objects.Role")
-local usersService = require("database.services.UsersService")
-local misc = require("utils.misc")
-local sessionPlayerStorage = require("main.sessionPlayerStorage")
 
 local utils = {}
+
 --- send a string to one client (ONLY PLAYERID)
 ---@param id integer
 ---@param event_name string
 ---@param data string   
 function utils.sendString(id, event_name, data)
-    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
-    if sessionStorage:get("synced") then
-        misc.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
-        misc.nkprint(data, "debug")       
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+    if SessionManager:getPlayerData(beammpid, "synced") then
+        Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
+        Utils.nkprint(data, "debug")       
         MP.TriggerClientEvent(id, event_name, data)
     end 
 end
@@ -32,10 +29,10 @@ end
 ---@param event_name string
 ---@param data table   
 function utils.sendTable(id, event_name, data)
-    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
-    if sessionStorage:get("synced") then
-        misc.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
-        misc.nkprint(Util.JsonEncode(data), "debug")
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+    if SessionManager:getPlayerData(beammpid, "synced") then
+        Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
+        Utils.nkprint(Util.JsonEncode(data), "debug")
         MP.TriggerClientEventJson(id, event_name, data)
     end
 end
@@ -54,9 +51,9 @@ end
 ---@param id integer
 ---@param event_name string
 function utils.sendNothing(id, event_name)
-    local sessionStorage = sessionPlayerStorage:new(misc.getPlayerBeamMPID(MP.GetPlayerName(id)))
-    if sessionStorage:get("synced") then
-        misc.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+    if SessionManager:getPlayerData(beammpid, "synced") then
+        Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
         MP.TriggerClientEvent(id, event_name, "")
     end
 end
@@ -77,27 +74,22 @@ end
 ---@param permManager PermissionsHandler
 ---@param cfgManager Settings
 function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManager)
-
-
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local seeAdvancedUserInfos = permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
+    local seeAdvancedUserInfos = permManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
     local onlineplayers, players = dbManager:withConnection(function()
         local onlineplayers = MP.GetPlayers()
         local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos, cfgManager:GetSetting("client").b64avatar)
         return onlineplayers, players
     end)
 
-    -- local maxPacketSize = 19500 -- 19.5 KB
     local maxPacketSize = 30000000 -- 30 MB
     local currentPacket = {}
     local currentSize = 0
 
-
     for i, v in ipairs(players) do
-
         local playerData = Util.JsonEncode(v) 
         local playerSize = #playerData
 
@@ -117,12 +109,10 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManag
     utils.resetUserInfos(receiver_id, permManager)
 end
 
-
-
 function utils.resetUserInfos(receiver_id, permManager)
     local userInfos = {}
     userInfos.self_action_perm = {}
-    local actions = permManager:getActions(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
+    local actions = permManager:getActions(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
     for _, action in ipairs(actions) do
         table.insert(userInfos.self_action_perm, action.actionName)
     end
@@ -137,12 +127,11 @@ function utils.resetAllUserInfos(permManager)
 end
 
 function utils.sendUserCommands(receiver_id, permManager, commandsHandler)
-    local beammpid = misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
     local commands = permManager:getCommands(beammpid)
     local userCommands = {}
     local commandCache = commandsHandler:GetCommands()
     for i, v in ipairs(commands) do
-
         local command = commandCache[v.commandName]
         if command then
             if command.type and command.type == "user" then
@@ -157,7 +146,7 @@ function utils.sendUserCommands(receiver_id, permManager, commandsHandler)
 end
 
 function utils.sendGlobalCommands(receiver_id, permManager, commandsHandler)
-    local beammpid = misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
     local commands = permManager:getCommands(beammpid)
     local globalCommands = {}
     local commandCache = commandsHandler:GetCommands()
@@ -192,7 +181,7 @@ function utils.sendPlayer(receiver_id, dbManager, permManager, cfgManager, beamm
         return player
     end)
 
-    if not permManager:hasPermissionForAction(misc.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
+    if not permManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
         player.ips = {}
     end
     utils.resetUserInfos(receiver_id, permManager)

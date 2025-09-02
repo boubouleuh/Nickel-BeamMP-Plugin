@@ -1,125 +1,84 @@
-local user = require("objects.User")
-local userIp = require("objects.UserIp")
-local userStatus = require("objects.UserStatus")
-local userRole = require("objects.UserRole")
-local utils = require("utils.misc")
-local StatusService = require("database.services.StatusService")
 
-local UsersService = require("database.services.UsersService")
+RegisterPlayer = {}
 
-local UsersIpsService = require("database.services.UsersIpsService")
-local interface = require("main.client.initInterface")
-
-local online = require("main.online")
-local registerPlayer = {}
-
-function registerPlayer.register(beammpid, name, permManager, msgManager, dbManager, cfgManager, ip, isguest)
-
-    -- Insérer ou mettre à jour un utilisateur
-    if not isguest then
-
-        online.savePlayerAvatarImg(name, 40)
-
-        local usersService = UsersService.new(beammpid, dbManager)
-
-        local newUser = usersService:getUser()
-        if usersService:getUser() == nil then
-            newUser = user.new(beammpid, name)
-        end
-
-        local ipClass, userRoleClass = dbManager:withConnection(function()
-            local ipClass = dbManager:getClassByBeammpId(userIp, beammpid)
-            local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
-            return ipClass, userRoleClass
-        end)
-
-
-
-        local tab1 = {}
-
-        local roles = permManager:getDefaultsRoles()
-        for role in pairs(roles) do
-            tab1[role] = role
-
-        end
-
-        local default = false
-        if userRoleClass ~= nil then
-            for role in pairs(userRoleClass) do
-                if tab1[role.roleID] == nil then
-                    default = true
-                end
-            end
-        end
-        if default or userRoleClass == nil then
-
-            for _, role in pairs(roles) do
-                permManager:assignRole(role.roleName, beammpid)
-            end
-        end
-
-
-        if ipClass ~= nil then
-
-            ipClass.ip = ip
-            ipClass.ip_id = nil
-            dbManager:save(ipClass, false)
-
-        else
-            local newUserIp = userIp.new(beammpid, ip)
-            dbManager:save(newUserIp)
-        end
-
-        dbManager:save(newUser)
-
-
-
-        if cfgManager:GetSetting("conditions").whitelist then
-            if not usersService:isWhitelisted() then
-                return "You are not whitelisted"
-            end
-        end
-
-
-        --Check status
-
-
-        local statusService = StatusService.new(beammpid, dbManager)
-
-        -- Vérifier les statuts de bannissement
-        local bannedStatuses = statusService:getStatus("isbanned")
-        if #bannedStatuses > 0 then
-            for _, status in ipairs(bannedStatuses) do
-                if status.is_status_value == 1 then
-                    return status.reason
-                end
-            end
-        end
-        
-        -- Vérifier les statuts de bannissement temporaire
-        local tempBannedStatuses = statusService:getStatus("istempbanned")
-        if #tempBannedStatuses > 0 then
-            for _, status in ipairs(tempBannedStatuses) do
-                if statusService:checkStatusTime("istempbanned") then
-                    return status.reason
-                else
-                    statusService:removeStatus("istempbanned")
-                end
-            end
-        end
-  
-
-        local usersIpsService = UsersIpsService.new(beammpid, dbManager)
-
-        if usersIpsService:isIpBanned() then
-            return "REASON" --TODO ADD REASON ?
-        end
-
-    elseif isguest and not cfgManager:GetSetting("conditions").guest then
-        return msgManager:GetMessage(-1, "conditions.guest_not_allowed")
+function RegisterPlayer.register(beammpid, name, ip, isguest)
+    if not beammpid then
+        Utils.nkprint("[registerPlayer] Invalid BeamMP ID for player: " .. (name or "Unknown"), "error")
+        return "Invalid player data"
     end
 
+    if not isguest then
+        local user = UsersService.getOrCreateUser(beammpid, name)
+        if not user then
+            Utils.nkprint("[registerPlayer] Failed to create user: " .. name, "error")
+            return "Failed to register user"
+        end
 
+        if name then
+            Online.savePlayerAvatarImg(name, 40)
+        end
+
+        if ip then
+            DatabaseManager:withConnection(function()
+                local existingIp = DatabaseManager:getEntry(UserIp, {{"beammpid", beammpid}})
+                if existingIp then
+                    existingIp.ip = ip
+                    DatabaseManager:save(existingIp)
+                else
+                    local newUserIp = UserIp.new(beammpid, ip)
+                    DatabaseManager:save(newUserIp)
+                end
+            end)
+        end
+
+        DatabaseManager:withConnection(function()
+            local userRoles = DatabaseManager:getAllEntries(UserRole, {{"beammpid", beammpid}})
+            if #userRoles == 0 then
+                local defaultRoles = DatabaseManager:getAllEntries(Role, {{"isDefault", 1}})
+                for _, role in ipairs(defaultRoles) do
+                    local userRole = UserRole.new(beammpid, role.roleID)
+                    DatabaseManager:save(userRole)
+                    Utils.nkprint("[registerPlayer] Assigned default role '" .. role.roleName .. "' to " .. name, "debug")
+                end
+            end
+        end)
+
+        if not StatusService.canPlayerConnect(beammpid) then
+            local banReason = StatusService.getStatusReason(beammpid, "isbanned") or 
+                             StatusService.getStatusReason(beammpid, "istempbanned")
+            
+            Utils.nkprint("[registerPlayer] Banned user denied: " .. name .. " (reason: " .. (banReason or "No reason") .. ")", "warning")
+            return banReason or "You are banned from this server"
+        end
+
+        local conditionsConfig = Settings.GetSetting("conditions")
+        if conditionsConfig and conditionsConfig.whitelist_required then
+            local isWhitelisted = UsersService.isUserWhitelisted(beammpid)
+            if not isWhitelisted then
+                Utils.nkprint("[registerPlayer] Non-whitelisted user denied: " .. name, "warning")
+                return MessagesManager:GetMessage(-1, "conditions.whitelist_required") or "You are not whitelisted on this server"
+            end
+        end
+
+        if ip then
+            -- local usersIpsService = UsersIpsService.new(beammpid)
+            -- if usersIpsService:isIpBanned() then
+            --     return "Your IP address is banned from this server"
+            -- end
+        end
+
+        Utils.nkprint("[registerPlayer] Successfully registered user: " .. name .. " (ID: " .. beammpid .. ")", "info")
+        return nil
+
+    else
+        local conditionsConfig = Settings.GetSetting("conditions")
+        local guestsAllowed = conditionsConfig and conditionsConfig.guest
+        if not guestsAllowed then
+            Utils.nkprint("[registerPlayer] Guest denied: " .. (name or "Unknown"), "warning")
+            return MessagesManager:GetMessage(-1, "conditions.guest_not_allowed") or "Guests are not allowed on this server"
+        end
+        
+        Utils.nkprint("[registerPlayer] Guest allowed: " .. (name or "Unknown"), "info")
+        return nil
+    end
 end
-
-return registerPlayer

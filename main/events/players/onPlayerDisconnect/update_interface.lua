@@ -1,11 +1,15 @@
-local utils = require("utils.misc")
-local interfaceUtils = require("main.client.interfaceUtils")
-
-return function(id, managers)
-    if managers.cfgManager:GetSetting("client").interface then
-        local onlineplayers = MP.GetPlayers()
-        for id2, player in pairs(onlineplayers) do
-            interfaceUtils.sendPlayer(id2, managers.dbManager, managers.permManager, managers.cfgManager, utils.getPlayerBeamMPID(MP.GetPlayerName(id)))
+return function(id)
+    if ConfigManager.GetSetting("client").interface then
+        local disconnectedPlayerName = MP.GetPlayerName(id)
+        local disconnectedBeammpid = Utils.getPlayerBeamMPID(disconnectedPlayerName)
+        
+        if disconnectedBeammpid then
+            local onlineplayers = MP.GetPlayers()
+            for player_id, _ in pairs(onlineplayers) do
+                if player_id ~= id then
+                    MP.TriggerClientEventJson(player_id, "playerDisconnected", string.format('{"beammpid": %d}', disconnectedBeammpid))
+                end
+            end
         end
     end
 end

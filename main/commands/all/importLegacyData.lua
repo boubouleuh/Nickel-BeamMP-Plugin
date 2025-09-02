@@ -1,19 +1,14 @@
 
-local legacy = require("main.legacy")
 
-local command = {}
+local command = {
+    type = "global",
+    args = {}
+}
+
 --- command
----@param managers managers
-function command.init(sender_id, sender_name, managers)
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
-   
-    legacy.importOldData(managers)
-    msgManager:SendMessage(sender_id, "commands.importLegacyData.success")
-
-    return true
+function command.init(sender_id, sender_name, _)
+    MessagesManager:SendMessage(sender_id, "commands.importLegacyData.not_available")
+    return false
 end
 
-return command
+RegisterNickelCommand("importLegacyData", command)

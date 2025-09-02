@@ -1,9 +1,5 @@
 
-local new = require("objects.New")
-
----@class User
-local User = {}
-
+User = {}
 User.tableName = "Users"
 
 function User.new(beammpid, name)
@@ -12,29 +8,15 @@ function User.new(beammpid, name)
   self.name = name or ""
   self.whitelisted = false
   self.language = nil
-  return new._object(User, self)
+  return self
 end
 
 
-function User:getKey(key)
-  return self[key]
-end
-
-function User:setKey(key, value)
-  self[key] = value
-end
-
--- Dans la classe User
-function User:getColumns()
+function User.getColumns()
     return {
       "beammpid INTEGER PRIMARY KEY",
       "name TEXT NOT NULL",
       "whitelisted BOOLEAN NOT NULL",
       "language TEXT"
-      -- Ajoutez d'autres colonnes si nécessaire
     }
-  end
-  
-
-
-return User
+end

@@ -1,14 +1,8 @@
-local utils = require("utils.misc")
-local success, module = pcall(require, 'ssl.https')
-local https = nil
-if success then
-    https = module
-else
-    https = {request = function(url)
-        local response = ""
-        
-        if MP.GetOSName() == "Windows" then
-            response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
+local https = {request = function(url)
+    local response = ""
+
+    if MP.GetOSName() == "Windows" then
+        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
         else
             response = os.execute("wget -q -O temp.txt " .. url)
         end
@@ -22,15 +16,12 @@ else
         else
             return "", 404
         end
-    end}
-end
+    end
+}
 
+Online = {}
 
-
-local mime = require("mime")
-local online = {}
-
-function online.getPlayerJson(playername)
+function Online.getPlayerJson(playername)
     
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
     local body, code = https.request(url)
@@ -46,7 +37,7 @@ function online.getPlayerJson(playername)
     end
 end
 
-function online.getPlayerB64Img(beammpid)
+function Online.getPlayerB64Img(beammpid)
 
     local file_path = string.format(utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)
     local file = io.open(file_path, "r")
@@ -54,13 +45,13 @@ function online.getPlayerB64Img(beammpid)
     if file then
         local image = file:read("*all")
         file:close() -- Close the file
-        return mime.b64(image)
+        return MIME.b64(image)
     else
         local file_path = string.format(utils.script_path() .. "/player_avatars/default_avatar.png")
         local file = io.open(file_path, "r")
         local image = file:read("*all")
         file:close() -- Close the file
-        return mime.b64(image)
+        return MIME.b64(image)
     end
 end
 
@@ -68,7 +59,7 @@ local function shellEscapeSingleQuotes(str)
     return str:gsub("'", "'\\''")
 end
 
-function online.sendDiscordMessage(webhook, message, username, avatar, embedTitle, embedDescription, color, authorName, authorUrl, authorIcon, footerText, footerIcon)
+function Online.sendDiscordMessage(webhook, message, username, avatar, embedTitle, embedDescription, color, authorName, authorUrl, authorIcon, footerText, footerIcon)
     local function escape(str)
         return tostring(str or "")
             :gsub('\\', '\\\\')
@@ -131,7 +122,7 @@ function online.sendDiscordMessage(webhook, message, username, avatar, embedTitl
     return result == true or result == 0
 end
 
-function online.savePlayerAvatarImg(playername, size)
+function Online.savePlayerAvatarImg(playername, size)
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
 
     local body, code, headers, status = https.request(url)
@@ -167,7 +158,7 @@ function online.savePlayerAvatarImg(playername, size)
     end
 end
 
-function online.getServerIP()
+function Online.getServerIP()
 
     local url = "https://api.ipify.org/?format=raw"
 
@@ -180,4 +171,3 @@ function online.getServerIP()
         print("Failed to get ip. Status code:", code)
     end
 end
-return online

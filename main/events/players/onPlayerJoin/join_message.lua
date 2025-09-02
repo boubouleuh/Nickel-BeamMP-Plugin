@@ -1,6 +1,18 @@
 
-local utils = require("utils.misc")
-
-return function(id, managers)
-    managers.msgManager:SendMessage(-1, managers.cfgManager:GetSetting("misc").join_message, {Role = managers.permManager:GetHighestRole(utils.getPlayerBeamMPID(MP.GetPlayerName(id))).roleName, Player = MP.GetPlayerName(id)})
+return function(id)
+    local playerName = MP.GetPlayerName(id)
+    local beammpid = Utils.getPlayerBeamMPID(playerName)
+    
+    if beammpid then
+        local highestRole = PermissionsManager:GetHighestRole(beammpid)
+        local roleName = highestRole and highestRole.roleName or "Guest"
+        
+        local joinMessage = ConfigManager.GetSetting("misc").join_message
+        if joinMessage then
+            MessagesManager:SendMessage(-1, joinMessage, {
+                Role = roleName,
+                Player = playerName
+            })
+        end
+    end
 end
