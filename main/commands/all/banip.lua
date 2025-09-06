@@ -7,8 +7,7 @@ local command = {
     }
 }
 
---- command
-function command.init(sender_id, sender_name, _, playername)
+function command.init(sender_id, sender_name, playername)
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.banip.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -20,27 +19,18 @@ function command.init(sender_id, sender_name, _, playername)
     end
 
     local beammpid = Utils.getPlayerBeamMPID(playername)
+    local user = User.getOrCreate(beammpid, playername)
 
-    DatabaseManager:withConnection(function()
-        local userIps = DatabaseManager:getEntries(UserIp, {{"beammpid", beammpid}})
-        local count = 0
-        
-        for _, userIp in ipairs(userIps) do
-            local existingBan = DatabaseManager:getEntry(UserIp, {{"ip", userIp.ip}, {"is_banned", true}})
-            if not existingBan then
-                -- Marquer cette IP comme bannie
-                userIp.is_banned = true
-                DatabaseManager:save(userIp)
-                count = count + 1
-            end
-        end
+    local count = user:banAllIps()
+    
+    local target_id = Utils.GetPlayerId(playername)
 
-        if count > 0 then
-            MessagesManager:SendMessage(sender_id, "commands.banip.success", {Count = count, Player = playername})
-        else
-            MessagesManager:SendMessage(sender_id, "commands.banip.no_registered", {Player = playername})
-        end
-    end)
+    if target_id ~= -1 then
+        MP.DropPlayer(target_id, MessagesManager:GetMessage(sender_id, "moderation.banned_ip"))
+    end
+    MessagesManager:SendMessage(sender_id, "commands.banip.success", {Count = count, Player = playername})
+
+
 
     return true
 end

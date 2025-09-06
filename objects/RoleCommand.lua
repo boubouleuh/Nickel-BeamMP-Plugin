@@ -3,6 +3,7 @@ RoleCommand.tableName = "RoleCommands"
 
 function RoleCommand.new(roleID, commandID)
   local self = {}
+  self.tableName = RoleCommand.tableName
   self.roleID = roleID
   self.commandID = commandID
   return self

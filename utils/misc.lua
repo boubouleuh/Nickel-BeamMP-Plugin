@@ -164,14 +164,12 @@ function Utils.getPlayerBeamMPID(player_name) --Playername only used when using 
   local player_id = Utils.GetPlayerId(player_name)
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
-        -- Note: online functionality needs to be migrated
-        -- local playerJson = online.getPlayerJson(player_name)
-        -- local beamid
-        -- if playerJson ~= nil then
-        --     beamid = playerJson.user.id
-        -- end
-        -- return beamid
-        return -1
+        local playerJson = Online.getPlayerJson(player_name)
+        local beamid
+        if playerJson ~= nil then
+            beamid = playerJson.user.id
+        end
+        return beamid
   end
   local player_beammp_id = identifiers['beammp']
   if player_beammp_id == nil then
@@ -250,7 +248,7 @@ function Utils.nkprint(message, type)
         print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|INFO] " .. message, "blue"))
     elseif type == "debug" then
       -- Miscellanous
-      if Settings and Settings.GetSetting and Settings.GetSetting("advanced") and Settings.GetSetting("advanced").debug then
+      if ConfigManager and ConfigManager.GetSetting and ConfigManager.GetSetting("advanced") and ConfigManager.GetSetting("advanced").debug then
         print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|DEBUG] " .. message, "cyan"))
       end
     end
@@ -316,56 +314,14 @@ function Utils.hotreload()
     end
 end
 
-
--- ===== STATUS MANAGEMENT UTILITIES =====
-
-function Utils.hasActiveStatus(beammpid, statusType)
-    if not DatabaseManager then return false end
-    
-    return DatabaseManager:withConnection(function()
-        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
-        if not status or not status.is_status_value then
-            return false
-        end
-        
-        if status.expiry_time and os.time() > status.expiry_time then
-            DatabaseManager:delete(UserStatus, {{"id", status.id}})
-            return false
-        end
-        
-        return true
-    end)
-end
-
-function Utils.isPlayerBanned(beammpid)
-    return Utils.hasActiveStatus(beammpid, "isbanned")
-end
-
-function Utils.isPlayerTempBanned(beammpid)
-    return Utils.hasActiveStatus(beammpid, "istempbanned")
-end
-
-function Utils.isPlayerMuted(beammpid)
-    return Utils.hasActiveStatus(beammpid, "ismuted")
-end
-
-function Utils.isPlayerTempMuted(beammpid)
-    return Utils.hasActiveStatus(beammpid, "istempmuted")
-end
-
-function Utils.getStatusReason(beammpid, statusType)
-    if not DatabaseManager then return nil end
-    
-    return DatabaseManager:withConnection(function()
-        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
-        return status and status.reason or nil
-    end)
-end
-
-function Utils.canPlayerSpeak(beammpid)
-    return not (Utils.isPlayerMuted(beammpid) or Utils.isPlayerTempMuted(beammpid))
-end
-
-function Utils.canPlayerConnect(beammpid)
-    return not (Utils.isPlayerBanned(beammpid) or Utils.isPlayerTempBanned(beammpid))
+---tableLength |
+-- Get the number of elements in a table (works with string keys)
+---@param t table
+---@return number
+function Utils.tableLength(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
 end

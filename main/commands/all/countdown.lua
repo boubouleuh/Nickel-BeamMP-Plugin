@@ -6,9 +6,9 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _)
+function command.init(sender_id, sender_name)
     local i = 5
-    function countdownWork()
+    function _countdownWork()
         if i == 5 then
             MessagesManager:SendMessage(-1, "Countdown started")
         end
@@ -20,7 +20,7 @@ function command.init(sender_id, sender_name, _)
         end
         i = i - 1
     end
-    MP.RegisterEvent("countdown", "countdownWork")
+    MP.RegisterEvent("countdown", "_countdownWork")
     MP.CreateEventTimer("countdown", 1000)
 
     return true

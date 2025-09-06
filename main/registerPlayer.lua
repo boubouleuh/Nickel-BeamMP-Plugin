@@ -20,7 +20,7 @@ function RegisterPlayer.register(beammpid, name, ip, isguest)
 
         if ip then
             DatabaseManager:withConnection(function()
-                local existingIp = DatabaseManager:getEntry(UserIp, {{"beammpid", beammpid}})
+                local existingIp = DatabaseManager:getAllEntry(UserIp, {{"beammpid", beammpid}})
                 if existingIp then
                     existingIp.ip = ip
                     DatabaseManager:save(existingIp)
@@ -51,7 +51,7 @@ function RegisterPlayer.register(beammpid, name, ip, isguest)
             return banReason or "You are banned from this server"
         end
 
-        local conditionsConfig = Settings.GetSetting("conditions")
+        local conditionsConfig = ConfigManager.GetSetting("conditions")
         if conditionsConfig and conditionsConfig.whitelist_required then
             local isWhitelisted = UsersService.isUserWhitelisted(beammpid)
             if not isWhitelisted then
@@ -61,17 +61,18 @@ function RegisterPlayer.register(beammpid, name, ip, isguest)
         end
 
         if ip then
-            -- local usersIpsService = UsersIpsService.new(beammpid)
-            -- if usersIpsService:isIpBanned() then
-            --     return "Your IP address is banned from this server"
-            -- end
+            local usersService = UsersService.new(beammpid)
+            if usersService:isIpBanned() then
+                Utils.nkprint("[registerPlayer] IP banned user denied: " .. name .. " (IP: " .. tostring(ip) .. ")", "warning")
+                return "Your IP address is banned from this server"
+            end
         end
 
         Utils.nkprint("[registerPlayer] Successfully registered user: " .. name .. " (ID: " .. beammpid .. ")", "info")
         return nil
 
     else
-        local conditionsConfig = Settings.GetSetting("conditions")
+        local conditionsConfig = ConfigManager.GetSetting("conditions")
         local guestsAllowed = conditionsConfig and conditionsConfig.guest
         if not guestsAllowed then
             Utils.nkprint("[registerPlayer] Guest denied: " .. (name or "Unknown"), "warning")

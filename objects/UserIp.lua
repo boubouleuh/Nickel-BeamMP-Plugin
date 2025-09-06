@@ -3,6 +3,7 @@ UserIp.tableName = "UserIps"
 
 function UserIp.new(beammpid, ip)
   local self = {}
+  self.tableName = UserIp.tableName
   self.ip_id = nil
   self.beammpid = beammpid
   self.ip = ip

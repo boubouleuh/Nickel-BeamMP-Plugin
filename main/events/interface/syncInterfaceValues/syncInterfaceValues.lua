@@ -8,7 +8,7 @@ return function(id, interfaceValues, force)
         return
     end
     
-    local clientConfig = Settings.GetSetting("client")
+    local clientConfig = ConfigManager.GetSetting("client")
     local server_interface_values = clientConfig and clientConfig.interfaceValues
 
     if not Utils.deepCompare(interfaceValues, server_interface_values) or force then
@@ -20,7 +20,7 @@ return function(id, interfaceValues, force)
             return
         end
 
-        Settings.SetSetting("client.interfaceValues", interfaceValues)
+        ConfigManager.SetSetting("client.interfaceValues", interfaceValues)
         MP.TriggerClientEventJson(-1, "getInterfaceValues", interfaceValues)
     end
 end

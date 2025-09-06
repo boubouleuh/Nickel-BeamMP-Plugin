@@ -27,18 +27,18 @@ function command.init(sender_id, sender_name, _, addORremove, playername)
     end
 
     DatabaseManager:withConnection(function()
-        local user = DatabaseManager:getEntry(User, {{"beamMPID", beammpid}})
+        local user = DatabaseManager:getAllEntry(User, {{"beammpid", beammpid}})
         if not user then
             user = User.new(beammpid, playername)
             DatabaseManager:save(user)
         end
 
         if addORremove == "add" then
-            user.whitelisted = 1
+            user.whitelisted = true
             DatabaseManager:save(user)
             MessagesManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
         elseif addORremove == "remove" then
-            user.whitelisted = 0
+            user.whitelisted = false
             DatabaseManager:save(user)
             MessagesManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
         end

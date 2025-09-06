@@ -1,42 +1,33 @@
-PermissionsHandler = {}
+PermissionsManager = {}
 
-
---- create a new instance of PermissionsHandler
----@param dbManager DatabaseManager
-function PermissionsHandler.new()
-    local self = {}
-    setmetatable(self, { __index = PermissionsHandler })
-    return self
-end
-
-function PermissionsHandler:addRole(rolename, permlvl, default)
+function PermissionsManager:addRole(rolename, permlvl, default)
     local newRole = Role.new(rolename, permlvl, default)
-    local result = self.dbManager:save(newRole, false)
+    local result = DatabaseManager:save(newRole, false)
     return result
 end
 
-function PermissionsHandler:removeRole(rolename)
-  return self.dbManager:withConnection(function()
+function PermissionsManager:removeRole(rolename)
+  return DatabaseManager:withConnection(function()
     local conditions = {
         {"roleName", rolename},
     }
-    return self.dbManager:deleteObject(Role, conditions)
+    return DatabaseManager:deleteObject(Role, conditions)
   end)
 end
 
-function PermissionsHandler:assignRole(rolename, beammpid)
-    return self.dbManager:withConnection(function()
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+function PermissionsManager:assignRole(rolename, beammpid)
+    return DatabaseManager:withConnection(function()
+        local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
 
         local newUserRole = UserRole.new(beammpid, roleid)
-        return self.dbManager:save(newUserRole, false)
+        return DatabaseManager:save(newUserRole, false)
     end)
 end
 
 
-function PermissionsHandler:unassignRole(rolename, beammpid)
-    return self.dbManager:withConnection(function()
-        local role = self.dbManager:getEntry(Role, "roleName", rolename)
+function PermissionsManager:unassignRole(rolename, beammpid)
+    return DatabaseManager:withConnection(function()
+        local role = DatabaseManager:getEntry(Role, "roleName", rolename)
         if role.is_default == 1 then
             return 516
         end
@@ -46,13 +37,13 @@ function PermissionsHandler:unassignRole(rolename, beammpid)
             {"beammpid", beammpid}
         }
 
-        return self.dbManager:deleteObject(UserRole, conditions)
+        return DatabaseManager:deleteObject(UserRole, conditions)
     end)
 end
 
-function PermissionsHandler:getDefaultsRoles()
-    local roles = self.dbManager:withConnection(function()
-        return self.dbManager:getAllEntry(Role)
+function PermissionsManager:getDefaultsRoles()
+    local roles = DatabaseManager:withConnection(function()
+        return DatabaseManager:getAllEntry(Role)
     end)
     local defaultroles = {}
     for _, role in pairs(roles) do
@@ -64,11 +55,11 @@ function PermissionsHandler:getDefaultsRoles()
 end
 
 
-function PermissionsHandler:getCommands(beammpid)
+function PermissionsManager:getCommands(beammpid)
     local commands = {}
 
-    local allCommands = self.dbManager:withConnection(function()
-        return self.dbManager:getAllEntry(Command)
+    local allCommands = DatabaseManager:withConnection(function()
+        return DatabaseManager:getAllEntry(Command)
     end)
     for _, command in ipairs(allCommands) do
         if self:hasPermission(beammpid, command.commandName) then
@@ -79,54 +70,54 @@ function PermissionsHandler:getCommands(beammpid)
 end
 
 
-function PermissionsHandler:assignCommand(commandname, rolename)
-    local commandid, roleid = self.dbManager:withConnection(function()
-        local commandid = self.dbManager:getEntry(Command, "commandName", commandname).commandID
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+function PermissionsManager:assignCommand(commandname, rolename)
+    local commandid, roleid = DatabaseManager:withConnection(function()
+        local commandid = DatabaseManager:getEntry(Command, "commandName", commandname).commandID
+        local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
         return commandid, roleid
     end)
     local newRoleCommand = RoleCommand.new(roleid, commandid)
-    local result = self.dbManager:save(newRoleCommand, false)
+    local result = DatabaseManager:save(newRoleCommand, false)
 
     return result
 end
 
-function PermissionsHandler:assignAction(actionname, rolename)
-    local actionid, roleid = self.dbManager:withConnection(function()
-        local actionid = self.dbManager:getEntry(Action, "actionName", actionname).actionID
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+function PermissionsManager:assignAction(actionname, rolename)
+    local actionid, roleid = DatabaseManager:withConnection(function()
+        local actionid = DatabaseManager:getEntry(Action, "actionName", actionname).actionID
+        local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
         return actionid, roleid
     end)
 
     local newRoleAction = RoleAction.new(roleid, actionid)
-    local result = self.dbManager:save(newRoleAction, false)
+    local result = DatabaseManager:save(newRoleAction, false)
 
     return result
 end
 
-function PermissionsHandler:unassignAction(actionname, rolename)
-    local result = self.dbManager:withConnection(function()
-        local actionid = self.dbManager:getEntry(Action, "actionName", actionname).actionID
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+function PermissionsManager:unassignAction(actionname, rolename)
+    local result = DatabaseManager:withConnection(function()
+        local actionid = DatabaseManager:getEntry(Action, "actionName", actionname).actionID
+        local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
 
         local conditions = {
             {"roleID", roleid},
             {"actionID", actionid}
         }
 
-        return self.dbManager:deleteObject(RoleAction, conditions)
+        return DatabaseManager:deleteObject(RoleAction, conditions)
     end)
 
     return result
 end
 
 --getActions
-function PermissionsHandler:getActions(beammpid)
+function PermissionsManager:getActions(beammpid)
 
     local actions = {}
 
-    local allActions = self.dbManager:withConnection(function()
-        return self.dbManager:getAllEntry(Action)
+    local allActions = DatabaseManager:withConnection(function()
+        return DatabaseManager:getAllEntry(Action)
     end)
 
     for _, action in ipairs(allActions) do
@@ -138,29 +129,29 @@ function PermissionsHandler:getActions(beammpid)
     return actions
 end
 
-function PermissionsHandler:unassignCommand(commandname, rolename)
-    local result = self.dbManager:withConnection(function()
-        local commandid = self.dbManager:getEntry(Command, "commandName", commandname).commandID
-        local roleid = self.dbManager:getEntry(Role, "roleName", rolename).roleID
+function PermissionsManager:unassignCommand(commandname, rolename)
+    local result = DatabaseManager:withConnection(function()
+        local commandid = DatabaseManager:getEntry(Command, "commandName", commandname).commandID
+        local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
 
         local conditions = {
             {"roleID", roleid},
             {"commandID", commandid}
         }
 
-        return self.dbManager:deleteObject(RoleCommand, conditions)
+        return DatabaseManager:deleteObject(RoleCommand, conditions)
     end)
 
     return result
 end
 
-function PermissionsHandler:getRoles(beammpid)
+function PermissionsManager:getRoles(beammpid)
 
-    local roles = self.dbManager:withConnection(function()
+    local roles = DatabaseManager:withConnection(function()
         local roles = {}
-        local userRoles = self.dbManager:getAllEntry(UserRole, {{"beammpid", beammpid}})
+        local userRoles = DatabaseManager:getAllEntry(UserRole, {{"beammpid", beammpid}})
         for _, userRole in ipairs(userRoles) do
-            local role = self.dbManager:getEntry(Role, "roleID", userRole.roleID)
+            local role = DatabaseManager:getEntry(Role, "roleID", userRole.roleID)
             if role then
                 table.insert(roles, role)
             end
@@ -171,7 +162,7 @@ function PermissionsHandler:getRoles(beammpid)
     return roles
 end
 
-function PermissionsHandler:GetHighestRole(beammpid)
+function PermissionsManager:GetHighestRole(beammpid)
     local roles = self:getRoles(beammpid)
     local highestRole = nil
     for _, role in ipairs(roles) do
@@ -182,14 +173,14 @@ function PermissionsHandler:GetHighestRole(beammpid)
     return highestRole
 end
 
-function PermissionsHandler:canManageRole(manager_beammpid, rolename)
+function PermissionsManager:canManageRole(manager_beammpid, rolename)
     local managerRoles = self:getRoles(manager_beammpid)
     if #managerRoles == 0 then
         return false
     end
 
-    local rolePermLvl = self.dbManager:withConnection(function()
-        return self.dbManager:getEntry(Role, "roleName", rolename).permlvl
+    local rolePermLvl = DatabaseManager:withConnection(function()
+        return DatabaseManager:getEntry(Role, "roleName", rolename).permlvl
     end)
 
     for _, managerRole in ipairs(managerRoles) do
@@ -200,7 +191,7 @@ function PermissionsHandler:canManageRole(manager_beammpid, rolename)
     return false
 end
 
-function PermissionsHandler:canManage(manager_beammpid, managed_beammpid)
+function PermissionsManager:canManage(manager_beammpid, managed_beammpid)
     local managerRoles = self:getRoles(manager_beammpid)
     if #managerRoles == 0 then
         return false
@@ -231,17 +222,17 @@ end
 
 
 
-function PermissionsHandler:hasPermissionForAction(beammpid, action)
+function PermissionsManager:hasPermissionForAction(beammpid, action)
     if beammpid == -2 then
         return true     -- if it's the console, give full permission
     end
 
     local userRoles = self:getRoles(beammpid)
-    local actionId = self.dbManager:withConnection(function()
-            return self.dbManager:getEntry(Action, "actionName", action).actionID
+    local actionId = DatabaseManager:withConnection(function()
+            return DatabaseManager:getEntry(Action, "actionName", action).actionID
     end)
 
-    local roleActionEntries = self.dbManager:withConnection(function()
+    local roleActionEntries = DatabaseManager:withConnection(function()
         local entries = {}
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
@@ -250,7 +241,7 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
                 {"actionID", actionId}
             }
 
-            table.insert(entries, self.dbManager:getAllEntry(RoleAction, conditions))
+            table.insert(entries, DatabaseManager:getAllEntry(RoleAction, conditions))
             
         end
         return entries
@@ -260,21 +251,21 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
         return true
     end
 
-    local bool = self.dbManager:withConnection(function()
+    local bool = DatabaseManager:withConnection(function()
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
-            local role = self.dbManager:getEntry(Role, "roleID", roleId)
+            local role = DatabaseManager:getEntry(Role, "roleID", roleId)
             local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
 
             while lowerPermissions >= 0 do
-                local lowerRole = self.dbManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
+                local lowerRole = DatabaseManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
                 if lowerRole then
                     local lowerConditions = {
                         {"roleID", lowerRole.roleID},
                         {"actionID", actionId}
                     }
 
-                    local lowerRoleActionEntries = self.dbManager:getAllEntry(RoleAction, lowerConditions)
+                    local lowerRoleActionEntries = DatabaseManager:getAllEntry(RoleAction, lowerConditions)
 
                     if #lowerRoleActionEntries > 0 then
                         return true
@@ -288,18 +279,18 @@ function PermissionsHandler:hasPermissionForAction(beammpid, action)
     return bool
 end
 
-function PermissionsHandler:hasPermission(beammpid, commandname)
+function PermissionsManager:hasPermission(beammpid, commandname)
     if beammpid == -2 then
         return true     -- if it's the console, give full permission
     end
 
     local userRoles = self:getRoles(beammpid)
 
-    local commandId = self.dbManager:withConnection(function()
-        return self.dbManager:getEntry(Command, "commandName", commandname).commandID
+    local commandId = DatabaseManager:withConnection(function()
+        return DatabaseManager:getEntry(Command, "commandName", commandname).commandID
     end)
 
-    local roleCommandEntries = self.dbManager:withConnection(function()
+    local roleCommandEntries = DatabaseManager:withConnection(function()
         local entries = {}
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
@@ -307,7 +298,7 @@ function PermissionsHandler:hasPermission(beammpid, commandname)
                 {"roleID", roleId},
                 {"commandID", commandId}
             }
-            table.insert(entries, self.dbManager:getAllEntry(RoleCommand, conditions))
+            table.insert(entries, DatabaseManager:getAllEntry(RoleCommand, conditions))
         end
         return entries
 
@@ -315,21 +306,21 @@ function PermissionsHandler:hasPermission(beammpid, commandname)
     if #roleCommandEntries > 0 then
         return true
     end
-    local bool = self.dbManager:withConnection(function()
+    local bool = DatabaseManager:withConnection(function()
         for _, userRole in ipairs(userRoles) do
             local roleId = userRole.roleID
-            local role = self.dbManager:getEntry(Role, "roleID", roleId)
+            local role = DatabaseManager:getEntry(Role, "roleID", roleId)
             local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
 
             while lowerPermissions >= 0 do
-                local lowerRole = self.dbManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
+                local lowerRole = DatabaseManager:getEntry(Role, "permlvl", tostring(lowerPermissions))
                 if lowerRole then
                     local lowerConditions = {
                         {"roleID", lowerRole.roleID},
                         {"commandID", commandId}
                     }
 
-                    local lowerRoleCommandEntries = self.dbManager:getAllEntry(RoleCommand, lowerConditions)
+                    local lowerRoleCommandEntries = DatabaseManager:getAllEntry(RoleCommand, lowerConditions)
 
                     if #lowerRoleCommandEntries > 0 then
                         return true
@@ -342,10 +333,3 @@ function PermissionsHandler:hasPermission(beammpid, commandname)
     end)
     return bool
 end
-
-
-
---todo need to fix permission check on lower perm
-
-
-return PermissionsHandler

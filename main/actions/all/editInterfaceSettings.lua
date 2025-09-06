@@ -1,5 +1,5 @@
-return {
+local action = {
     actionName = "editInterfaceSettings",
 }
 
---it can be empty it will still work, maybe will feature additionnal things
+RegisterNickelAction(action.actionName, action)

@@ -8,7 +8,7 @@ function UsersService.new(beammpid)
     
     function self:getOrCreateUser(name)
         return DatabaseManager:withConnection(function()
-            local user = DatabaseManager:getEntry(User, {{"beammpid", self.beammpid}})
+            local user = DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
             if not user then
                 user = User.new(self.beammpid, name or "Unknown")
                 DatabaseManager:save(user)
@@ -24,20 +24,20 @@ function UsersService.new(beammpid)
     
     function self:getUser()
         return DatabaseManager:withConnection(function()
-            return DatabaseManager:getEntry(User, {{"beammpid", self.beammpid}})
+            return DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
         end)
     end
     
     function self:isBanned()
         return DatabaseManager:withConnection(function()
-            local banStatus = DatabaseManager:getEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "isbanned"}})
+            local banStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "isbanned"}})
             return banStatus and banStatus.is_status_value
         end)
     end
     
     function self:isTempBanned()
         return DatabaseManager:withConnection(function()
-            local tempBanStatus = DatabaseManager:getEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "istempbanned"}})
+            local tempBanStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "istempbanned"}})
             if tempBanStatus and tempBanStatus.is_status_value then
                 local currentTime = os.time()
                 if tempBanStatus.expiry_time and currentTime > tempBanStatus.expiry_time then
@@ -52,14 +52,14 @@ function UsersService.new(beammpid)
     
     function self:isMuted()
         return DatabaseManager:withConnection(function()
-            local muteStatus = DatabaseManager:getEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "ismuted"}})
+            local muteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "ismuted"}})
             return muteStatus and muteStatus.is_status_value
         end)
     end
     
     function self:isTempMuted()
         return DatabaseManager:withConnection(function()
-            local tempMuteStatus = DatabaseManager:getEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "istempmuted"}})
+            local tempMuteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", self.beammpid}, {"status_type", "istempmuted"}})
             if tempMuteStatus and tempMuteStatus.is_status_value then
                 local currentTime = os.time()
                 if tempMuteStatus.expiry_time and currentTime > tempMuteStatus.expiry_time then
@@ -74,14 +74,14 @@ function UsersService.new(beammpid)
     
     function self:isWhitelisted()
         return DatabaseManager:withConnection(function()
-            local user = DatabaseManager:getEntry(User, {{"beammpid", self.beammpid}})
+            local user = DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
             return user and user.whitelisted == 1
         end)
     end
     
     function self:setWhitelisted(whitelisted)
         return DatabaseManager:withConnection(function()
-            local user = DatabaseManager:getEntry(User, {{"beammpid", self.beammpid}})
+            local user = DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
             if user then
                 user.whitelisted = whitelisted and 1 or 0
                 DatabaseManager:save(user)
@@ -93,7 +93,7 @@ function UsersService.new(beammpid)
     
     function self:setLanguage(language)
         return DatabaseManager:withConnection(function()
-            local user = DatabaseManager:getEntry(User, {{"beammpid", self.beammpid}})
+            local user = DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
             if user then
                 user.language = language
                 DatabaseManager:save(user)
@@ -129,6 +129,10 @@ function UsersService.new(beammpid)
             return false, "banned"
         end
         
+        if self:isIpBanned() then
+            return false, "ip_banned"
+        end
+        
         if ConfigManager.GetSetting("whitelist") and ConfigManager.GetSetting("whitelist").enabled then
             if not self:isWhitelisted() then
                 return false, "not_whitelisted"
@@ -138,6 +142,11 @@ function UsersService.new(beammpid)
         return true, "allowed"
     end
     
+    function self:isIpBanned()
+        local usersIpsService = UsersIpsService.new(self.beammpid)
+        return usersIpsService:isIpBanned()
+    end
+
     return self
 end
 

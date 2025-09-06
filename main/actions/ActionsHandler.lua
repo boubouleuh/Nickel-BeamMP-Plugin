@@ -1,4 +1,4 @@
-ActionsHandler = {}
+ActionsManager = {}
 
 NickelActions = NickelActions or {}
 
@@ -8,17 +8,15 @@ function RegisterNickelAction(name, actionData)
 end
 
 --- init actions
-function ActionsHandler.init()
-    local self = {
-        actions = {}
-    }
-    setmetatable(self, { __index = ActionsHandler })
-    
-    for actionName, actionData in pairs(NickelActions or {}) do
+function ActionsManager.init()
+
+    local actionCount = Utils.tableLength(NickelActions)
+    Utils.nkprint("[ActionsHandler] Initializing with " .. tostring(actionCount) .. " registered actions", "info")
+
+    for actionName, actionData in pairs(NickelActions) do
+        Utils.nkprint("[ActionsHandler] Found registered action: " .. actionName, "debug")
         local action = Action.new(actionName)
         DatabaseManager:save(action)
-        
-        self.actions[actionName] = actionData
     end
 
     local function checkActions()
@@ -27,12 +25,13 @@ function ActionsHandler.init()
 
             -- Remove actions not present in memory from the database
             for _, action in pairs(actionsFromDB) do
-                if not self.actions[action.actionName] then
+                if not NickelActions[action.actionName] then
                     local conditions = {
                         {"actionName", action.actionName},
                     }
 
                     DatabaseManager:deleteObject(Action, conditions)
+                    print("Removed obsolete action from database: " .. action.actionName)
                 end
             end
         end)
@@ -40,11 +39,8 @@ function ActionsHandler.init()
 
     checkActions()
 
-    return self
 end
 
-function ActionsHandler:GetActions()
-    return self.actions
+function ActionsManager:GetActions()
+    return Utils.shallowCopy(NickelActions)
 end
-
-return ActionsHandler

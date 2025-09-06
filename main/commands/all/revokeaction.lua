@@ -18,19 +18,19 @@ function command.init(sender_id, sender_name, _, actionName, rolename)
     rolename = Utils.capitalize(rolename)
 
     DatabaseManager:withConnection(function()
-        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
         if not role then
             MessagesManager:SendMessage(sender_id, "commands.revokeaction.role_not_found", {Role = rolename})
             return
         end
         
-        local action = DatabaseManager:getEntry(Action, {{"actionName", actionName}})
+        local action = DatabaseManager:getAllEntry(Action, {{"actionName", actionName}})
         if not action then
             MessagesManager:SendMessage(sender_id, "commands.revokeaction.action_not_found", {Action = actionName})
             return
         end
         
-        local existingRoleAction = DatabaseManager:getEntry(RoleAction, {{"roleID", role.roleID}, {"actionID", action.actionID}})
+        local existingRoleAction = DatabaseManager:getAllEntry(RoleAction, {{"roleID", role.roleID}, {"actionID", action.actionID}})
         if not existingRoleAction then
             MessagesManager:SendMessage(sender_id, "commands.revokeaction.does_not_have_action", {Role = rolename, Action = actionName})
         else

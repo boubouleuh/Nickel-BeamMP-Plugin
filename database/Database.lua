@@ -1,26 +1,30 @@
 -- Database Management Class
 DatabaseManager = {}
 
-function DatabaseManager.new(databaseName)
-  local self = {
-    dbname = databaseName
-  }
-  setmetatable(self, { __index = DatabaseManager })
-  return self
+function DatabaseManager.init()
+  local configDatabaseFile = ConfigManager.GetSetting("sync").database_file
+
+  if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
+      DatabaseManager.dbname = configDatabaseFile
+      Utils.nkprint("Using custom database: " .. configDatabaseFile, "info")
+  else
+      Utils.nkprint("No database set in config, now using default path", "info") 
+      DatabaseManager.dbname = Utils.script_path() .. "database/db.sqlite"
+  end
 end
 
 function DatabaseManager:createTableIfNotExists(tableName, columns)
   local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(columns, ", "))
 
-  self.db:exec(query)
+  DatabaseManager.db:exec(query)
 end
 
 
 function DatabaseManager:returnQuery(query)
-  local msg = self.db:exec(query)
+  local msg = DatabaseManager.db:exec(query)
   Utils.nkprint(query, "debug")
-  Utils.nkprint("Changes = " .. self.db:changes(), "debug")
-  if self.db:changes() == 0 then
+  Utils.nkprint("Changes = " .. DatabaseManager.db:changes(), "debug")
+  if DatabaseManager.db:changes() == 0 then
     return "nickel.nochange"
   end
   return msg
@@ -33,7 +37,7 @@ function DatabaseManager:prepareAndExecute(query, ...)
     local attempts = 0
     
     while attempts < max_attempts do
-        local stmt = self.db:prepare(query)
+        local stmt = DatabaseManager.db:prepare(query)
         if not stmt then
             error("Failed to prepare statement: " .. query)
         end
@@ -48,7 +52,7 @@ function DatabaseManager:prepareAndExecute(query, ...)
         local result = stmt:step()
         
         Utils.nkprint(query, "debug")
-        Utils.nkprint("Changes = " .. self.db:changes(), "debug")
+        Utils.nkprint("Changes = " .. DatabaseManager.db:changes(), "debug")
 
         if result == 5 then -- SQLITE_BUSY (database locked)
             stmt:finalize()
@@ -57,7 +61,7 @@ function DatabaseManager:prepareAndExecute(query, ...)
             MP.Sleep(delay_seconds)
         else
             -- Normal processing
-            if self.db:changes() == 0 then
+            if DatabaseManager.db:changes() == 0 then
                 stmt:finalize()
                 return "nickel.nochange"
             end
@@ -79,7 +83,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local columns = {}
   local values = {}
   local updateColumns = {}
-  local columnsOrder = self:getTableColumnsName(tableName)
+  local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
   local firstColumn
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
@@ -106,7 +110,7 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   Utils.nkprint(selectQuery, "debug")
   local count = 0
-  local stmt = self.db:prepare(selectQuery)
+  local stmt = DatabaseManager.db:prepare(selectQuery)
   stmt:bind(1, object[firstColumn])
   for row in stmt:nrows() do
     count = tonumber(row["COUNT(*)"])
@@ -118,24 +122,24 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
       local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
 
       -- Execute the query using prepareAndExecute with the bound value for the WHERE clause
-      return self:prepareAndExecute(updateQuery, object[firstColumn])
+      return DatabaseManager:prepareAndExecute(updateQuery, object[firstColumn])
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
     
     -- Execute the query using prepareAndExecute with the values array
-    return self:prepareAndExecute(insertQuery, table.unpack(values))
+    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
   end
 end
 
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
-
+  
   local tableName = class.tableName
-
+  print("Getting entry from table: " .. tableName .. " where " .. columnName .. " = " .. tostring(columnValue)) -- Debug print
 
   local query = string.format("SELECT * FROM %s WHERE %s = ?", tableName, columnName)
-  local stmt = self.db:prepare(query)
+  local stmt = DatabaseManager.db:prepare(query)
   if not stmt then
     error("Failed to prepare statement: " .. query)
   end
@@ -171,7 +175,7 @@ function DatabaseManager:deleteObject(class, conditions)
 
   local deleteQuery = string.format("DELETE FROM %s WHERE %s", tableName, whereClauseString)
   
-  return self:returnQuery(deleteQuery)
+  return DatabaseManager:returnQuery(deleteQuery)
 
   -- TODO: Do that for every databases that need to be synced
 end
@@ -181,9 +185,9 @@ function DatabaseManager:save(class, canupdate)
   if canupdate == nil then
     canupdate = true
   end
-  local result = self:withConnection(function()
+  local result = DatabaseManager:withConnection(function()
     local tableName = class.tableName
-    return self:insertOrUpdateObject(tableName, class, canupdate)
+    return DatabaseManager:insertOrUpdateObject(tableName, class, canupdate)
   end)
   return result
 end
@@ -193,10 +197,10 @@ function DatabaseManager:createTableForClass(class)
 
   local tableName = class.tableName
   local columns = class:getColumns()
-  local existingColumns = self:getTableColumns(tableName)
+  local existingColumns = DatabaseManager:getTableColumns(tableName)
 
   if not next(existingColumns) then
-    self:createTableIfNotExists(tableName, columns)
+    DatabaseManager:createTableIfNotExists(tableName, columns)
   else
       local existingColumnsFinal = {}
       local columnsFinal = {}
@@ -219,7 +223,7 @@ function DatabaseManager:createTableForClass(class)
          
           local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
           
-          self:returnQuery(alterQuery)
+          DatabaseManager:returnQuery(alterQuery)
           -- self.db:exec(alterQuery)
         end
       end
@@ -242,10 +246,10 @@ function DatabaseManager:createTableForClass(class)
         else  
           alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, column)
         end
-        self:returnQuery(alterQuery)
+        DatabaseManager:returnQuery(alterQuery)
         if isUnique then
           local query = string.format("CREATE UNIQUE INDEX idx_unique_%s ON %s(%s)", column:match("^(%S+)%s"), tableName, column:match("^(%S+)%s"))
-          self:returnQuery(query)
+          DatabaseManager:returnQuery(query)
 
         end
         -- self.db:exec(alterQuery)
@@ -272,7 +276,7 @@ function DatabaseManager:getAllEntry(class, conditions)
 
   local results = {}
 
-  for row in self.db:nrows(query) do
+  for row in DatabaseManager.db:nrows(query) do
     local result = class.new()
 
     for key, value in pairs(row) do
@@ -298,20 +302,20 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
   local query = string.format("SELECT * FROM %s WHERE beammpid = %s LIMIT 1", tableName, tostring(beammpid))
   local result = nil
 
-  for row in self.db:nrows(query) do
+  for row in DatabaseManager.db:nrows(query) do
     result = class.new()
 
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
         local parsedList = Utils.string_to_table(value)
-        result:setKey(key, parsedList)
+        result[key] = parsedList  -- Direct assignment instead of setKey
       else
+        result[key] = value  -- Direct assignment instead of setKey
       end
     end
 
     break -- Assuming beammpid is unique, so we break after finding the first match
   end
-
 
   return result
 end
@@ -322,20 +326,19 @@ function DatabaseManager:getAllClassByBeammpId(class, beammpid)
   local result = {}
 
   local i = 1
-  for row in self.db:nrows(query) do
+  for row in DatabaseManager.db:nrows(query) do
     result[i] = class.new();
 
-  
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
         local parsedList = Utils.string_to_table(value)
-        result[i]:setKey(key, parsedList)
+        result[i][key] = parsedList  -- Direct assignment instead of setKey
       else
+        result[i][key] = value  -- Direct assignment instead of setKey
       end
     end
     i = i + 1
   end
-
 
   return result
 end
@@ -472,7 +475,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
     ]]
 
     -- Fetch online users
-    local stmtOnline = self.db:prepare(onlineQuery)
+    local stmtOnline = DatabaseManager.db:prepare(onlineQuery)
     for row in stmtOnline:nrows() do
       local user_id = row.user_beammpid
       if not onlineResults[user_id] then
@@ -547,7 +550,7 @@ function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAd
   ]]
 
   -- Fetch remaining users
-  local stmtRemaining = self.db:prepare(remainingQuery)
+  local stmtRemaining = DatabaseManager.db:prepare(remainingQuery)
   stmtRemaining:bind(1, limit)
   stmtRemaining:bind(2, offset)
 
@@ -634,10 +637,10 @@ end
 --get an user with his roles and details like online, b64img but simple and return a json like getUsersDynamically return but only with one user
 function DatabaseManager:getUserWithRoles(beammpid, permManager, allowbase64)
   local onlinePlayers = MP.GetPlayers()
-  local user = self:getClassByBeammpId(User, beammpid)
-  local userRoles = self:getAllClassByBeammpId(UserRole, beammpid)
-  local userStatus = self:getAllClassByBeammpId(UserStatus, beammpid)
-  local userIps = self:getAllClassByBeammpId(UserIp, beammpid)
+  local user = DatabaseManager:getClassByBeammpId(User, beammpid)
+  local userRoles = DatabaseManager:getAllClassByBeammpId(UserRole, beammpid)
+  local userStatus = DatabaseManager:getAllClassByBeammpId(UserStatus, beammpid)
+  local userIps = DatabaseManager:getAllClassByBeammpId(UserIp, beammpid)
   local userRolesFinal = {}
   local userStatusFinal = {}
   local userIpsFinal = {}
@@ -711,7 +714,7 @@ function DatabaseManager:getTableColumns(tableName)
   local existingColumns = {}
   local query = string.format("PRAGMA table_info(%s)", tableName)
 
-  for row in self.db:nrows(query) do
+  for row in DatabaseManager.db:nrows(query) do
     existingColumns[row.name] = true
   end
 
@@ -721,7 +724,7 @@ end
 function DatabaseManager:getTableColumnsName(tableName)
 
   local columns = {}
-  for row in self.db:nrows("PRAGMA table_info(" .. tableName .. ")") do
+  for row in DatabaseManager.db:nrows("PRAGMA table_info(" .. tableName .. ")") do
     table.insert(columns, row.name)
   end
   return columns
@@ -729,21 +732,24 @@ end
 
 
 function DatabaseManager:openConnection()
-  self.db = SQLITE3.open(self.dbname)
+  DatabaseManager.db = SQLITE3.open(DatabaseManager.dbname)
 end
 
 function DatabaseManager:closeConnection()
-  if self.db then
+  if DatabaseManager.db then
     Utils.nkprint("Database closed", "debug")
-    self.db:close()
-    self.db = nil
+    DatabaseManager.db:close()
+    DatabaseManager.db = nil
   end
 end
 
+--return multiples values that can be anything
+---@param callback function
+---@return any ...
 function DatabaseManager:withConnection(callback)
-    self:openConnection()
+    DatabaseManager:openConnection()
     local results = {pcall(callback)}
-    self:closeConnection()
+    DatabaseManager:closeConnection()
     
     local ok = table.remove(results, 1) 
     
@@ -754,4 +760,4 @@ function DatabaseManager:withConnection(callback)
     return table.unpack(results) 
 end
 
-return DatabaseManager
+DatabaseManager.init()

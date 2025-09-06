@@ -3,6 +3,7 @@ Infos.tableName = "Infos"
 
 function Infos.new(infoKey, infoValue)
   local self = {}
+  self.tableName = Infos.tableName
   self.infoID = nil
   self.infoKey = infoKey
   self.infoValue = infoValue

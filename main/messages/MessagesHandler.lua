@@ -1,12 +1,6 @@
-MessagesHandler = {}
+MessagesManager = {}
 
-function MessagesHandler.new()
-    local self = {}
-    setmetatable(self, { __index = MessagesHandler })
-    return self
-end
-
-  function MessagesHandler:SendMessage(sender_id, messageKey, values)
+function MessagesManager:SendMessage(sender_id, messageKey, values)
     local chatcolor = "^l^7"
     local chatstyle = "^r^o"
 
@@ -23,7 +17,7 @@ end
     end
 end
 
-function MessagesHandler:SendHTMLMessage(sender_id, html)
+function MessagesManager:SendHTMLMessage(sender_id, html)
     local consolecolor = "\x1b[1m\x1b[96m[\x1b[90mNickel\x1b[96m]\x1b[49m\x1b[90m : \x1b[21m\x1b[0m\x1b[93m"
 
     local consoleMessage = html
@@ -57,7 +51,7 @@ function MessagesHandler:SendHTMLMessage(sender_id, html)
     end
 end
 
-function MessagesHandler:GetMessage(sender_id, key, values)
+function MessagesManager:GetMessage(sender_id, key, values)
     local beamId
     if sender_id ~= -2 and sender_id ~= -1 then
         beamId = Utils.getPlayerBeamMPID(MP.GetPlayerName(sender_id))
@@ -100,6 +94,3 @@ function MessagesHandler:GetMessage(sender_id, key, values)
 
     return message
 end
-
-
-return MessagesHandler

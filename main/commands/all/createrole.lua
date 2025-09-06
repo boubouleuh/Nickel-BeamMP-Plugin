@@ -9,7 +9,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, rolename, permlvl)
+function command.init(sender_id, sender_name, rolename, permlvl)
     if rolename == nil or permlvl == nil then
         MessagesManager:SendMessage(sender_id, "commands.createrole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -22,7 +22,7 @@ function command.init(sender_id, sender_name, _, rolename, permlvl)
     end
 
     DatabaseManager:withConnection(function()
-        local existingRole = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        local existingRole = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
         if existingRole then
             MessagesManager:SendMessage(sender_id, "commands.createrole.already_exists", {Role = rolename})
         else

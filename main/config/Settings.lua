@@ -1,6 +1,6 @@
 
-Settings = {}
-function Settings.loadExistingConfig()
+ConfigManager = {}
+function ConfigManager.loadExistingConfig()
     local existingConfigPath = Utils.script_path() .. "NickelConfig.toml"
     if FS.Exists(existingConfigPath) then
         return TOML.decodeFromFile(existingConfigPath)
@@ -21,8 +21,8 @@ local function mergeTables(dest, src)
     end
 end
 
-function Settings.init()
-    Settings.config = Settings.loadExistingConfig()
+function ConfigManager.init()
+    ConfigManager.config = ConfigManager.loadExistingConfig()
     local configChanged = false
     
    local defaultConfig = {
@@ -85,30 +85,30 @@ function Settings.init()
         return false
     end
 
-    if needsMerge(Settings.config, defaultConfig) then
-        mergeTables(Settings.config, defaultConfig)
+    if needsMerge(ConfigManager.config, defaultConfig) then
+        mergeTables(ConfigManager.config, defaultConfig)
         configChanged = true
     end
 
-    for key, _ in pairs(Settings.config) do
+    for key, _ in pairs(ConfigManager.config) do
         if defaultConfig[key] == nil then
-            Settings.config[key] = nil
+            ConfigManager.config[key] = nil
             configChanged = true
         end
     end
 
     if configChanged then
-        TOML.encodeToFile(Settings.config, {
+        TOML.encodeToFile(ConfigManager.config, {
             file = Utils.script_path() .. "NickelConfig.toml",
             overwrite = true
         })
     end
 
-    return Settings
+    return ConfigManager
 end
 
-function Settings.GetSetting(settingKey)
-    return Settings.config[settingKey]
+function ConfigManager.GetSetting(settingKey)
+    return ConfigManager.config[settingKey]
 end
 
 local function convertStringsToBooleans(value)
@@ -127,7 +127,7 @@ local function convertStringsToBooleans(value)
     return value
 end
 
-function Settings.SetSetting(settingKey, value)
+function ConfigManager.SetSetting(settingKey, value)
     value = convertStringsToBooleans(value)
 
     local keys = {}
@@ -135,7 +135,7 @@ function Settings.SetSetting(settingKey, value)
         table.insert(keys, key)
     end
 
-    local current = Settings.config
+    local current = ConfigManager.config
     for i = 1, #keys - 1 do
         local key = keys[i]
         if current[key] == nil then
@@ -147,6 +147,6 @@ function Settings.SetSetting(settingKey, value)
     print("Setting " .. keys[#keys] .. " to " .. tostring(value))
     current[keys[#keys]] = value
 
-    TOML.encodeToFile(Settings.config, {file = Utils.script_path() .. "NickelConfig.toml", overwrite = true})
+    TOML.encodeToFile(ConfigManager.config, {file = Utils.script_path() .. "NickelConfig.toml", overwrite = true})
 end
-Settings.init()
+ConfigManager.init()

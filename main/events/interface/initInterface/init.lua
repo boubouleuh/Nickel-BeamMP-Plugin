@@ -15,7 +15,7 @@ return function (id, offset)
                 MP.TriggerClientEventJson(id, "initInterface", playerData)
             end
             
-            local clientConfig = Settings.GetSetting("client")
+            local clientConfig = ConfigManager.GetSetting("client")
             if clientConfig and clientConfig.interfaceValues then
                 MP.TriggerClientEventJson(id, "getInterfaceValues", clientConfig.interfaceValues)
             end

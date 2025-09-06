@@ -3,6 +3,7 @@ RoleAction.tableName = "RoleActions"
 
 function RoleAction.new(roleID, actionID)
   local self = {}
+  self.tableName = RoleAction.tableName
   self.roleID = roleID
   self.actionID = actionID
   return self

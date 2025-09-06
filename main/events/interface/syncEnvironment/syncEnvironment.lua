@@ -11,7 +11,7 @@ return function(id, environment, force)
         return
     end
     
-    local clientConfig = Settings.GetSetting("client")
+    local clientConfig = ConfigManager.GetSetting("client")
     local server_env = clientConfig and clientConfig.environment
 
     if not Utils.deepCompare(environment, server_env) or force then
@@ -23,7 +23,7 @@ return function(id, environment, force)
             return
         end
     
-        Settings.SetSetting("client.environment", environment)
+        ConfigManager.SetSetting("client.environment", environment)
         MP.TriggerClientEventJson(-1, "receiveEnvironment", environment)
     end
 end

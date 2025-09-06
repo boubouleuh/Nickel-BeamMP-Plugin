@@ -18,8 +18,8 @@ function command.init(sender_id, sender_name, _, playername)
     local unbanned = false
 
     DatabaseManager:withConnection(function()
-        local banStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "isbanned"}})
-        local tempBanStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempbanned"}})
+        local banStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "isbanned"}})
+        local tempBanStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempbanned"}})
         
         if banStatus then
             DatabaseManager:delete(banStatus)
@@ -31,7 +31,7 @@ function command.init(sender_id, sender_name, _, playername)
             unbanned = true
         end
         
-        local userIps = DatabaseManager:getEntries(UserIp, {{"beammpid", beammpid}, {"is_banned", true}})
+        local userIps = DatabaseManager:getAllEntries(UserIp, {{"beammpid", beammpid}, {"is_banned", true}})
         local ipCount = 0
         
         for _, userIp in ipairs(userIps) do

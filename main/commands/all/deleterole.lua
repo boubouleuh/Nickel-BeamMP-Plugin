@@ -16,7 +16,7 @@ function command.init(sender_id, sender_name, _, rolename)
     rolename = Utils.capitalize(rolename)
 
     DatabaseManager:withConnection(function()
-        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
         if role then
             DatabaseManager:delete(role)
             MessagesManager:SendMessage(sender_id, "commands.deleterole.success", {Role = rolename})

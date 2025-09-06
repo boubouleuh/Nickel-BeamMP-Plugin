@@ -1,5 +1,4 @@
 
-
 local command = {
     type = "user",
     args = {
@@ -8,12 +7,13 @@ local command = {
     }
 }
 
---- command
-function command.init(sender_id, sender_name, _, playername, reason)
+function command.init(sender_id, sender_name, playername, reason)
+    print("Ban command called by " .. sender_name .. " for player " .. tostring(playername) .. " with reason: " .. tostring(reason))
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.ban.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
-    elseif reason == nil then
+    end
+    if reason == nil then
         reason = MessagesManager:GetMessage(sender_id, "moderation.default_reason")
     end
 
@@ -21,28 +21,25 @@ function command.init(sender_id, sender_name, _, playername, reason)
         MessagesManager:SendMessage(sender_id, "commands.guest_not_compatible")
         return false
     end
-    
+
     local beammpid = Utils.getPlayerBeamMPID(playername)
+    local user = User.getOrCreate(beammpid, playername)
 
-    DatabaseManager:withConnection(function()
-        local existingStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "isbanned"}})
-        local existingTempBan = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempbanned"}})
+    print(user:isBanned())
+    if user:isBanned() or user:isTempBanned() then
+        MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
+    else
+        local result = user:ban(reason)
         
-        if existingStatus or existingTempBan then
-            MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
-        else
-            local userStatus = UserStatus.new(-1, beammpid, "isbanned", reason)
-            DatabaseManager:save(userStatus)
-            
-            local target_id = Utils.GetPlayerId(playername)
-
-            if target_id ~= -1 then
-                MP.DropPlayer(target_id, MessagesManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
-            end
-            MessagesManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
+        local target_id = Utils.GetPlayerId(playername)
+        if target_id ~= -1 then
+            MP.DropPlayer(target_id, MessagesManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
         end
-    end)
-   
+        
+        MessagesManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
+        MessagesManager:SendMessage(sender_id, string.format("database.code.%s", result))
+    end
+
     return true
 end
 

@@ -39,7 +39,7 @@ end
 
 function Online.getPlayerB64Img(beammpid)
 
-    local file_path = string.format(utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)
+    local file_path = string.format(Utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)
     local file = io.open(file_path, "r")
 
     if file then
@@ -47,7 +47,7 @@ function Online.getPlayerB64Img(beammpid)
         file:close() -- Close the file
         return MIME.b64(image)
     else
-        local file_path = string.format(utils.script_path() .. "/player_avatars/default_avatar.png")
+        local file_path = string.format(Utils.script_path() .. "/player_avatars/default_avatar.png")
         local file = io.open(file_path, "r")
         local image = file:read("*all")
         file:close() -- Close the file

@@ -29,8 +29,8 @@ function command.init(sender_id, sender_name, _, playername, time, reason)
     local beammpid = Utils.getPlayerBeamMPID(playername)
 
     DatabaseManager:withConnection(function()
-        local existingMute = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "ismuted"}})
-        local existingTempMute = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempmuted"}})
+        local existingMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "ismuted"}})
+        local existingTempMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempmuted"}})
         
         if existingMute or existingTempMute then
             MessagesManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})

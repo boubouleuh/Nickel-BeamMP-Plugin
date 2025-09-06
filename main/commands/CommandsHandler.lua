@@ -1,21 +1,17 @@
-CommandsHandler = {}
+CommandsManager = {}
 
 NickelCommands = NickelCommands or {}
 
 function RegisterNickelCommand(name, commandData)
     NickelCommands[name] = commandData
-    print("Registered command: " .. name)
 end
 
 --- init commands
-function CommandsHandler.init()
-    print("[CommandsHandler] Initializing with " .. tostring(#NickelCommands or 0) .. " registered commands")
-    
-    for commandName, _ in pairs(NickelCommands or {}) do
-        print("[CommandsHandler] Found registered command: " .. commandName)
-    end
-    
-    for commandName, commandData in pairs(NickelCommands or {}) do
+function CommandsManager.init()
+    local commandCount = Utils.tableLength(NickelCommands)
+    Utils.nkprint("[CommandsHandler] Initializing with " .. tostring(commandCount) .. " registered commands", "info")
+
+    for commandName, commandData in pairs(NickelCommands) do
         local command = Command.new(commandName)
         DatabaseManager:save(command)
         
@@ -35,6 +31,7 @@ function CommandsHandler.init()
                     }
 
                     DatabaseManager:deleteObject(Command, conditions)
+                    Utils.nkprint("[CommandsHandler] Removed obsolete command from database: " .. command.commandName, "warn")
                 end
             end
         end)
@@ -45,14 +42,14 @@ function CommandsHandler.init()
 end
 
 
-function CommandsHandler:GetCommands()
-    return Utils.shallowCopy(NickelCommands or {})
+function CommandsManager:GetCommands()
+    return Utils.shallowCopy(NickelCommands)
 end
 
 
 
 
-function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
+function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
 
     local prefix = ConfigManager.GetSetting("commands").prefix
@@ -84,7 +81,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --get number of args of callback function
     local info = debug.getinfo(callback, "u")
     local numParams = info.nparams
-    local numCommandArgs = math.max(numParams - 3, 0)
+    local numCommandArgs = math.max(numParams - 2, 0)  -- Changed from -3 to -2 since we removed CommandsManager parameter
     local i = 0
     --allow space on last argument
     if allowSpaceOnLastArg and numCommandArgs > 0 then -- That logic was rewritten by an AI and hardly tested by me.
@@ -124,7 +121,7 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
 
 
     if PermissionsManager:hasPermission(beammpid, commandWithoutPrefix) then
-        local bool = callback(sender_id, playername, CommandsHandler, table.unpack(args))
+        local bool = callback(sender_id, playername, table.unpack(args))
         if sender_id == -2 then
             local resultMessage = bool and "successfully" or "failed to"
             return "Nickel command '" .. command .. "' " .. resultMessage .. " run"
@@ -132,12 +129,8 @@ function CommandsHandler:CreateCommand(sender_id, message, allowSpaceOnLastArg)
             return 1
         end
     else
-        MessagesManager:SendMessage(sender_id, "noPermissionToExecuteCommand", {commandWithoutPrefix})
+        MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient")
         return
     end
     
 end
-
-
-
-return CommandsHandler

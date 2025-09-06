@@ -4,6 +4,7 @@ Role.tableName = "Roles"
 
 function Role.new(rolename, permlvl, is_default)
   local self = {}
+  self.tableName = Role.tableName
   self.roleID = nil
   self.roleName = rolename
   self.permlvl = permlvl

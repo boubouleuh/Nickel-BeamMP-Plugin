@@ -29,8 +29,8 @@ function command.init(sender_id, sender_name, _, playername, time, reason)
     local beammpid = Utils.getPlayerBeamMPID(playername)
 
     DatabaseManager:withConnection(function()
-        local existingBan = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "isbanned"}})
-        local existingTempBan = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempbanned"}})
+        local existingBan = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "isbanned"}})
+        local existingTempBan = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempbanned"}})
         
         if existingBan or existingTempBan then
             MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})

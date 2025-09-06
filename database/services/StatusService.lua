@@ -1,10 +1,10 @@
-local StatusService = {}
+StatusService = {}
 
 function StatusService.hasActiveStatus(beammpid, statusType)
     if not DatabaseManager then return false end
     
     return DatabaseManager:withConnection(function()
-        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        local status = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
         if not status or not status.is_status_value then
             return false
         end
@@ -39,7 +39,7 @@ function StatusService.getStatusReason(beammpid, statusType)
     if not DatabaseManager then return nil end
     
     return DatabaseManager:withConnection(function()
-        local status = DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
+        local status = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", statusType}})
         return status and status.reason or nil
     end)
 end
@@ -68,8 +68,7 @@ end
 
 function StatusService.getStatusDetails(beammpid, status_type)
     return DatabaseManager:withConnection(function()
-        return DatabaseManager:getEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", status_type}})
+        return DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", status_type}})
     end)
 end
 
-return StatusService

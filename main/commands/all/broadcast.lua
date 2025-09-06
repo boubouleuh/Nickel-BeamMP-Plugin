@@ -6,7 +6,7 @@ local command = {
     }
 }
 --- command
-function command.init(sender_id, sender_name, _, message)
+function command.init(sender_id, sender_name, message)
     if message == nil then
         MessagesManager:SendMessage(sender_id, "commands.broadcast.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false

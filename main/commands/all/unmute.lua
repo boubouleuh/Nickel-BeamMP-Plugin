@@ -22,8 +22,8 @@ function command.init(sender_id, sender_name, _, playername)
     local beammpid = Utils.getPlayerBeamMPID(playername)
 
     DatabaseManager:withConnection(function()
-        local muteStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "ismuted"}})
-        local tempMuteStatus = DatabaseManager:getEntry(UserStatus, {{"beamMPID", beammpid}, {"statusType", "istempmuted"}})
+        local muteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "ismuted"}})
+        local tempMuteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempmuted"}})
         
         if muteStatus or tempMuteStatus then
             if muteStatus then

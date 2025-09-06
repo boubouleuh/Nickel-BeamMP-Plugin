@@ -38,13 +38,13 @@ function command.init(sender_id, sender_name, _, rolename, playername)
         end
 
         DatabaseManager:withConnection(function()
-            local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+            local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
             if not role then
                 MessagesManager:SendMessage(sender_id, "commands.revokerole.role_not_found", {Role = rolename})
                 return
             end
             
-            local existingUserRole = DatabaseManager:getEntry(UserRole, {{"beammpid", beammpid}, {"roleID", role.roleID}})
+            local existingUserRole = DatabaseManager:getAllEntry(UserRole, {{"beammpid", beammpid}, {"roleID", role.roleID}})
             if not existingUserRole then
                 MessagesManager:SendMessage(sender_id, "commands.revokerole.does_not_have_role", {Player = playername, Role = rolename})
             else

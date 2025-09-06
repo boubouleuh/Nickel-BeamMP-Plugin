@@ -26,19 +26,19 @@ function command.init(sender_id, sender_name, _, commandName, rolename)
     end
 
     DatabaseManager:withConnection(function()
-        local role = DatabaseManager:getEntry(Role, {{"roleName", rolename}})
+        local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
         if not role then
             MessagesManager:SendMessage(sender_id, "commands.grantcommand.role_not_found", {Role = rolename})
             return
         end
         
-        local cmd = DatabaseManager:getEntry(Command, {{"commandName", commandName}})
+        local cmd = DatabaseManager:getAllEntry(Command, {{"commandName", commandName}})
         if not cmd then
             MessagesManager:SendMessage(sender_id, "commands.grantcommand.command_not_found", {Command = commandName})
             return
         end
         
-        local existingRoleCommand = DatabaseManager:getEntry(RoleCommand, {{"roleID", role.roleID}, {"commandID", cmd.commandID}})
+        local existingRoleCommand = DatabaseManager:getAllEntry(RoleCommand, {{"roleID", role.roleID}, {"commandID", cmd.commandID}})
         if existingRoleCommand then
             MessagesManager:SendMessage(sender_id, "commands.grantcommand.already_has_command", {Role = rolename, Command = commandName})
         else
