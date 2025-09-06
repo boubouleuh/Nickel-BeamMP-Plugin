@@ -5,7 +5,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _)
+function command.init(sender_id, sender_name)
     DatabaseManager:withConnection(function()
         local actions = DatabaseManager:getAllEntry(Action)
         

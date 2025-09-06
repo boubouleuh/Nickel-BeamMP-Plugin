@@ -15,7 +15,7 @@ return function(id, interfaceValues, force)
         local playerName = MP.GetPlayerName(id)
         local beammpid = Utils.getPlayerBeamMPID(playerName)
         
-        if not PermissionsManager:hasPermissionForAction(beammpid, "editInterfaceSettings") then
+        if not User.findByBeammpid(beammpid):hasPermissionForAction("editInterfaceSettings") then
             MP.TriggerClientEventJson(id, "getInterfaceValues", server_interface_values)
             return
         end

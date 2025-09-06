@@ -105,10 +105,11 @@ function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
         end
     end
 
-
+    local access = false
     local playername = MP.GetPlayerName(sender_id)
     if sender_id == -2 then
         playername = "console"
+        access = true
     end
     local beammpid
     if sender_id ~= nil then
@@ -120,7 +121,8 @@ function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     end
 
 
-    if PermissionsManager:hasPermission(beammpid, commandWithoutPrefix) then
+
+    if access or User.getOrCreate(beammpid, playername):hasPermission(commandWithoutPrefix) then
         local bool = callback(sender_id, playername, table.unpack(args))
         if sender_id == -2 then
             local resultMessage = bool and "successfully" or "failed to"

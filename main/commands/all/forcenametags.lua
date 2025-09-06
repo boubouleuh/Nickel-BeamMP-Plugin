@@ -6,7 +6,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _)
+function command.init(sender_id, sender_name)
     if sender_id == -2 then
         return false
     end

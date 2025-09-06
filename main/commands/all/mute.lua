@@ -8,7 +8,7 @@ local command = {
     }
 }
 --- command
-function command.init(sender_id, sender_name, _, playername, reason)
+function command.init(sender_id, sender_name, playername, reason)
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.mute.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -22,24 +22,19 @@ function command.init(sender_id, sender_name, _, playername, reason)
     end
 
     local beammpid = Utils.getPlayerBeamMPID(playername)
-
-    DatabaseManager:withConnection(function()
-        local existingMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "ismuted"}})
-        local existingTempMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempmuted"}})
+    local user = User.getOrCreate(beammpid, playername)
+    
+    if user:isMuted() or user:isTempMuted() then
+        MessagesManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
+    else
+        user:mute(reason)
         
-        if existingMute or existingTempMute then
-            MessagesManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
-        else
-            local userStatus = UserStatus.new(-1, beammpid, "ismuted", reason)
-            DatabaseManager:save(userStatus)
-            
-            local target_id = Utils.GetPlayerId(playername)
-            if target_id ~= -1 then
-                MessagesManager:SendMessage(target_id, "moderation.muted", {Reason = reason})
-            end
-            MessagesManager:SendMessage(sender_id, "commands.mute.success", {Player = playername, Reason = reason})
+        local target_id = Utils.GetPlayerId(playername)
+        if target_id ~= -1 then
+            MessagesManager:SendMessage(target_id, "moderation.muted", {Reason = reason})
         end
-    end)
+        MessagesManager:SendMessage(sender_id, "commands.mute.success", {Player = playername, Reason = reason})
+    end
 
     return true
 end

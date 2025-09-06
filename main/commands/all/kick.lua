@@ -8,7 +8,7 @@ local command = {
     }
 }
 --- command
-function command.init(sender_id, sender_name, _, playername, reason)
+function command.init(sender_id, sender_name, playername, reason)
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.kick.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false

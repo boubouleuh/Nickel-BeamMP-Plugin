@@ -8,7 +8,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, target_name, message)
+function command.init(sender_id, sender_name, target_name, message)
     if target_name == nil or message == nil then
         MessagesManager:SendMessage(sender_id, "commands.dm.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false

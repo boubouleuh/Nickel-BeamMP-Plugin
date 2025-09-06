@@ -10,7 +10,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, playername, time, reason)
+function command.init(sender_id, sender_name, playername, time, reason)
     if playername == nil or time == nil then
         MessagesManager:SendMessage(sender_id, "commands.tempmute.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -27,25 +27,19 @@ function command.init(sender_id, sender_name, _, playername, time, reason)
     local end_date = os.date("%d/%m/%Y %H:%M:%S", timestamp)
 
     local beammpid = Utils.getPlayerBeamMPID(playername)
-
-    DatabaseManager:withConnection(function()
-        local existingMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "ismuted"}})
-        local existingTempMute = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempmuted"}})
+    local user = User.getOrCreate(beammpid, playername)
+    
+    if user:isMuted() or user:isTempMuted() then
+        MessagesManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
+    else
+        user:tempMute(reason, timestamp)
         
-        if existingMute or existingTempMute then
-            MessagesManager:SendMessage(sender_id, "moderation.alreadymuted", {Player = playername})
-        else
-            local userStatus = UserStatus.new(-1, beammpid, "istempmuted", reason, timestamp)
-            DatabaseManager:save(userStatus)
-            
-            local target_id = Utils.GetPlayerId(playername)
-
-            if target_id ~= -1 then
-                MessagesManager:SendMessage(target_id, "moderation.tempmuted", {Reason = reason, Date = end_date})
-            end
-            MessagesManager:SendMessage(sender_id, "commands.tempmute.success", {Player = playername, Reason = reason, Date = end_date})
+        local target_id = Utils.GetPlayerId(playername)
+        if target_id ~= -1 then
+            MessagesManager:SendMessage(target_id, "moderation.tempmuted", {Reason = reason, Date = end_date})
         end
-    end)
+        MessagesManager:SendMessage(sender_id, "commands.tempmute.success", {Player = playername, Reason = reason, Date = end_date})
+    end
 
     return true
 end

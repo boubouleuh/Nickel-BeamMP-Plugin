@@ -9,7 +9,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, addORremove, playername)
+function command.init(sender_id, sender_name, addORremove, playername)
     if playername == nil or not Utils.element_exist_in_table(addORremove, {"add", "remove"}) then
         MessagesManager:SendMessage(sender_id, "commands.whitelist.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -26,23 +26,15 @@ function command.init(sender_id, sender_name, _, addORremove, playername)
         return false
     end
 
-    DatabaseManager:withConnection(function()
-        local user = DatabaseManager:getAllEntry(User, {{"beammpid", beammpid}})
-        if not user then
-            user = User.new(beammpid, playername)
-            DatabaseManager:save(user)
-        end
+    local user = User.getOrCreate(beammpid, playername)
 
-        if addORremove == "add" then
-            user.whitelisted = true
-            DatabaseManager:save(user)
-            MessagesManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
-        elseif addORremove == "remove" then
-            user.whitelisted = false
-            DatabaseManager:save(user)
-            MessagesManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
-        end
-    end)
+    if addORremove == "add" then
+        user:setWhitelisted(true)
+        MessagesManager:SendMessage(sender_id, "commands.whitelist.add.success", {Player = playername})
+    elseif addORremove == "remove" then
+        user:setWhitelisted(false)
+        MessagesManager:SendMessage(sender_id, "commands.whitelist.remove.success", {Player = playername})
+    end
 
     return true
 end

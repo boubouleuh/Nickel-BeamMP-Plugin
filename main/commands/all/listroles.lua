@@ -7,7 +7,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _)
+function command.init(sender_id, sender_name)
     DatabaseManager:withConnection(function()
         local roles = DatabaseManager:getAllEntry(Role)
         table.sort(roles, function(a, b) return a.permlvl > b.permlvl end)

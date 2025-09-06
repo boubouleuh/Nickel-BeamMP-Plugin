@@ -10,7 +10,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, playername, time, reason)
+function command.init(sender_id, sender_name, playername, time, reason)
     if playername == nil or time == nil then
         MessagesManager:SendMessage(sender_id, "commands.tempban.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -27,25 +27,19 @@ function command.init(sender_id, sender_name, _, playername, time, reason)
     local end_date = os.date("%d/%m/%Y %H:%M:%S", timestamp)
 
     local beammpid = Utils.getPlayerBeamMPID(playername)
-
-    DatabaseManager:withConnection(function()
-        local existingBan = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "isbanned"}})
-        local existingTempBan = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempbanned"}})
+    local user = User.getOrCreate(beammpid, playername)
+    
+    if user:isBanned() or user:isTempBanned() then
+        MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
+    else
+        user:tempBan(reason, timestamp)
         
-        if existingBan or existingTempBan then
-            MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
-        else
-            local userStatus = UserStatus.new(-1, beammpid, "istempbanned", reason, timestamp)
-            DatabaseManager:save(userStatus)
-            
-            local target_id = Utils.GetPlayerId(playername)
-
-            if target_id ~= -1 then
-                MP.DropPlayer(target_id, reason .. " " .. MessagesManager:GetMessage(sender_id, "moderation.tempbanned", {Reason = reason, Date = end_date}))
-            end
-            MessagesManager:SendMessage(sender_id, "commands.tempban.success", {Player = playername, Reason = reason, Date = end_date})
+        local target_id = Utils.GetPlayerId(playername)
+        if target_id ~= -1 then
+            MP.DropPlayer(target_id, reason .. " " .. MessagesManager:GetMessage(sender_id, "moderation.tempbanned", {Reason = reason, Date = end_date}))
         end
-    end)
+        MessagesManager:SendMessage(sender_id, "commands.tempban.success", {Player = playername, Reason = reason, Date = end_date})
+    end
     
     return true
 end

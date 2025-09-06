@@ -76,6 +76,19 @@ function DatabaseManager:prepareAndExecute(query, ...)
 end
 
 
+function DatabaseManager:getTablePrimaryKeyColumns(tableName)
+    local query = string.format("PRAGMA table_info(%s)", tableName)
+    local primaryKeys = {}
+    
+    for row in DatabaseManager.db:nrows(query) do
+        if row.pk and row.pk > 0 then  -- pk > 0 means it's part of primary key
+            table.insert(primaryKeys, row.name)
+        end
+    end
+    
+    return primaryKeys
+end
+
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   Utils.nkprint("TABLENAME = " .. tableName, "debug")
@@ -84,13 +97,10 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local values = {}
   local updateColumns = {}
   local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
-  local firstColumn
-  for _, columnName in ipairs(columnsOrder) do
-    if object[columnName] ~= nil and object[columnName] ~= "" then
-      firstColumn = columnName
-      break
-    end
-  end
+  
+  -- Get primary key columns to build proper WHERE clause
+  local primaryKeyColumns = DatabaseManager:getTablePrimaryKeyColumns(tableName)
+  
   for key, value in pairs(object) do
     table.insert(columns, key)
     if type(value) == "table" then
@@ -107,22 +117,73 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(values, tostring(value))
     table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
+  
+  -- Build WHERE clause based on primary key columns
+  local whereConditions = {}
+  local whereValues = {}
+  for _, pkColumn in ipairs(primaryKeyColumns) do
+    if object[pkColumn] ~= nil then
+      table.insert(whereConditions, pkColumn .. " = ?")
+      table.insert(whereValues, object[pkColumn])
+    end
+  end
+  
+  -- If no primary key columns found, fall back to first column method
+  if #whereConditions == 0 then
+    local firstColumn
+    for _, columnName in ipairs(columnsOrder) do
+      if object[columnName] ~= nil and object[columnName] ~= "" then
+        firstColumn = columnName
+        break
+      end
+    end
+    if firstColumn then
+      table.insert(whereConditions, firstColumn .. " = ?")
+      table.insert(whereValues, object[firstColumn])
+    end
+  end
+  
+  local whereClause = table.concat(whereConditions, " AND ")
+  
+  -- Skip existence check if no WHERE clause can be built
+  if #whereConditions == 0 then
+    -- Just insert directly
+    local placeholders = string.rep("?, ", #values - 1) .. "?"
+    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
+    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
+  end
+  
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, whereClause)
   Utils.nkprint(selectQuery, "debug")
+  
   local count = 0
   local stmt = DatabaseManager.db:prepare(selectQuery)
-  stmt:bind(1, object[firstColumn])
+  if not stmt then
+    error("Failed to prepare statement: " .. selectQuery)
+  end
+  
+  for i, value in ipairs(whereValues) do
+    stmt:bind(i, value)
+  end
   for row in stmt:nrows() do
     count = tonumber(row["COUNT(*)"])
   end
   stmt:finalize()
+  
   if count > 0 and canupdate then
-
-      -- Update query with a placeholder for the WHERE clause
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
-
-      -- Execute the query using prepareAndExecute with the bound value for the WHERE clause
-      return DatabaseManager:prepareAndExecute(updateQuery, object[firstColumn])
+      -- Update query with proper WHERE clause
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), whereClause)
+      
+      -- Combine update values and where values
+      local allValues = {}
+      for _, value in ipairs(values) do
+        table.insert(allValues, value)
+      end
+      for _, value in ipairs(whereValues) do
+        table.insert(allValues, value)
+      end
+      
+      return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(allValues))
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)

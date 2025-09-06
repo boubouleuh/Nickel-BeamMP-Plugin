@@ -9,7 +9,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, rolename, playername)
+function command.init(sender_id, sender_name, rolename, playername)
     if rolename == nil or playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.revokerole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -22,42 +22,36 @@ function command.init(sender_id, sender_name, _, rolename, playername)
         return false
     end
 
-    local beammpid = Utils.getPlayerBeamMPID(playername)
+    local target_beammpid = Utils.getPlayerBeamMPID(playername)
 
-    if beammpid ~= nil then
+
+    local target_user = User.getOrCreate(target_beammpid, playername)
+
+    if target_beammpid ~= nil then
         if sender_id ~= -2 then
-            local senderBeammpid = Utils.getPlayerBeamMPID(sender_name)
-            if not PermissionsManager:canManage(senderBeammpid, beammpid) then
+            local sender_beammpid = Utils.getPlayerBeamMPID(sender_name)
+            local sender_user = User.getOrCreate(sender_beammpid, sender_name)
+            if not sender_user:canManage(target_beammpid) then
                 MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
                 return false
             end
-            if not PermissionsManager:canManageRole(senderBeammpid, rolename) then
+            if not sender_user:canManageRole(rolename) then
                 MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
                 return false
             end
         end
 
-        DatabaseManager:withConnection(function()
-            local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
-            if not role then
-                MessagesManager:SendMessage(sender_id, "commands.revokerole.role_not_found", {Role = rolename})
-                return
-            end
-            
-            local existingUserRole = DatabaseManager:getAllEntry(UserRole, {{"beammpid", beammpid}, {"roleID", role.roleID}})
-            if not existingUserRole then
-                MessagesManager:SendMessage(sender_id, "commands.revokerole.does_not_have_role", {Player = playername, Role = rolename})
-            else
-                DatabaseManager:delete(UserRole, {{"beammpid", beammpid}, {"roleID", role.roleID}})
-                MessagesManager:SendMessage(sender_id, "commands.revokerole.success", {Player = playername, Role = rolename})
-            end
-        end)
-        
+        local code = target_user:unassignRole(rolename)
+
+
+        MessagesManager:SendMessage(sender_id, "database.code." .. code)
+
         return true
     else
         MessagesManager:SendMessage(sender_id, "player.not_found", {Player = playername})
         return false
     end
+
 end
 
 RegisterNickelCommand("revokerole", command)

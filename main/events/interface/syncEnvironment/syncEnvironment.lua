@@ -18,7 +18,7 @@ return function(id, environment, force)
         local playerName = MP.GetPlayerName(id)
         local beammpid = Utils.getPlayerBeamMPID(playerName)
         
-        if not PermissionsManager:hasPermissionForAction(beammpid, "editEnvironment") then
+        if not User.findByBeammpid(beammpid):hasPermissionForAction("editEnvironment") then
             MP.TriggerClientEventJson(id, "receiveEnvironment", server_env)
             return
         end

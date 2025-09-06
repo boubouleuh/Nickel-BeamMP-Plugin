@@ -8,7 +8,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, playername)
+function command.init(sender_id, sender_name, playername)
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.unmute.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -20,23 +20,14 @@ function command.init(sender_id, sender_name, _, playername)
     end
 
     local beammpid = Utils.getPlayerBeamMPID(playername)
-
-    DatabaseManager:withConnection(function()
-        local muteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "ismuted"}})
-        local tempMuteStatus = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", "istempmuted"}})
-        
-        if muteStatus or tempMuteStatus then
-            if muteStatus then
-                DatabaseManager:delete(muteStatus)
-            end
-            if tempMuteStatus then
-                DatabaseManager:delete(tempMuteStatus)
-            end
-            MessagesManager:SendMessage(sender_id, "commands.unmute.success", {Player = playername})
-        else
-            MessagesManager:SendMessage(sender_id, "moderation.not_muted", {Player = playername})
-        end
-    end)
+    local user = User.getOrCreate(beammpid, playername)
+    
+    if user:isMuted() or user:isTempMuted() then
+        user:unmute()
+        MessagesManager:SendMessage(sender_id, "commands.unmute.success", {Player = playername})
+    else
+        MessagesManager:SendMessage(sender_id, "moderation.not_muted", {Player = playername})
+    end
 
     return true
 end

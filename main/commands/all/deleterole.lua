@@ -7,7 +7,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, rolename)
+function command.init(sender_id, sender_name, rolename)
     if rolename == nil then
         MessagesManager:SendMessage(sender_id, "commands.deleterole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -18,7 +18,7 @@ function command.init(sender_id, sender_name, _, rolename)
     DatabaseManager:withConnection(function()
         local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
         if role then
-            DatabaseManager:delete(role)
+            DatabaseManager:deleteObject(role)
             MessagesManager:SendMessage(sender_id, "commands.deleterole.success", {Role = rolename})
             
             local onlineplayers = MP.GetPlayers()

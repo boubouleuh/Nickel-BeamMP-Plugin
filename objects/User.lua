@@ -1,4 +1,3 @@
-
 ---@class User
 ---@field tableName string
 ---@field beammpid number
@@ -289,4 +288,208 @@ function User:getActiveStatuses()
     end
     
     return statuses
+end
+
+-- Role management methods
+function User:getRoles()
+    return UserRoleRepository.getUserRolesWithDetails(self.beammpid)
+end
+
+function User:assignRole(rolename)
+    local role = RoleRepository.findByName(rolename)
+    if not role then
+        return "commands.grantrole.role_not_found"
+    end
+    
+    local existingUserRole = UserRoleRepository.findByBeammpidAndRoleId(self.beammpid, role.roleID)
+    if existingUserRole and #existingUserRole > 0 then
+        return "commands.grantrole.already_has_role"
+    end
+    
+    local newUserRole = UserRole.new(self.beammpid, role.roleID)
+    return UserRoleRepository.save(newUserRole)
+end
+
+function User:unassignRole(rolename)
+    local role = RoleRepository.findByName(rolename)
+    if not role then
+        return "commands.grantrole.role_not_found"
+    end
+    
+    if role.is_default == 1 then
+        return "commands.grantrole.cannot_unassign_default_role"
+    end
+    
+    return UserRoleRepository.deleteByBeammpidAndRoleId(self.beammpid, role.roleID)
+end
+
+function User:getHighestRole()
+    local roles = self:getRoles()
+    local highestRole = nil
+    for _, role in ipairs(roles) do
+        if highestRole == nil or role.permlvl > highestRole.permlvl then
+            highestRole = role
+        end
+    end
+    return highestRole
+end
+
+function User:getCommands()
+    local commands = {}
+    local allCommands = CommandRepository.findAll()
+    
+    for _, command in ipairs(allCommands) do
+        if self:hasPermission(command.commandName) then
+            table.insert(commands, command)
+        end
+    end
+    return commands
+end
+
+function User:getActions()
+    local actions = {}
+    local allActions = ActionRepository.findAll()
+    
+    for _, action in ipairs(allActions) do
+        if self:hasPermissionForAction(action.actionName) then
+            table.insert(actions, action)
+        end
+    end
+    return actions
+end
+
+function User:hasPermission(commandname)
+    if self.beammpid == -2 then
+        return true  -- Console has full permission
+    end
+
+    local userRoles = self:getRoles()
+    if not userRoles or #userRoles == 0 then
+        return false
+    end
+
+    local command = CommandRepository.findByName(commandname)
+    if not command then
+        return false
+    end
+
+    -- Check direct role-command permissions
+    for _, userRole in ipairs(userRoles) do
+        local roleCommandEntries = RoleCommandRepository.findByRoleAndCommand(userRole.roleID, command.commandID)
+        if #roleCommandEntries > 0 then
+            return true
+        end
+    end
+
+    -- Check inherited permissions from lower permission levels
+    for _, userRole in ipairs(userRoles) do
+        local role = RoleRepository.findById(userRole.roleID)
+        local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
+
+        while lowerPermissions >= 0 do
+            local lowerRole = RoleRepository.findByPermissionLevel(lowerPermissions)
+            if lowerRole then
+                local lowerRoleCommandEntries = RoleCommandRepository.findByRoleAndCommand(lowerRole.roleID, command.commandID)
+                if #lowerRoleCommandEntries > 0 then
+                    return true
+                end
+            end
+            lowerPermissions = lowerPermissions - 1
+        end
+    end
+    
+    return false
+end
+
+function User:hasPermissionForAction(actionName)
+    if self.beammpid == -2 then
+        return true  -- Console has full permission
+    end
+
+    local userRoles = self:getRoles()
+    if not userRoles or #userRoles == 0 then
+        return false
+    end
+
+    local action = ActionRepository.findByName(actionName)
+    if not action then
+        return false
+    end
+
+    -- Check direct role-action permissions
+    for _, userRole in ipairs(userRoles) do
+        local roleActionEntries = RoleActionRepository.findByRoleAndAction(userRole.roleID, action.actionID)
+        if #roleActionEntries > 0 then
+            return true
+        end
+    end
+
+    -- Check inherited permissions from lower permission levels
+    for _, userRole in ipairs(userRoles) do
+        local role = RoleRepository.findById(userRole.roleID)
+        local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
+
+        while lowerPermissions >= 0 do
+            local lowerRole = RoleRepository.findByPermissionLevel(lowerPermissions)
+            if lowerRole then
+                local lowerRoleActionEntries = RoleActionRepository.findByRoleAndAction(lowerRole.roleID, action.actionID)
+                if #lowerRoleActionEntries > 0 then
+                    return true
+                end
+            end
+            lowerPermissions = lowerPermissions - 1
+        end
+    end
+    
+    return false
+end
+
+-- Administrative role management (instance methods)
+function User:canManageRole(rolename)
+    local managerRoles = self:getRoles()
+    if #managerRoles == 0 then
+        return false
+    end
+
+    local role = RoleRepository.findByName(rolename)
+    if not role then
+        return false
+    end
+
+    for _, managerRole in ipairs(managerRoles) do
+        if managerRole.permlvl > role.permlvl then
+            return true
+        end
+    end
+    return false
+end
+
+function User:canManage(managed_beammpid)
+    local managed = User.findByBeammpid(managed_beammpid)
+    
+    if not managed then
+        return false
+    end
+    
+    local managerRoles = self:getRoles()
+    local managedRoles = managed:getRoles()
+    
+    if #managerRoles == 0 or #managedRoles == 0 then
+        return false
+    end
+
+    local maxManagedRoleLevel = 0
+    for _, managedRole in ipairs(managedRoles) do
+        if managedRole.permlvl > maxManagedRoleLevel then
+            maxManagedRoleLevel = managedRole.permlvl
+        end
+    end
+
+    for _, managerRole in ipairs(managerRoles) do
+        if managerRole.permlvl > maxManagedRoleLevel then
+            return true
+        end
+    end
+
+    return false
 end

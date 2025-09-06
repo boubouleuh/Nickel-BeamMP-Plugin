@@ -9,7 +9,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _, commandName, rolename)
+function command.init(sender_id, sender_name, commandName, rolename)
     if commandName == nil or rolename == nil then
         MessagesManager:SendMessage(sender_id, "commands.grantcommand.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -19,35 +19,42 @@ function command.init(sender_id, sender_name, _, commandName, rolename)
 
     if sender_id ~= -2 then
         local senderBeammpid = Utils.getPlayerBeamMPID(sender_name)
-        if not PermissionsManager:canManageRole(senderBeammpid, rolename) then
+        local senderUser = User.getOrCreate(senderBeammpid, sender_name)
+        
+        if not senderUser:canManageRole(rolename) then
             MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
             return false
         end
     end
 
-    DatabaseManager:withConnection(function()
-        local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
-        if not role then
-            MessagesManager:SendMessage(sender_id, "commands.grantcommand.role_not_found", {Role = rolename})
-            return
-        end
-        
-        local cmd = DatabaseManager:getAllEntry(Command, {{"commandName", commandName}})
-        if not cmd then
-            MessagesManager:SendMessage(sender_id, "commands.grantcommand.command_not_found", {Command = commandName})
-            return
-        end
-        
-        local existingRoleCommand = DatabaseManager:getAllEntry(RoleCommand, {{"roleID", role.roleID}, {"commandID", cmd.commandID}})
-        if existingRoleCommand then
-            MessagesManager:SendMessage(sender_id, "commands.grantcommand.already_has_command", {Role = rolename, Command = commandName})
-        else
-            local roleCommand = RoleCommand.new(role.roleID, cmd.commandID)
-            DatabaseManager:save(roleCommand)
-            MessagesManager:SendMessage(sender_id, "commands.grantcommand.success", {Role = rolename, Command = commandName})
-        end
-    end)
-
+    local role = RoleRepository.findByName(rolename)
+    if not role then
+        MessagesManager:SendMessage(sender_id, "commands.grantcommand.role_not_found", {Role = rolename})
+        return false
+    end
+    
+    local cmd = CommandRepository.findByName(commandName)
+    if not cmd then
+        MessagesManager:SendMessage(sender_id, "commands.grantcommand.command_not_found", {Command = commandName})
+        return false
+    end
+    
+    -- Debug: Print role and command info
+    Utils.nkprint("Debug grantcommand: roleID=" .. tostring(role.roleID) .. " commandID=" .. tostring(cmd.commandID), "info")
+    
+    local existingRoleCommand = RoleCommandRepository.findByRoleAndCommand(role.roleID, cmd.commandID)
+    Utils.nkprint("Debug grantcommand: existing count=" .. tostring(#existingRoleCommand), "info")
+    
+    if existingRoleCommand and #existingRoleCommand > 0 then
+        MessagesManager:SendMessage(sender_id, "commands.grantcommand.already_has_command", {Role = rolename, Command = commandName})
+        return false
+    end
+    
+    local roleCommand = RoleCommand.new(role.roleID, cmd.commandID)
+    local code = RoleCommandRepository.save(roleCommand)
+    Utils.nkprint("Debug grantcommand: save result=" .. tostring(code), "info")
+    MessagesManager:SendMessage(sender_id, "database.code." .. code)
+    
     return true
 end
 

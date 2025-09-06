@@ -6,7 +6,7 @@ local command = {
 }
 
 --- command
-function command.init(sender_id, sender_name, _)
+function command.init(sender_id, sender_name)
     MessagesManager:SendMessage(sender_id, "commands.importLegacyData.not_available")
     return false
 end

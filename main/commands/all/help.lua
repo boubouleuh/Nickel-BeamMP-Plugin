@@ -7,14 +7,11 @@ local command = {
 }
 --- command
 function command.init(sender_id, sender_name)
-    print("[Help Command] Starting help command execution")
     local prefix = ConfigManager.GetSetting("commands").prefix
 
     local li = ""
     
-    print("[Help Command] Available commands in NickelCommands:")
     for commandName in pairs(NickelCommands or {}) do
-        print("[Help Command] - " .. commandName)
         local description = NickelCommands[commandName].description or "No description"
         li = li .. "<li style='color: #A1A1A1; font-weight: bold; font-decoration: underline;'>" .. prefix .. commandName .. " | <span style='color: #F27D16; font-style: italic;'>" .. description .. "</span></li>"
     end

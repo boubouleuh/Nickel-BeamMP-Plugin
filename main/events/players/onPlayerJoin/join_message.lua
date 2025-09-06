@@ -4,7 +4,7 @@ return function(id)
     local beammpid = Utils.getPlayerBeamMPID(playerName)
     
     if beammpid then
-        local highestRole = PermissionsManager:GetHighestRole(beammpid)
+        local highestRole = User.findByBeammpid(beammpid):getHighestRole()
         local roleName = highestRole and highestRole.roleName or "Guest"
         
         local joinMessage = ConfigManager.GetSetting("misc").join_message
