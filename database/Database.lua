@@ -95,7 +95,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   object.tableName = nil
   local columns = {}
   local values = {}
-  local updateColumns = {}
   local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
   
   -- Get primary key columns to build proper WHERE clause
@@ -115,7 +114,6 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     end
 
     table.insert(values, tostring(value))
-    table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
   
   -- Build WHERE clause based on primary key columns
@@ -171,10 +169,14 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   stmt:finalize()
   
   if count > 0 and canupdate then
-      -- Update query with proper WHERE clause
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updateColumns, ", "), whereClause)
+      -- Build UPDATE query with placeholders for prepared statement
+      local updatePlaceholders = {}
+      for _, column in ipairs(columns) do
+        table.insert(updatePlaceholders, column .. " = ?")
+      end
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updatePlaceholders, ", "), whereClause)
       
-      -- Combine update values and where values
+      -- Combine update values and where values for binding
       local allValues = {}
       for _, value in ipairs(values) do
         table.insert(allValues, value)

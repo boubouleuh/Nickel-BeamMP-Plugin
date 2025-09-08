@@ -22,13 +22,16 @@ function command.init(sender_id, sender_name, rolename, permlvl)
     end
 
     DatabaseManager:withConnection(function()
-        local existingRole = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
-        if existingRole then
+        local existingRoles = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
+        if existingRoles and #existingRoles > 0 then
             MessagesManager:SendMessage(sender_id, "commands.createrole.already_exists", {Role = rolename})
         else
-            local newRole = Role.new(rolename, permlvl_num)
-            DatabaseManager:save(newRole)
-            MessagesManager:SendMessage(sender_id, "commands.createrole.success", {Role = rolename, PermLevel = permlvl})
+            local newRole = Role.new(rolename, permlvl_num, false)            
+            local result = DatabaseManager:save(newRole, true)
+            
+
+            MessagesManager:SendMessage(sender_id, "database.code." .. result)
+            
         end
     end)
     

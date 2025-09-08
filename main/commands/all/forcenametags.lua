@@ -17,14 +17,15 @@ function command.init(sender_id, sender_name)
         return false
     end
 
-    local currentValue = SessionManager:getPlayerData(beammpid, "bypassNametags")
-    
+    local currentValue = SessionManager.getData(beammpid, "bypassNametags")
+
+
     -- Basculer entre on/off
     if currentValue == nil or currentValue == "off" then
-        SessionManager:setPlayerData(beammpid, "bypassNametags", "on")
+        SessionManager.set(beammpid, "bypassNametags", "on")    --todo switch to : SessionManager.toggle(beammpid, "bypassNametags")
         currentValue = "on"
     else
-        SessionManager:setPlayerData(beammpid, "bypassNametags", "off")
+        SessionManager.set(beammpid, "bypassNametags", "off")
         currentValue = "off"
     end
 
@@ -32,7 +33,7 @@ function command.init(sender_id, sender_name)
     MP.TriggerClientEventJson(sender_id, "setNickelValue", string.format('{"key": "bypassNametags", "value": "%s"}', currentValue))
     
     MessagesManager:SendMessage(sender_id, "commands.nametags.success", {
-        Prefix = ConfigManager.GetSetting("commands").prefix, 
+        Prefix = ConfigManager.GetSetting("commands").prefix,
         On_Off = currentValue
     })
     

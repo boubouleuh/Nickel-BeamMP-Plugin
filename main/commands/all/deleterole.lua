@@ -16,14 +16,11 @@ function command.init(sender_id, sender_name, rolename)
     rolename = Utils.capitalize(rolename)
 
     DatabaseManager:withConnection(function()
-        local role = DatabaseManager:getAllEntry(Role, {{"roleName", rolename}})
+        local role = DatabaseManager:getEntry(Role, "roleName", rolename)
         if role then
-            DatabaseManager:deleteObject(role)
+            DatabaseManager:deleteObject(Role, {{"roleName", rolename}})
             MessagesManager:SendMessage(sender_id, "commands.deleterole.success", {Role = rolename})
             
-            local onlineplayers = MP.GetPlayers()
-            for id, player in pairs(onlineplayers) do
-            end
         else
             MessagesManager:SendMessage(sender_id, "commands.deleterole.not_found", {Role = rolename})
         end
