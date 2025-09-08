@@ -14,14 +14,6 @@ function Utils.capitalize(str)
   return (str:gsub("^%l", string.upper))
 end
 
-
-function Utils.getLinuxVersion()
-    local handle = io.popen("lsb_release -ds")
-    local result = handle:read("*a")
-    handle:close()
-    return result
-end
-
 function Utils.get_key_for_value( t, value )
     for k,v in pairs(t) do
       if v==value then return k end
