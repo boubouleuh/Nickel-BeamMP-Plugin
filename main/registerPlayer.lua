@@ -27,7 +27,7 @@ function registerPlayer.register(beammpid, name, permManager, msgManager, dbMana
 
         local ipClass, userRoleClass = dbManager:withConnection(function()
             local ipClass = dbManager:getClassByBeammpId(userIp, beammpid)
-            local userRoleClass = dbManager:getClassByBeammpId(userRole, beammpid)
+            local userRoleClass = dbManager:getAllClassByBeammpId(userRole, beammpid)
             return ipClass, userRoleClass
         end)
 

@@ -551,15 +551,14 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
         local parsedList = utils.string_to_table(value)
-        result:setKey(key, parsedList)
+        result[key] = parsedList
       else
-  result:setKey(key, value)
+        result[key] = value
       end
     end
 
     break -- Assuming beammpid is unique, so we break after finding the first match
   end
-
 
   return result
 end
@@ -571,20 +570,25 @@ function DatabaseManager:getAllClassByBeammpId(class, beammpid)
 
   local i = 1
   for row in self.db:nrows(query) do
-    result[i] = class.new();
-
-  
+    -- Create new object instance
+    local obj = class.new()
+    
+    -- Set all properties from database row
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
         local parsedList = utils.string_to_table(value)
-        result[i]:setKey(key, parsedList)
+        obj[key] = parsedList  -- Direct assignment instead of setKey
       else
-  result[i]:setKey(key, value)
+        obj[key] = value  -- Direct assignment instead of setKey
       end
     end
+    
+    -- Ensure tableName is set correctly
+    obj.tableName = tableName
+    
+    result[i] = obj
     i = i + 1
   end
-
 
   return result
 end
