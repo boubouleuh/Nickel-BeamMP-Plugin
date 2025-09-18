@@ -317,3 +317,19 @@ function Utils.tableLength(t)
     end
     return count
 end
+
+---isTruthy |
+-- Check if a value should be considered as boolean true
+-- Recognizes: true, "true", 1, "1" as true
+---@param value any
+---@return boolean
+function Utils.isTruthy(value)
+    if value == true or value == 1 then
+        return true
+    end
+    if type(value) == "string" then
+        local lower = string.lower(value)
+        return lower == "true" or lower == "1"
+    end
+    return false
+end

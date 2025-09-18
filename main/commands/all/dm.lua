@@ -1,6 +1,7 @@
 
 
 local command = {
+    type = "user",
     args = {
         {name = "target_name", type = "string"},
         {name = "message", type = "string"}

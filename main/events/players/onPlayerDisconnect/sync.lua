@@ -2,6 +2,6 @@
 return function(id)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
     if beammpid then
-        SessionManager:clearPlayerSession(beammpid)
+        SessionManager.clear(beammpid)
     end
 end

@@ -1,7 +1,6 @@
 
 
 local command = {
-    type = "global",
     args = {}
 }
 

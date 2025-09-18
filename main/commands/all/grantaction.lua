@@ -1,7 +1,6 @@
 
 
 local command = {
-    type = "user",
     args = {
         {name = "actionName", type = "string"},
         {name = "rolename", type = "string"}

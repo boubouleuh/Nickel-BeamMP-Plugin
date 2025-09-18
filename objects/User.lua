@@ -70,7 +70,7 @@ function User:setLanguage(language)
 end
 
 function User:isWhitelisted()
-    return self.whitelisted
+    return Utils.isTruthy(self.whitelisted)
 end
 
 -- Status methods
@@ -202,6 +202,17 @@ function User:unmute()
 end
 
 -- IP methods
+
+function User:addIp(ip)
+    local existingIp = UserIpRepository.findByUserAndIp(self.beammpid, ip)
+    if existingIp then
+        return
+    end
+    
+    local newUserIp = UserIp.new(self.beammpid, ip)
+    return UserIpRepository.save(newUserIp)
+end
+
 function User:getAllIps()
     return UserIpRepository.findAllByUser(self.beammpid)
 end
@@ -211,7 +222,7 @@ function User:isIpBanned()
     if not ips or type(ips) ~= "table" then return false end
     
     for _, ip in ipairs(ips) do
-        if ip.is_banned == 1 then
+        if Utils.isTruthy(ip.is_banned) then
             return true
         end
     end
@@ -224,7 +235,7 @@ function User:banAllIps()
     
     local count = 0
     for _, ip in ipairs(ips) do
-        if ip.is_banned == 0 then
+        if not Utils.isTruthy(ip.is_banned) then
             ip.is_banned = true
             UserIpRepository.save(ip)
             count = count + 1
@@ -239,7 +250,7 @@ function User:unbanAllIps()
     
     local count = 0
     for _, ip in ipairs(ips) do
-        if ip.is_banned == 1 then
+        if Utils.isTruthy(ip.is_banned) then
             ip.is_banned = false
             UserIpRepository.save(ip)
             count = count + 1
@@ -258,7 +269,7 @@ function User:canConnect()
         return false, "ip_banned"
     end
     
-    if ConfigManager.GetSetting("whitelist") and ConfigManager.GetSetting("whitelist").enabled then
+    if ConfigManager.GetSetting("conditions").whitelist then
         if not self:isWhitelisted() then
             return false, "not_whitelisted"
         end
@@ -276,7 +287,7 @@ function User:getActiveStatuses()
     local allStatuses = UserStatusRepository.findAllByUser(self.beammpid)
     
     for _, status in ipairs(allStatuses) do
-        local isActive = status.is_status_value
+        local isActive = Utils.isTruthy(status.is_status_value)
         if isActive and self:isStatusExpired(status) then
             self:deactivateStatus(status.status_type)
             isActive = false

@@ -137,7 +137,7 @@ function Online.savePlayerAvatarImg(playername, size)
         local body2, code2, headers2, status2 = https.request(url2)
 
         if code2 == 200 then
-            local file_path = string.format(utils.script_path() .. "/player_avatars/%s_avatar.png", json.user.id)
+            local file_path = string.format(Utils.script_path() .. "/player_avatars/%s_avatar.png", json.user.id)
 
             -- Open the file in binary write mode
             local file = io.open(file_path, "wb")

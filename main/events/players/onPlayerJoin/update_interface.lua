@@ -6,7 +6,7 @@ return function(id)
         if beammpid then
             local onlineplayers = MP.GetPlayers()
             for player_id, _ in pairs(onlineplayers) do
-                MP.TriggerClientEventJson(player_id, "updatePlayerData", Utils.playerDataToJson(beammpid))
+                InterfaceUtils.sendPlayer(player_id, beammpid)
             end
         end
     end

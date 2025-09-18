@@ -1,7 +1,6 @@
 
 
 local command = {
-    type = "user",
     args = {
         {name = "addORremove", type = "string"},
         {name = "playername", type = "string"}

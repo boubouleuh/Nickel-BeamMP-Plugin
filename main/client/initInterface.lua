@@ -1,12 +1,11 @@
 
 
-local interfaceUtils = require("main.client.interfaceUtils")
-local interface = {}
+InterfaceManager = {}
 
 --- initialize the interface for a given player
 ---@param id integer
----@param managers managers
-function interface.init(id, managers, offset)
+---@param offset integer|nil
+function InterfaceManager.init(id, offset)
 
     if offset == nil then
         offset = 0
@@ -26,18 +25,16 @@ function interface.init(id, managers, offset)
         serverInfos.server_version = major .. "." .. minor .. "." .. patch
         serverInfos.server_name = Utils.getBeamMPConfig().General.Name
         
-        Utils.RunAsync(interfaceUtils.sendTable, 50, id, "NKgetServerInfos", serverInfos)
-        Utils.RunAsync(interfaceUtils.resetUserInfos, 50, id, PermissionsManager)
-        Utils.RunAsync(interfaceUtils.sendRoles, 50, id, "NKgetRoles", DatabaseManager)
-        Utils.RunAsync(interfaceUtils.sendUserCommands, 50, id, PermissionsManager, CommandsManager)
-        Utils.RunAsync(interfaceUtils.sendGlobalCommands, 50, id, PermissionsManager, CommandsManager)
+        Utils.RunAsync(InterfaceUtils.sendTable, 50, id, "NKgetServerInfos", serverInfos)
+        Utils.RunAsync(InterfaceUtils.resetUserInfos, 50, id)
+        Utils.RunAsync(InterfaceUtils.sendRoles, 50, id, "NKgetRoles")
+        Utils.RunAsync(InterfaceUtils.sendUserCommands, 50, id)
+        Utils.RunAsync(InterfaceUtils.sendGlobalCommands, 50, id)
     end
 
-    Utils.RunAsync(interfaceUtils.sendPlayers, 50, id, offset, DatabaseManager, PermissionsManager, ConfigManager)
+    Utils.RunAsync(InterfaceUtils.sendPlayers, 50, id, offset)
     
-    MP.TriggerLocalEvent("syncEnvironment", id, Util.JsonEncode(ConfigManager.GetSetting("client").environment), managers, true)
-    MP.TriggerLocalEvent("syncInterfaceValues", id, Util.JsonEncode(ConfigManager.GetSetting("client").interfaceValues), managers, true)
+    MP.TriggerLocalEvent("syncEnvironment", id, Util.JsonEncode(ConfigManager.GetSetting("client").environment), nil, true)
+    MP.TriggerLocalEvent("syncInterfaceValues", id, Util.JsonEncode(ConfigManager.GetSetting("client").interfaceValues), nil, true)
 
 end
-
-return interface

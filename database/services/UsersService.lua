@@ -75,7 +75,7 @@ function UsersService.new(beammpid)
     function self:isWhitelisted()
         return DatabaseManager:withConnection(function()
             local user = DatabaseManager:getAllEntry(User, {{"beammpid", self.beammpid}})
-            return user and user.whitelisted == 1
+            return user and Utils.isTruthy(user.whitelisted)
         end)
     end
     

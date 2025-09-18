@@ -1,13 +1,13 @@
 
-local utils = {}
+InterfaceUtils = {}
 
 --- send a string to one client (ONLY PLAYERID)
 ---@param id integer
 ---@param event_name string
 ---@param data string   
-function utils.sendString(id, event_name, data)
+function InterfaceUtils.sendString(id, event_name, data)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
-    if SessionManager:getPlayerData(beammpid, "synced") then
+    if SessionManager.getData(beammpid, "synced") then
         Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
         Utils.nkprint(data, "debug")       
         MP.TriggerClientEvent(id, event_name, data)
@@ -17,10 +17,10 @@ end
 --- send a string to every clients (ONLY PLAYERID)
 ---@param event_name string
 ---@param data string
-function utils.sendStringToAll(event_name, data)
+function InterfaceUtils.sendStringToAll(event_name, data)
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        utils.sendString(i, event_name, data)
+        InterfaceUtils.sendString(i, event_name, data)
     end
 end
 
@@ -28,9 +28,9 @@ end
 ---@param id integer
 ---@param event_name string
 ---@param data table   
-function utils.sendTable(id, event_name, data)
+function InterfaceUtils.sendTable(id, event_name, data)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
-    if SessionManager:getPlayerData(beammpid, "synced") then
+    if SessionManager.getData(beammpid, "synced") then
         Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
         Utils.nkprint(Util.JsonEncode(data), "debug")
         MP.TriggerClientEventJson(id, event_name, data)
@@ -40,19 +40,19 @@ end
 --- send a table to every clients (ONLY PLAYERID)
 ---@param event_name string
 ---@param data table
-function utils.sendTableToAll(event_name, data)
+function InterfaceUtils.sendTableToAll(event_name, data)
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        utils.sendTable(i, event_name, data)
+        InterfaceUtils.sendTable(i, event_name, data)
     end
 end
 
 --- send nothing one client, useful to just trigger a client function when needed (ONLY PLAYERID)
 ---@param id integer
 ---@param event_name string
-function utils.sendNothing(id, event_name)
+function InterfaceUtils.sendNothing(id, event_name)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
-    if SessionManager:getPlayerData(beammpid, "synced") then
+    if SessionManager.getData(beammpid, "synced") then
         Utils.nkprint("(" .. id .. ") [" .. event_name .. "] ", "debug")
         MP.TriggerClientEvent(id, event_name, "")
     end
@@ -60,30 +60,79 @@ end
 
 --- send nothing to every clients, useful to just trigger a client function when needed (ONLY PLAYERID)
 ---@param event_name string
-function utils.sendNothingToAll(event_name)
+function InterfaceUtils.sendNothingToAll(event_name)
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        utils.sendNothing(i, event_name)
+        InterfaceUtils.sendNothing(i, event_name)
     end
 end
 
 --- send every players to client
----@param id integer
+---@param receiver_id integer
 ---@param offset integer
----@param dbManager DatabaseManager
----@param permManager PermissionsHandler
----@param cfgManager Settings
-function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManager)
+function InterfaceUtils.sendPlayers(receiver_id, offset)
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local seeAdvancedUserInfos = permManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
-    local onlineplayers, players = dbManager:withConnection(function()
-        local onlineplayers = MP.GetPlayers()
-        local players = dbManager:getUsersDynamically(-1, 0, onlineplayers, seeAdvancedUserInfos, cfgManager:GetSetting("client").b64avatar)
-        return onlineplayers, players
-    end)
+    local seeAdvancedUserInfos = PermissionsManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
+    local onlinePlayers = MP.GetPlayers()
+    local allUsers = UserRepository.findAll() or {}
+    
+    local players = {}
+    for _, user in ipairs(allUsers) do
+        local playerData = {
+            beammpid = user.beammpid,
+            name = user.name,
+            whitelisted = Utils.isTruthy(user.whitelisted),
+            online = onlinePlayers[Utils.GetPlayerId(user.name)] ~= nil,
+            roles = {},
+            status = {},
+            ips = {}
+        }
+        
+        -- Get user roles
+        local userRoles = UserRoleRepository.findByBeammpid(user.beammpid) or {}
+        for _, userRole in ipairs(userRoles) do
+            local role = RoleRepository.findById(userRole.roleID)
+            if role then
+                table.insert(playerData.roles, {
+                    name = role.roleName,
+                    permlvl = role.permlvl
+                })
+            end
+        end
+        
+        -- Get user status
+        local userStatuses = UserStatusRepository.findAllByUser(user.beammpid) or {}
+        for _, status in ipairs(userStatuses) do
+            if Utils.isTruthy(status.is_status_value) then
+                table.insert(playerData.status, {
+                    status_type = status.status_type,
+                    status_value = status.is_status_value,
+                    reason = status.reason or "",
+                    expiry_time = status.expiry_time
+                })
+            end
+        end
+        
+        -- Get user IPs (only if has permission)
+        if seeAdvancedUserInfos then
+            local userIps = UserIpRepository.findAllByUser(user.beammpid) or {}
+            for _, ipRecord in ipairs(userIps) do
+                if ipRecord.ip then
+                    table.insert(playerData.ips, ipRecord.ip)
+                end
+            end
+        end
+        
+        -- Add avatar if enabled
+        if ConfigManager.GetSetting("client").b64avatar then
+            playerData.b64img = "data:image/png;base64," .. Online.getPlayerB64Img(user.beammpid)
+        end
+        
+        table.insert(players, playerData)
+    end
 
     local maxPacketSize = 30000000 -- 30 MB
     local currentPacket = {}
@@ -94,7 +143,7 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManag
         local playerSize = #playerData
 
         if currentSize + playerSize > maxPacketSize then
-            utils.sendTable(receiver_id, "NKinsertPlayers", currentPacket)
+            InterfaceUtils.sendTable(receiver_id, "NKinsertPlayers", currentPacket)
             currentPacket = {}
             currentSize = 0
         end
@@ -103,34 +152,34 @@ function utils.sendPlayers(receiver_id, offset, dbManager, permManager, cfgManag
     end
 
     if #currentPacket > 0 then
-        utils.sendTable(receiver_id,"NKinsertPlayers", currentPacket)
+        InterfaceUtils.sendTable(receiver_id,"NKinsertPlayers", currentPacket)
     end
 
-    utils.resetUserInfos(receiver_id, permManager)
+    InterfaceUtils.resetUserInfos(receiver_id)
 end
 
-function utils.resetUserInfos(receiver_id, permManager)
+function InterfaceUtils.resetUserInfos(receiver_id)
     local userInfos = {}
     userInfos.self_action_perm = {}
-    local actions = permManager:getActions(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
+    local actions = PermissionsManager:getActions(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
     for _, action in ipairs(actions) do
         table.insert(userInfos.self_action_perm, action.actionName)
     end
-    utils.sendTable(receiver_id, "NKgetUserInfos", userInfos)
+    InterfaceUtils.sendTable(receiver_id, "NKgetUserInfos", userInfos)
 end
 
-function utils.resetAllUserInfos(permManager)
+function InterfaceUtils.resetAllUserInfos()
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        utils.resetUserInfos(i, permManager)
+        InterfaceUtils.resetUserInfos(i)
     end
 end
 
-function utils.sendUserCommands(receiver_id, permManager, commandsHandler)
+function InterfaceUtils.sendUserCommands(receiver_id)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
-    local commands = permManager:getCommands(beammpid)
+    local commands = PermissionsManager:getCommands(beammpid)
     local userCommands = {}
-    local commandCache = commandsHandler:GetCommands()
+    local commandCache = CommandsManager:GetCommands()
     for i, v in ipairs(commands) do
         local command = commandCache[v.commandName]
         if command then
@@ -142,14 +191,14 @@ function utils.sendUserCommands(receiver_id, permManager, commandsHandler)
             end
         end
     end
-    utils.sendTable(receiver_id, "NKgetUserCommands", userCommands)
+    InterfaceUtils.sendTable(receiver_id, "NKgetUserCommands", userCommands)
 end
 
-function utils.sendGlobalCommands(receiver_id, permManager, commandsHandler)
+function InterfaceUtils.sendGlobalCommands(receiver_id)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
-    local commands = permManager:getCommands(beammpid)
+    local commands = PermissionsManager:getCommands(beammpid)
     local globalCommands = {}
-    local commandCache = commandsHandler:GetCommands()
+    local commandCache = CommandsManager:GetCommands()
     for i, v in ipairs(commands) do
         local command = commandCache[v.commandName]
         if command then
@@ -162,48 +211,87 @@ function utils.sendGlobalCommands(receiver_id, permManager, commandsHandler)
             end
         end
     end
-    utils.sendTable(receiver_id, "NKgetGlobalCommands", globalCommands)
+    InterfaceUtils.sendTable(receiver_id, "NKgetGlobalCommands", globalCommands)
 end
 
 --- send one player to client
----@param id integer
----@param dbManager DatabaseManager
----@param permManager PermissionsHandler
----@param cfgManager Settings
+---@param receiver_id integer
 ---@param beammpid integer
-function utils.sendPlayer(receiver_id, dbManager, permManager, cfgManager, beammpid)
+function InterfaceUtils.sendPlayer(receiver_id, beammpid)
     if receiver_id < 0 then
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local player = dbManager:withConnection(function()
-        local player = dbManager:getUserWithRoles(beammpid, permManager, cfgManager:GetSetting("client").b64avatar)
-        return player
-    end)
-
-    if not permManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
-        player.ips = {}
+    local user = UserRepository.findByBeammpid(beammpid)
+    if not user then
+        return
     end
-    utils.resetUserInfos(receiver_id, permManager)
-    utils.sendTable(receiver_id, "NKinsertPlayers", {player})
+
+    local onlinePlayers = MP.GetPlayers()
+    local playerData = {
+        beammpid = user.beammpid,
+        name = user.name,
+        whitelisted = Utils.isTruthy(user.whitelisted),
+        online = onlinePlayers[Utils.GetPlayerId(user.name)] ~= nil,
+        roles = {},
+        status = {},
+        ips = {}
+    }
+    
+    -- Get user roles
+    local userRoles = UserRoleRepository.findByBeammpid(user.beammpid) or {}
+    for _, userRole in ipairs(userRoles) do
+        local role = RoleRepository.findById(userRole.roleID)
+        if role then
+            table.insert(playerData.roles, {
+                name = role.roleName,
+                permlvl = role.permlvl
+            })
+        end
+    end
+    
+    -- Get user status
+    local userStatuses = UserStatusRepository.findByBeammpid(user.beammpid) or {}
+    for _, status in ipairs(userStatuses) do
+        if Utils.isTruthy(status.is_status_value) then
+            table.insert(playerData.status, {
+                status_type = status.status_type,
+                status_value = status.is_status_value,
+                reason = status.reason or "",
+                expiry_time = status.expiry_time
+            })
+        end
+    end
+    
+    -- Get user IPs (only if has permission)
+    if PermissionsManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
+        local userIps = UserIpRepository.findByBeammpid(user.beammpid) or {}
+        for _, ipRecord in ipairs(userIps) do
+            if ipRecord.ip then
+                table.insert(playerData.ips, ipRecord.ip)
+            end
+        end
+    end
+    
+    -- Add avatar if enabled
+    if ConfigManager.GetSetting("client").b64avatar then
+        playerData.b64img = "data:image/png;base64," .. Online.getPlayerB64Img(user.beammpid)
+    end
+
+    InterfaceUtils.resetUserInfos(receiver_id)
+    InterfaceUtils.sendTable(receiver_id, "NKinsertPlayers", {playerData})
 end
 
 --- send every roles to client
 ---@param id integer
 ---@param event_name string
----@param dbManager DatabaseManager
-function utils.sendRoles(id, event_name, dbManager)
-    local roles = dbManager:withConnection(function()
-        local roles = dbManager:getAllEntry(Roles)
-        return roles
-    end)
+function InterfaceUtils.sendRoles(id, event_name)
+    local roles = RoleRepository.findAll()
 
     local rolesfinal = {}
     for i, v in pairs(roles) do
         table.insert(rolesfinal, {permlvl = v.permlvl, roleName = v.roleName})
     end
 
-    utils.sendTable(id, event_name, rolesfinal)
+    InterfaceUtils.sendTable(id, event_name, rolesfinal)
 end
-
-return utils

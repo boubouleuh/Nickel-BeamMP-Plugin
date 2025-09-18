@@ -13,6 +13,13 @@ function UserRepository.findByBeammpid(beammpid)
     end)
 end
 
+---Find all users
+function UserRepository.findAll()
+    return DatabaseManager:withConnection(function()
+        return DatabaseManager:getAllEntry(User)
+    end)
+end
+
 ---Save user to database
 ---@param user User
 ---@return boolean
