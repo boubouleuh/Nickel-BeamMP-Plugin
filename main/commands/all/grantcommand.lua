@@ -38,12 +38,7 @@ function command.init(sender_id, sender_name, commandName, rolename)
         MessagesManager:SendMessage(sender_id, "commands.grantcommand.command_not_found", {Command = commandName})
         return false
     end
-    
-    -- Debug: Print role and command info
-    Utils.nkprint("Debug grantcommand: roleID=" .. tostring(role.roleID) .. " commandID=" .. tostring(cmd.commandID), "info")
-    
     local existingRoleCommand = RoleCommandRepository.findByRoleAndCommand(role.roleID, cmd.commandID)
-    Utils.nkprint("Debug grantcommand: existing count=" .. tostring(#existingRoleCommand), "info")
     
     if existingRoleCommand and #existingRoleCommand > 0 then
         MessagesManager:SendMessage(sender_id, "commands.grantcommand.already_has_command", {Role = rolename, Command = commandName})
@@ -52,7 +47,6 @@ function command.init(sender_id, sender_name, commandName, rolename)
     
     local roleCommand = RoleCommand.new(role.roleID, cmd.commandID)
     local code = RoleCommandRepository.save(roleCommand)
-    Utils.nkprint("Debug grantcommand: save result=" .. tostring(code), "info")
     MessagesManager:SendMessage(sender_id, "database.code." .. code)
     
     return true
