@@ -72,6 +72,36 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
  - `whitelist <add/remove> <playername>` Add or remove a player from the whitelist
  - `countdown <duration>` Start a countdown
 
+## Database Configuration
+
+Nickel supports multiple database types for data persistence:
+
+### SQLite (Default)
+SQLite is the default database and requires no additional setup:
+```toml
+[sync]
+database_type = "sqlite"
+database_file = "database/nickel.sqlite"
+```
+
+### MySQL
+For larger deployments or multi-server setups, MySQL is supported:
+```toml
+[sync]
+database_type = "mysql"
+mysql_host = "localhost"
+mysql_port = 3306
+mysql_database = "nickel_beammp"
+mysql_username = "your_username"
+mysql_password = "your_password"
+```
+
+**Requirements for MySQL:**
+- MySQL server installation
+- `luasql-mysql` library (install using `scripts/install_mysql.sh`)
+
+For detailed setup instructions, see `database/DATABASE_CONFIG.md` and `database/MIGRATION_GUIDE.md`.
+
 
 
 

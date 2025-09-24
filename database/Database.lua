@@ -1,35 +1,201 @@
--- Database Management Class
+-- Database Management Class (Global Manager with MySQL/SQLite support)
 DatabaseManager = {}
 
-function DatabaseManager.init()
-  local configDatabaseFile = ConfigManager.GetSetting("sync").database_file
+local config = {}
 
-  if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
-      DatabaseManager.dbname = configDatabaseFile
-      Utils.nkprint("Using custom database: " .. configDatabaseFile, "info")
+function DatabaseManager.init()
+  local configDatabaseFile = ConfigManager.GetSetting("database").file
+  local configDatabaseType = ConfigManager.GetSetting("database").type or "sqlite"
+
+  -- Build configuration
+  config.database_type = configDatabaseType
+
+  if configDatabaseType == "mysql" then
+    -- MySQL configuration
+    config.mysql_host = ConfigManager.GetSetting("database").host or "localhost"
+    config.mysql_port = ConfigManager.GetSetting("database").port or 3306
+    config.mysql_database = ConfigManager.GetSetting("database").name or "nickel_beammp"
+    config.mysql_username = ConfigManager.GetSetting("database").username or "root"
+    config.mysql_password = ConfigManager.GetSetting("database").password or ""
+    
+    Utils.nkprint("Using MySQL database: " .. config.mysql_host .. ":" .. config.mysql_port .. "/" .. config.mysql_database, "info")
+    
+    -- Create adapter using factory
+    if DatabaseFactory.validateConfig(config) then
+      DatabaseManager.adapter = DatabaseFactory.createAdapter(config)
+      DatabaseManager.db = DatabaseManager.adapter
+    else
+      error("Invalid MySQL configuration")
+    end
   else
-      Utils.nkprint("No database set in config, now using default path", "info") 
-      DatabaseManager.dbname = Utils.script_path() .. "database/db.sqlite"
+    -- SQLite configuration (fallback and default)
+    if configDatabaseFile ~= "" and configDatabaseFile ~= nil then
+        config.database_file = Utils.script_path() .. configDatabaseFile
+        DatabaseManager.dbname = config.database_file
+        Utils.nkprint("Using custom SQLite database: " .. config.database_file, "info")
+    else
+        Utils.nkprint("No database set in config, using default SQLite path", "info") 
+        config.database_file = Utils.script_path() .. "database/db.sqlite"
+        DatabaseManager.dbname = config.database_file
+    end
+    
+
+     
+    DatabaseManager.adapter = DatabaseFactory.createAdapter(config)
+    DatabaseManager.db = DatabaseManager.adapter
+
   end
 end
 
 function DatabaseManager:createTableIfNotExists(tableName, columns)
-  local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(columns, ", "))
+  local processed = {}
+  for _, col in ipairs(columns) do
+    local trimmed = col:gsub("^%s+", ""):gsub("%s+$", "")
+    if trimmed ~= "" then
+      table.insert(processed, trimmed)
+    end
+  end
+    if config.database_type == "sqlite" then
+      local sqliteParts = {}
+      for _, raw in ipairs(columns) do
+        local line = (raw or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if line ~= "" then
+          local cleaned = line:gsub(",+$", "") -- gsub returns (str, count); avoid passing count to table.insert
+          table.insert(sqliteParts, cleaned)
+        end
+      end
+      local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(sqliteParts, ", "))
+      Utils.nkprint("DDL(SQLite): " .. query, "info")
+      local ok, err = pcall(function() DatabaseManager.db:exec(query) end)
+      if not ok then
+        error("Failed DDL (SQLite) for table " .. tableName .. ": " .. query .. " | " .. tostring(err))
+      end
+      return
+    end
 
-  DatabaseManager.db:exec(query)
+    local colDefs = {}
+    local pkDefs = {}
+    local fkDefs = {}
+    local idxDefs = {}
+    local otherConstraints = {}
+    local hasAutoPK = {}
+
+    local function quoteIdent(name)
+      if not name then return name end
+      if name:match("`") then return name end
+      if name:match("^[A-Za-z0-9_]+$") then
+        return "`" .. name .. "`"
+      end
+      return name
+    end
+
+    for _, raw in ipairs(columns) do
+      local line = (raw or ""):gsub("^%s+", ""):gsub("%s+$", "")
+      if line ~= "" then
+        line = line:gsub(",+$", "")
+        local upper = line:upper()
+          if upper:match("^FOREIGN KEY") then
+            local colPart = line:match("FOREIGN KEY%s*%(([^)]+)%)") or ""
+            local refTable, refCols = line:match("REFERENCES%s+([A-Za-z0-9_`]+)%s*%(([^)]+)%)")
+            local rest = line:match("%)%s+REFERENCES[^(]+%([^)]*%)(.+)$") or ""
+            local firstCol = colPart:match("[^,%s]+") or "fkcol"
+            local constraintName
+            if refTable then
+              local cleanRef = refTable:gsub("`", "")
+              constraintName = string.format("`fk_%s_%s_%s`", tableName, cleanRef, firstCol)
+            else
+              constraintName = string.format("`fk_%s_%s`", tableName, firstCol)
+            end
+            -- Quoter les listes de colonnes
+            local function quoteCols(list)
+              local out = {}
+              for c in list:gmatch("[^,%s]+") do
+                c = c:gsub("`", "")
+                table.insert(out, quoteIdent(c))
+              end
+              return table.concat(out, ", ")
+            end
+            local fkColsQuoted = quoteCols(colPart)
+            local refColsQuoted = refCols and quoteCols(refCols) or ""
+            local refTableQuoted = refTable and quoteIdent(refTable:gsub("`", "")) or refTable or ""
+            local rebuilt = string.format("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s(%s)%s", constraintName, fkColsQuoted, refTableQuoted, refColsQuoted, rest)
+            table.insert(fkDefs, rebuilt)
+        elseif upper:match("^PRIMARY KEY") then
+          table.insert(pkDefs, line)
+        else
+          local colName, rest = line:match("^(%S+)%s+(.+)$")
+          if colName and rest then
+              local mapped = rest
+              mapped = mapped:gsub("INTEGER PRIMARY KEY AUTOINCREMENT", "INT PRIMARY KEY AUTO_INCREMENT")
+              mapped = mapped:gsub("INTEGER PRIMARY KEY", "INT PRIMARY KEY AUTO_INCREMENT")
+              mapped = mapped:gsub("BOOLEAN", "TINYINT(1)")
+              if mapped:find("PRIMARY KEY") then
+                hasAutoPK[colName] = true
+              end
+              table.insert(colDefs, string.format("%s %s", quoteIdent(colName), mapped))
+          else
+            table.insert(otherConstraints, line)
+          end
+        end
+      end
+    end
+
+    local seenIdx = {}
+    for _, fk in ipairs(fkDefs) do
+      local colList = fk:match("FOREIGN KEY%s*%(([^)]+)%)")
+      if colList then
+        for col in colList:gmatch("[^,%s]+") do
+          local rawCol = col:gsub("`", "")
+          if not hasAutoPK[rawCol] and not seenIdx[rawCol] then
+            table.insert(idxDefs, string.format("KEY idx_%s_%s (%s)", tableName, rawCol, quoteIdent(rawCol)))
+            seenIdx[rawCol] = true
+          end
+        end
+      end
+    end
+
+    local parts = {}
+    for _, v in ipairs(colDefs) do table.insert(parts, v) end
+    for _, v in ipairs(pkDefs) do table.insert(parts, v) end
+    for _, v in ipairs(idxDefs) do table.insert(parts, v) end
+    for _, v in ipairs(otherConstraints) do table.insert(parts, v) end
+    for _, v in ipairs(fkDefs) do table.insert(parts, v) end
+
+    Utils.nkprint(string.format(
+      "DDL(BuildDebug) table=%s colDefs=%d pk=%d idx=%d other=%d fk=%d firstPart='%s'",
+      tableName, #colDefs, #pkDefs, #idxDefs, #otherConstraints, #fkDefs, parts[1] or "<nil>"
+    ), "info")
+
+    if (#colDefs == 0) and (#parts > 0) then
+      local fallbackCol = "`_dummy_id` INT PRIMARY KEY AUTO_INCREMENT"
+      Utils.nkprint("WARN: aucune définition de colonne détectée avant contraintes pour " .. tableName .. ", insertion colonne fallback.", "warn")
+      table.insert(parts, 1, fallbackCol)
+    elseif parts[1] and parts[1]:match("^FOREIGN KEY") then
+      local fallbackCol = "`_dummy_id` INT PRIMARY KEY AUTO_INCREMENT"
+      Utils.nkprint("WARN: première entrée est FOREIGN KEY pour " .. tableName .. ", ajout colonne fallback.", "warn")
+      table.insert(parts, 1, fallbackCol)
+    end
+
+    local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s) ENGINE=InnoDB", tableName, table.concat(parts, ", "))
+    Utils.nkprint("DDL(MySQL): " .. query, "info")
+    local ok, err = pcall(function() DatabaseManager.db:exec(query) end)
+    if not ok then
+      error("Failed DDL (MySQL) for table " .. tableName .. ": " .. query .. " | " .. tostring(err))
+    end
 end
-
 
 function DatabaseManager:returnQuery(query)
   local msg = DatabaseManager.db:exec(query)
   Utils.nkprint(query, "debug")
   Utils.nkprint("Changes = " .. DatabaseManager.db:changes(), "debug")
+  if msg == "nickel.nochange" then
+    return msg
+  end
   if DatabaseManager.db:changes() == 0 then
     return "nickel.nochange"
   end
-  return msg
+  return 0
 end
-
 
 function DatabaseManager:prepareAndExecute(query, ...)
     local max_attempts = 3
@@ -49,44 +215,28 @@ function DatabaseManager:prepareAndExecute(query, ...)
         end
 
         -- Execute the statement
-        local result = stmt:step()
-        
-        Utils.nkprint(query, "debug")
-        Utils.nkprint("Changes = " .. DatabaseManager.db:changes(), "debug")
+    local result = stmt:step()
+    Utils.nkprint(query, "debug")
+    Utils.nkprint("Changes = " .. DatabaseManager.db:changes(), "debug")
 
-        if result == 5 then -- SQLITE_BUSY (database locked)
+    if result == 5 then -- SQLITE_BUSY (database locked)
             stmt:finalize()
             attempts = attempts + 1
             Utils.nkprint("Database locked, retrying (" .. attempts .. "/" .. max_attempts .. ")", "warn")
             MP.Sleep(delay_seconds)
         else
-            -- Normal processing
-            if DatabaseManager.db:changes() == 0 then
-                stmt:finalize()
-                return "nickel.nochange"
-            end
-            
-            stmt:finalize()
-            return result
+      local changes = DatabaseManager.db:changes()
+      stmt:finalize()
+      if changes == 0 then
+        return "nickel.nochange"
+      else
+        return 0
+      end
         end
     end
     
     -- If we get here, all attempts failed
     error("Failed to execute query after " .. max_attempts .. " attempts (database locked)")
-end
-
-
-function DatabaseManager:getTablePrimaryKeyColumns(tableName)
-    local query = string.format("PRAGMA table_info(%s)", tableName)
-    local primaryKeys = {}
-    
-    for row in DatabaseManager.db:nrows(query) do
-        if row.pk and row.pk > 0 then  -- pk > 0 means it's part of primary key
-            table.insert(primaryKeys, row.name)
-        end
-    end
-    
-    return primaryKeys
 end
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
@@ -95,11 +245,15 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   object.tableName = nil
   local columns = {}
   local values = {}
+  local updateColumns = {}
   local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
-  
-  -- Get primary key columns to build proper WHERE clause
-  local primaryKeyColumns = DatabaseManager:getTablePrimaryKeyColumns(tableName)
-  
+  local firstColumn
+  for _, columnName in ipairs(columnsOrder) do
+    if object[columnName] ~= nil and object[columnName] ~= "" then
+      firstColumn = columnName
+      break
+    end
+  end
   for key, value in pairs(object) do
     table.insert(columns, key)
     if type(value) == "table" then
@@ -114,78 +268,24 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     end
 
     table.insert(values, tostring(value))
+    table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
   end
-  
-  -- Build WHERE clause based on primary key columns
-  local whereConditions = {}
-  local whereValues = {}
-  for _, pkColumn in ipairs(primaryKeyColumns) do
-    if object[pkColumn] ~= nil then
-      table.insert(whereConditions, pkColumn .. " = ?")
-      table.insert(whereValues, object[pkColumn])
-    end
-  end
-  
-  -- If no primary key columns found, fall back to first column method
-  if #whereConditions == 0 then
-    local firstColumn
-    for _, columnName in ipairs(columnsOrder) do
-      if object[columnName] ~= nil and object[columnName] ~= "" then
-        firstColumn = columnName
-        break
-      end
-    end
-    if firstColumn then
-      table.insert(whereConditions, firstColumn .. " = ?")
-      table.insert(whereValues, object[firstColumn])
-    end
-  end
-  
-  local whereClause = table.concat(whereConditions, " AND ")
-  
-  -- Skip existence check if no WHERE clause can be built
-  if #whereConditions == 0 then
-    -- Just insert directly
-    local placeholders = string.rep("?, ", #values - 1) .. "?"
-    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
-    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
-  end
-  
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, whereClause)
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   Utils.nkprint(selectQuery, "debug")
-  
   local count = 0
   local stmt = DatabaseManager.db:prepare(selectQuery)
-  if not stmt then
-    error("Failed to prepare statement: " .. selectQuery)
-  end
-  
-  for i, value in ipairs(whereValues) do
-    stmt:bind(i, value)
-  end
+  stmt:bind(1, object[firstColumn])
   for row in stmt:nrows() do
     count = tonumber(row["COUNT(*)"])
   end
   stmt:finalize()
-  
   if count > 0 and canupdate then
-      -- Build UPDATE query with placeholders for prepared statement
-      local updatePlaceholders = {}
-      for _, column in ipairs(columns) do
-        table.insert(updatePlaceholders, column .. " = ?")
-      end
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s", tableName, table.concat(updatePlaceholders, ", "), whereClause)
-      
-      -- Combine update values and where values for binding
-      local allValues = {}
-      for _, value in ipairs(values) do
-        table.insert(allValues, value)
-      end
-      for _, value in ipairs(whereValues) do
-        table.insert(allValues, value)
-      end
-      
-      return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(allValues))
+
+      -- Update query with a placeholder for the WHERE clause
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
+
+      -- Execute the query using prepareAndExecute with the bound value for the WHERE clause
+      return DatabaseManager:prepareAndExecute(updateQuery, object[firstColumn])
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
@@ -197,9 +297,9 @@ end
 
 
 function DatabaseManager:getEntry(class, columnName, columnValue)
-  
+
   local tableName = class.tableName
-  print("Getting entry from table: " .. tableName .. " where " .. columnName .. " = " .. tostring(columnValue)) -- Debug print
+
 
   local query = string.format("SELECT * FROM %s WHERE %s = ?", tableName, columnName)
   local stmt = DatabaseManager.db:prepare(query)
@@ -268,12 +368,17 @@ function DatabaseManager:createTableForClass(class)
       local existingColumnsFinal = {}
       local columnsFinal = {}
 
+      local foreignConstraints = {}
+
       for key2, _ in pairs(existingColumns) do
           table.insert(existingColumnsFinal, key2)
       end
 
       for key, column in ipairs(columns) do
         local colName = column:match("^(%S+)")
+        if colName and colName:upper() == "FOREIGN" then
+          table.insert(foreignConstraints, column)
+        end
         local finalKey = Utils.get_key_for_value(existingColumnsFinal, colName)
         if finalKey ~= nil then
           columnsFinal[finalKey] = colName
@@ -287,35 +392,111 @@ function DatabaseManager:createTableForClass(class)
           local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
           
           DatabaseManager:returnQuery(alterQuery)
-          -- self.db:exec(alterQuery)
+          -- DatabaseManager.db:exec(alterQuery)
         end
       end
 
     -- Ajoutez les colonnes manquantes
+    local pendingPrimaryKey = nil
+    for _, rawcol in ipairs(columns) do
+      local upper = rawcol:upper()
+      if upper:match("^PRIMARY KEY") then
+        pendingPrimaryKey = rawcol -- Ex: PRIMARY KEY (beammpid, roleID)
+      end
+    end
+
     for _, column in ipairs(columns) do
-      local colName = column:match("^(%S+)")
+      local trimmed = column:gsub("^%s+", "")
+      if trimmed:upper():match("^FOREIGN KEY") then
+        goto continue_col_add
+      end
+      if trimmed:upper():match("^PRIMARY KEY") then
+        goto continue_col_add
+      end
+      local colName = trimmed:match("^(%S+)")
       if not existingColumns[colName] then
-
-
+        local working = trimmed
         local alterQuery
-
         local isUnique = false
-        if column:find("UNIQUE") ~= nil then
-          column = column:gsub(" UNIQUE", "")
+        if working:find("UNIQUE") ~= nil then
+          working = working:gsub(" UNIQUE", "")
           isUnique = true
         end
-        if column:find("NOT NULL") ~= nil then
-          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s %s", tableName, column, "DEFAULT " .. class:getKey(column:match("^(%S+)%s")))
-        else  
-          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, column)
+        if working:find("NOT NULL") ~= nil then
+          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s %s", tableName, working, "DEFAULT " .. tostring(class:getKey(working:match("^(%S+)%s")) or "''"))
+        else
+          alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, working)
         end
+        Utils.nkprint("ALTER ADD COLUMN: " .. alterQuery, "info")
         DatabaseManager:returnQuery(alterQuery)
         if isUnique then
-          local query = string.format("CREATE UNIQUE INDEX idx_unique_%s ON %s(%s)", column:match("^(%S+)%s"), tableName, column:match("^(%S+)%s"))
-          DatabaseManager:returnQuery(query)
-
+          local baseCol = working:match("^(%S+)%s")
+          if baseCol then
+            local query = string.format("CREATE UNIQUE INDEX idx_unique_%s ON %s(%s)", baseCol, tableName, baseCol)
+            Utils.nkprint("CREATE UNIQUE INDEX: " .. query, "info")
+            DatabaseManager:returnQuery(query)
+          end
         end
-        -- self.db:exec(alterQuery)
+        -- DatabaseManager.db:exec(alterQuery)
+      end
+      ::continue_col_add::
+    end
+
+    -- Ajout des FOREIGN KEY manquantes (MySQL uniquement pour l'instant)
+    if config.database_type == "mysql" and #foreignConstraints > 0 then
+      local existingCreate = ""
+      for row in DatabaseManager.db:nrows("SHOW CREATE TABLE " .. tableName) do
+        existingCreate = row["Create Table"] or ""
+        break
+      end
+      for _, fkLine in ipairs(foreignConstraints) do
+        local colPart = fkLine:match("FOREIGN KEY%s*%(([^)]+)%)") or ""
+        local refTable, refCols = fkLine:match("REFERENCES%s+([A-Za-z0-9_`]+)%s*%(([^)]+)%)")
+        if colPart ~= "" and refTable and refCols then
+          local firstCol = colPart:match("[^,%s]+") or "fkcol"
+          local cleanRef = refTable:gsub("`", "")
+          local constraintName = string.format("fk_%s_%s_%s", tableName, cleanRef, firstCol)
+          if not existingCreate:find(constraintName, 1, true) then
+            -- Construire contrainte
+            local function quoteCols(list)
+              local out = {}
+              for c in list:gmatch("[^,%s]+") do
+                c = c:gsub("`", "")
+                table.insert(out, "`" .. c .. "`")
+              end
+              return table.concat(out, ", ")
+            end
+            local fkColsQuoted = quoteCols(colPart)
+            local refColsQuoted = quoteCols(refCols)
+            local refTableQuoted = "`" .. cleanRef .. "`"
+            local rest = fkLine:match("%)%s+REFERENCES[^(]+%([^)]*%)(.+)$") or ""
+            local alterFk = string.format("ALTER TABLE %s ADD CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES %s(%s)%s", tableName, constraintName, fkColsQuoted, refTableQuoted, refColsQuoted, rest)
+            Utils.nkprint("ALTER ADD FK: " .. alterFk, "info")
+            local okFk, errFk = pcall(function() DatabaseManager.db:exec(alterFk) end)
+            if not okFk then
+              Utils.nkprint("Failed to add FK '" .. constraintName .. "': " .. tostring(errFk), "warn")
+            end
+          end
+        end
+      end
+    end
+
+    if config.database_type == "mysql" and pendingPrimaryKey then
+      local hasPK = false
+      for row in DatabaseManager.db:nrows("SHOW INDEX FROM " .. tableName .. " WHERE Key_name = 'PRIMARY'") do
+        hasPK = true
+        break
+      end
+      if not hasPK then
+        local pkCols = pendingPrimaryKey:match("PRIMARY KEY%s*%(([^)]+)%)")
+        if pkCols then
+          local pkAlter = string.format("ALTER TABLE %s ADD PRIMARY KEY (%s)", tableName, pkCols)
+          Utils.nkprint("ALTER ADD PRIMARY KEY: " .. pkAlter, "info")
+          local okPk, errPk = pcall(function() DatabaseManager.db:exec(pkAlter) end)
+          if not okPk then
+            Utils.nkprint("Failed to add PRIMARY KEY on " .. tableName .. ": " .. tostring(errPk), "warn")
+          end
+        end
       end
     end
   end
@@ -338,8 +519,11 @@ function DatabaseManager:getAllEntry(class, conditions)
   end
 
   local results = {}
-
+  Utils.nkprint("getAllEntry query: " .. query, "debug")
+  
+  local count = 0
   for row in DatabaseManager.db:nrows(query) do
+    count = count + 1
     local result = class.new()
 
     for key, value in pairs(row) do
@@ -390,21 +574,29 @@ function DatabaseManager:getAllClassByBeammpId(class, beammpid)
 
   local i = 1
   for row in DatabaseManager.db:nrows(query) do
-    result[i] = class.new();
-
+    -- Create new object instance
+    local obj = class.new()
+    
+    -- Set all properties from database row
     for key, value in pairs(row) do
       if type(value) == "string" and value:find("{") and value:find("}") then
         local parsedList = Utils.string_to_table(value)
-        result[i][key] = parsedList  -- Direct assignment instead of setKey
+        obj[key] = parsedList  -- Direct assignment instead of setKey
       else
-        result[i][key] = value  -- Direct assignment instead of setKey
+        obj[key] = value  -- Direct assignment instead of setKey
       end
     end
+    
+    -- Ensure tableName is set correctly
+    obj.tableName = tableName
+    
+    result[i] = obj
     i = i + 1
   end
 
   return result
 end
+
 
 
 
@@ -456,7 +648,7 @@ end
 
 --   print(selectQuery)
 
---   local stmt = self.db:prepare(selectQuery)
+--   local stmt = DatabaseManager.db:prepare(selectQuery)
 --   stmt:bind(1, limit)
 --   stmt:bind(2, offset)
 
@@ -506,7 +698,6 @@ end
 ---@param limit integer
 ---@param offset integer
 ---@param onlinePlayers table
----@param permManager PermissionsHandler
 function DatabaseManager:getUsersDynamically(limit, offset, onlinePlayers, seeAdvancedUserInfos, allowbase64)
   -- Get a set of online player beammpids
   local onlineBeammpids = {}
@@ -749,7 +940,7 @@ end
 -- function DatabaseManager:likeSearchUserWithRoles(name, permManager)
 --   local users = {}
 --   local query = "SELECT * FROM users WHERE name LIKE ? LIMIT 50"
---   local stmt = self.db:prepare(query)
+--   local stmt = DatabaseManager.db:prepare(query)
 --   if not stmt then
 --       error("Failed to prepare statement: " .. query)
 --   end
@@ -759,7 +950,7 @@ end
 
 --   -- Execute the statement and iterate over the results
 --   for row in stmt:nrows() do
---       local user = self:getUserWithRoles(row.beammpid, permManager)
+--       local user = DatabaseManager:getUserWithRoles(row.beammpid, permManager)
 --       table.insert(users, user)
 --   end
 
@@ -772,55 +963,89 @@ end
 
 
 function DatabaseManager:getTableColumns(tableName)
-
-
   local existingColumns = {}
-  local query = string.format("PRAGMA table_info(%s)", tableName)
-
-  for row in DatabaseManager.db:nrows(query) do
-    existingColumns[row.name] = true
+  local query
+  
+  if config.database_type == "sqlite" then
+    query = string.format("PRAGMA table_info(%s)", tableName)
+    for row in DatabaseManager.db:nrows(query) do
+      existingColumns[row.name] = true
+    end
+  elseif config.database_type == "mysql" then
+    query = string.format("SHOW COLUMNS FROM %s", tableName)
+    for row in DatabaseManager.db:nrows(query) do
+      existingColumns[row.Field] = true
+    end
   end
 
   return existingColumns
 end
 
 function DatabaseManager:getTableColumnsName(tableName)
-
   local columns = {}
-  for row in DatabaseManager.db:nrows("PRAGMA table_info(" .. tableName .. ")") do
-    table.insert(columns, row.name)
+  local query
+  if config.database_type == "sqlite" then
+    query = "PRAGMA table_info(" .. tableName .. ")"
+    for row in DatabaseManager.db:nrows(query) do
+      table.insert(columns, row.name)
+    end
+  elseif config.database_type == "mysql" then
+    query = "SHOW COLUMNS FROM " .. tableName
+    for row in DatabaseManager.db:nrows(query) do
+      table.insert(columns, row.Field)
+    end
   end
+  
   return columns
 end
 
 
 function DatabaseManager:openConnection()
-  DatabaseManager.db = SQLITE3.open(DatabaseManager.dbname)
+  Utils.nkprint("Database opened", "debug")
+  DatabaseManager.adapter:connect()
+
+  -- For backward compatibility, expose the adapter as DatabaseManager.db
+  DatabaseManager.db = DatabaseManager.adapter
 end
 
 function DatabaseManager:closeConnection()
-  if DatabaseManager.db then
+  if DatabaseManager.adapter and DatabaseManager.adapter:isConnected() then
     Utils.nkprint("Database closed", "debug")
-    DatabaseManager.db:close()
+    DatabaseManager.adapter:disconnect()
     DatabaseManager.db = nil
   end
 end
-
 --return multiples values that can be anything
 ---@param callback function
 ---@return any ...
 function DatabaseManager:withConnection(callback)
-    DatabaseManager:openConnection()
-    local results = {pcall(callback)}
+  local keepOpen = (DatabaseManager.database_type == "mysql")
+  -- Always ensure connection before executing callback
+  DatabaseManager:openConnection()
+  local results = {pcall(callback)}
+  -- For SQLite (and others) close immediately; for MySQL keep persistent
+  if not keepOpen then
     DatabaseManager:closeConnection()
-    
-    local ok = table.remove(results, 1) 
-    
-    if not ok then
-        error(results[1])  
+  end
+  local ok = table.remove(results, 1)
+  if not ok then
+    -- If MySQL callback failed due to connection loss, attempt one retry
+    local err = results[1]
+    if keepOpen and type(err) == 'string' and (err:match("gone away") or err:match("Lost connection")) then
+      Utils.nkprint("MySQL connection lost. Reconnecting and retrying once...", "warn")
+      DatabaseManager:closeConnection() -- ensure clean state
+      DatabaseManager:openConnection()
+      results = {pcall(callback)}
+      ok = table.remove(results, 1)
+      if not ok then
+        error(results[1])
+      end
+      return table.unpack(results)
     end
-    
-    return table.unpack(results) 
+    error(err)
+  end
+  return table.unpack(results)
 end
+
 
 DatabaseManager.init()

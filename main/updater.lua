@@ -1,7 +1,5 @@
 
-local utils = require("utils.misc")
-
-local updater = {}
+Updater = {}
 
 
 local function execute_in_dir(dir, command)
@@ -25,9 +23,9 @@ local function execute_in_dir_return(dir, command)
     return success, termType, exitCode, output
 end
 
-function updater.get_git_version()
+function Updater.get_git_version()
     local temp_file = "git_version.txt"
-    local script_path = utils.script_path()
+    local script_path = Utils.script_path()
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
 
     local function read_file(file_path)
@@ -64,16 +62,16 @@ function updater.get_git_version()
     return string.format("%s (%s)%s", version, branch, dirty)
 end
 
-function updater.check(cfgManager)
+function Updater.check(cfgManager)
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
     if not git_check then
-        utils.nkprint("Git is not installed on your system. The auto updater will not work.", "warn")
+        Utils.nkprint("Git is not installed on your system. The auto updater will not work.", "warn")
         return
     end
-    if FS.Exists(utils.script_path() .. ".git") then
+    if FS.Exists(Utils.script_path() .. ".git") then
         if cfgManager:GetSetting("advanced").autoupdate then
-            local repo_path = utils.script_path()
+            local repo_path = Utils.script_path()
             local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin dev")
             print("Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
             if fetchExit == 0 then
@@ -83,41 +81,39 @@ function updater.check(cfgManager)
                 remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
                 if localHash and remoteHash then
                     if localHash ~= remoteHash then
-                        utils.nkprint("New remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
+                        Utils.nkprint("New remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
                         local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin dev")
                         print("Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
                         if pullExit == 0 then
-                            utils.RunAsync(function()
-                                utils.hotreload()
+                            Utils.RunAsync(function()
+                                Utils.hotreload()
                             end, 2000)
                         else
-                            utils.nkprint("Update failed: " .. (pullOut or ""), "error")
+                            Utils.nkprint("Update failed: " .. (pullOut or ""), "error")
                         end
                     else
-                        utils.nkprint("No update available (HEAD == origin/dev).", "info")
+                        Utils.nkprint("No update available (HEAD == origin/dev).", "info")
                     end
                 else
-                    utils.nkprint("Could not read local/remote hashes.", "warn")
+                    Utils.nkprint("Could not read local/remote hashes.", "warn")
                 end
             else
-                utils.nkprint("Remote fetch failed: " .. (fetchOut or ""), "error")
+                Utils.nkprint("Remote fetch failed: " .. (fetchOut or ""), "error")
             end
         else
-            utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
+            Utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
         end
     else
-        utils.nkprint("This project is not a Git repository. Initializing ...", "warn")
-        updater.init_git()
-        utils.nkprint("Project initialized successfully!", "info")
+        Utils.nkprint("This project is not a Git repository. Initializing ...", "warn")
+        Updater.init_git()
+        Utils.nkprint("Project initialized successfully!", "info")
     end
 end
 
-function updater.init_git()
-    execute_in_dir(utils.script_path(), "git init")
-    execute_in_dir(utils.script_path(), "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
-    execute_in_dir(utils.script_path(), "git fetch origin dev")
-    execute_in_dir(utils.script_path(), "git checkout -b main origin/dev")
+function Updater.init_git()
+    execute_in_dir(Utils.script_path(), "git init")
+    execute_in_dir(Utils.script_path(), "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
+    execute_in_dir(Utils.script_path(), "git fetch origin dev")
+    execute_in_dir(Utils.script_path(), "git checkout -b main origin/dev")
 
 end
-
-return updater

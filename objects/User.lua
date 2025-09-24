@@ -25,9 +25,9 @@ end
 function User.getColumns()
     return {
       "beammpid INTEGER PRIMARY KEY",
-      "name TEXT NOT NULL",
+      "name VARCHAR(191) NOT NULL",
       "whitelisted BOOLEAN NOT NULL",
-      "language TEXT"
+      "language VARCHAR(191)"
     }
 end
 

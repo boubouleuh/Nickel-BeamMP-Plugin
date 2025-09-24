@@ -1,7 +1,7 @@
 
-return function(NotRejected, id, name, message, managers)
+return function(NotRejected, id, name, message)
 
-    local webhook = managers.cfgManager:GetSetting("discord").chat_webhook
+    local webhook = ConfigManager.GetSetting("discord").chat_webhook
     if webhook and webhook ~= "" then
         local username = "Nickel Chat Logger"
         local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"

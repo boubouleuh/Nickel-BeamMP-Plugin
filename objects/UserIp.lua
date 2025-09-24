@@ -15,7 +15,7 @@ function UserIp.getColumns()
   return {
     "ip_id INTEGER PRIMARY KEY AUTOINCREMENT",
     "beammpid INTEGER",
-    "ip TEXT UNIQUE",
+    "ip VARCHAR(191) UNIQUE",
     "is_banned BOOLEAN NOT NULL",
     "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
   }

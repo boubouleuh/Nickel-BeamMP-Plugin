@@ -42,8 +42,15 @@ function ConfigManager.init()
         commands = {
             prefix = "/"
         },
-        sync = {
-           database_file = ""
+        database = {
+            type = "sqlite",
+            file = "database/nickel.sqlite",
+            host = "localhost",
+            port = 3306,
+            name = "nickel",
+            username = "",
+            password = "",
+            ssl = false
         },
         conditions = {
             whitelist = false,

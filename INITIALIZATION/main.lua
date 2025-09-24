@@ -2,10 +2,6 @@ if Utils.getBeamMPConfig() and Utils.getBeamMPConfig().General.LogChat and Confi
     Utils.nkprint("Chat logging is enabled in the Nickel config, but also in the BeamMP config. Please disable one of them to avoid duplicate logs.", "warn")
 end
 
-DatabaseManager:withConnection(function()
-    DatabaseManager.db:exec("PRAGMA journal_mode=WAL2;")
-end)
-
 -- Create all database tables
 Utils.nkprint("Creating database tables...", "info")
 DatabaseManager:withConnection(function()
@@ -61,4 +57,3 @@ if EventDispatcher and EventDispatcher.load then
 end
 
 Utils.nkprint("Nickel Plugin fully initialized!", "info")
-

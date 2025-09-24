@@ -34,7 +34,7 @@ function RoleRepository.findAllDefault()
         local roles = DatabaseManager:getAllEntry(Role)
         local defaultRoles = {}
         for _, role in pairs(roles) do
-            if role.is_default == 1 then
+            if Utils.isTruthy(role.is_default) then
                 table.insert(defaultRoles, role)
             end
         end

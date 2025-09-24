@@ -1,7 +1,7 @@
 
-return function(player_id, vehicle_id, data, managers)
+return function(player_id, vehicle_id, data)
 
-    local webhook = managers.cfgManager:GetSetting("discord").vehicle_webhook
+    local webhook = ConfigManager.GetSetting("discord").vehicle_webhook
     if webhook and webhook ~= "" then
         local username = "Nickel Vehicle Logger"
         local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"

@@ -75,11 +75,10 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local user = User.getOrCreate(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), MP.GetPlayerName(receiver_id))
-    local seeAdvancedUserInfos = user:hasPermissionForAction("seeAdvancedUserInfos")
+    local currentUser = User.getOrCreate(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), MP.GetPlayerName(receiver_id))
+    local seeAdvancedUserInfos = currentUser:hasPermissionForAction("seeAdvancedUserInfos")
     local onlinePlayers = MP.GetPlayers()
     local allUsers = UserRepository.findAll() or {}
-    
     local players = {}
     for _, singleUser in ipairs(allUsers) do
         local playerData = {
@@ -91,9 +90,9 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
             status = {},
             ips = {}
         }
-        
+        local singleUserClass = User.getOrCreate(singleUser.beammpid, singleUser.name)
         -- Get user roles
-        local roles = user:getRoles()
+        local roles = singleUserClass:getRoles()
         for _, role in ipairs(roles) do
             if role then
                 table.insert(playerData.roles, {
@@ -104,7 +103,7 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         end
         
         -- Get user status
-        local statuses = user:getAllStatuses()
+        local statuses = singleUserClass:getAllStatuses()
         for _, status in ipairs(statuses) do
             if Utils.isTruthy(status.is_status_value) then
                 table.insert(playerData.status, {
@@ -118,7 +117,7 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         
         -- Get user IPs (only if has permission)
         if seeAdvancedUserInfos then
-            local userIps = user:getAllIps()
+            local userIps = singleUserClass:getAllIps()
             for _, ipRecord in ipairs(userIps) do
                 if ipRecord.ip then
                     table.insert(playerData.ips, ipRecord.ip)
@@ -137,7 +136,7 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
     local maxPacketSize = 30000000 -- 30 MB
     local currentPacket = {}
     local currentSize = 0
-
+    print(players)
     for i, v in ipairs(players) do
         local playerData = Util.JsonEncode(v) 
         local playerSize = #playerData

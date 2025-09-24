@@ -19,6 +19,7 @@ function RegisterPlayer.register(beammpid, name, ip, isguest)
         end
 
         local roles = RoleRepository.findAllDefault()
+        print(roles)
         for _, role in ipairs(roles) do
             user:assignRole(role.roleName)
         end
