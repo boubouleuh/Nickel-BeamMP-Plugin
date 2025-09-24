@@ -1,6 +1,6 @@
-author = 'Example Plugin'
-description = 'Example Plugin'
-version = '1.0.0'
+author = 'Bouboule'
+description = 'Nickel plugin'
+version = '3.0.0'
 files_dir = "main/.."
 server_scripts = {
     "/INITIALIZATION/loadlibs.lua",
