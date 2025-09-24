@@ -1,7 +1,3 @@
-print("Initializing Nickel Plugin...")
-print("Utils available:", Utils and "YES" or "NO")
-print("Settings available:", ConfigManager and "YES" or "NO")
-
 if Utils.getBeamMPConfig() and Utils.getBeamMPConfig().General.LogChat and ConfigManager.GetSetting("misc").chat_log then
     Utils.nkprint("Chat logging is enabled in the Nickel config, but also in the BeamMP config. Please disable one of them to avoid duplicate logs.", "warn")
 end
