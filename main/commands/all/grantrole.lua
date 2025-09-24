@@ -44,6 +44,7 @@ function command.init(sender_id, sender_name, rolename, playername)
 
 
         MessagesManager:SendMessage(sender_id, "database.code." .. code)
+        InterfaceUtils.updatePlayer(Utils.GetPlayerId(playername))
         return true
 
     else

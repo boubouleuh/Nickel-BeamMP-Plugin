@@ -222,15 +222,14 @@ end
 
 
 
-function PermissionsManager:hasPermissionForAction(beammpid, action)
+function PermissionsManager:hasPermissionForAction(beammpid, actionName)
     if beammpid == -2 then
         return true     -- if it's the console, give full permission
     end
 
     local userRoles = self:getRoles(beammpid)
-    local actionId = DatabaseManager:withConnection(function()
-            return DatabaseManager:getEntry(Action, "actionName", action).actionID
-    end)
+    local action = ActionRepository.findByName(actionName)
+
 
     local roleActionEntries = DatabaseManager:withConnection(function()
         local entries = {}
@@ -238,7 +237,7 @@ function PermissionsManager:hasPermissionForAction(beammpid, action)
             local roleId = userRole.roleID
             local conditions = {
                 {"roleID", roleId},
-                {"actionID", actionId}
+                {"actionID", action.id}
             }
 
             table.insert(entries, DatabaseManager:getAllEntry(RoleAction, conditions))
@@ -262,7 +261,7 @@ function PermissionsManager:hasPermissionForAction(beammpid, action)
                 if lowerRole then
                     local lowerConditions = {
                         {"roleID", lowerRole.roleID},
-                        {"actionID", actionId}
+                        {"actionID", action.id}
                     }
 
                     local lowerRoleActionEntries = DatabaseManager:getAllEntry(RoleAction, lowerConditions)
@@ -279,16 +278,13 @@ function PermissionsManager:hasPermissionForAction(beammpid, action)
     return bool
 end
 
-function PermissionsManager:hasPermission(beammpid, commandname)
+function PermissionsManager:hasPermission(beammpid, commandName)
     if beammpid == -2 then
         return true     -- if it's the console, give full permission
     end
 
     local userRoles = self:getRoles(beammpid)
-
-    local commandId = DatabaseManager:withConnection(function()
-        return DatabaseManager:getEntry(Command, "commandName", commandname).commandID
-    end)
+    local command = CommandRepository.findByName(commandName)
 
     local roleCommandEntries = DatabaseManager:withConnection(function()
         local entries = {}
@@ -296,7 +292,7 @@ function PermissionsManager:hasPermission(beammpid, commandname)
             local roleId = userRole.roleID
             local conditions = {
                 {"roleID", roleId},
-                {"commandID", commandId}
+                {"commandID", command.id}
             }
             table.insert(entries, DatabaseManager:getAllEntry(RoleCommand, conditions))
         end
@@ -317,7 +313,7 @@ function PermissionsManager:hasPermission(beammpid, commandname)
                 if lowerRole then
                     local lowerConditions = {
                         {"roleID", lowerRole.roleID},
-                        {"commandID", commandId}
+                        {"commandID", command.id}
                     }
 
                     local lowerRoleCommandEntries = DatabaseManager:getAllEntry(RoleCommand, lowerConditions)

@@ -156,6 +156,10 @@ function User:getStatus(statusType)
     return UserStatusRepository.findByUserAndType(self.beammpid, statusType)
 end
 
+function User:getAllStatuses()
+    return UserStatusRepository.findAllByUser(self.beammpid)
+end
+
 -- High-level status checks
 function User:isBanned()
     return self:hasStatus("isbanned")

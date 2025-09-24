@@ -75,26 +75,26 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local seeAdvancedUserInfos = PermissionsManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos")
+    local user = User.getOrCreate(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), MP.GetPlayerName(receiver_id))
+    local seeAdvancedUserInfos = user:hasPermissionForAction("seeAdvancedUserInfos")
     local onlinePlayers = MP.GetPlayers()
     local allUsers = UserRepository.findAll() or {}
     
     local players = {}
-    for _, user in ipairs(allUsers) do
+    for _, singleUser in ipairs(allUsers) do
         local playerData = {
-            beammpid = user.beammpid,
-            name = user.name,
-            whitelisted = Utils.isTruthy(user.whitelisted),
-            online = onlinePlayers[Utils.GetPlayerId(user.name)] ~= nil,
+            beammpid = singleUser.beammpid,
+            name = singleUser.name,
+            whitelisted = Utils.isTruthy(singleUser.whitelisted),
+            online = onlinePlayers[Utils.GetPlayerId(singleUser.name)] ~= nil,
             roles = {},
             status = {},
             ips = {}
         }
         
         -- Get user roles
-        local userRoles = UserRoleRepository.findByBeammpid(user.beammpid) or {}
-        for _, userRole in ipairs(userRoles) do
-            local role = RoleRepository.findById(userRole.roleID)
+        local roles = user:getRoles()
+        for _, role in ipairs(roles) do
             if role then
                 table.insert(playerData.roles, {
                     name = role.roleName,
@@ -104,8 +104,8 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         end
         
         -- Get user status
-        local userStatuses = UserStatusRepository.findAllByUser(user.beammpid) or {}
-        for _, status in ipairs(userStatuses) do
+        local statuses = user:getAllStatuses()
+        for _, status in ipairs(statuses) do
             if Utils.isTruthy(status.is_status_value) then
                 table.insert(playerData.status, {
                     status_type = status.status_type,
@@ -118,7 +118,7 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         
         -- Get user IPs (only if has permission)
         if seeAdvancedUserInfos then
-            local userIps = UserIpRepository.findAllByUser(user.beammpid) or {}
+            local userIps = user:getAllIps()
             for _, ipRecord in ipairs(userIps) do
                 if ipRecord.ip then
                     table.insert(playerData.ips, ipRecord.ip)
@@ -128,7 +128,7 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
         
         -- Add avatar if enabled
         if ConfigManager.GetSetting("client").b64avatar then
-            playerData.b64img = "data:image/png;base64," .. Online.getPlayerB64Img(user.beammpid)
+            playerData.b64img = "data:image/png;base64," .. Online.getPlayerB64Img(singleUser.beammpid)
         end
         
         table.insert(players, playerData)
@@ -161,7 +161,9 @@ end
 function InterfaceUtils.resetUserInfos(receiver_id)
     local userInfos = {}
     userInfos.self_action_perm = {}
-    local actions = PermissionsManager:getActions(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)))
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
+    local user = User.getOrCreate(beammpid, MP.GetPlayerName(receiver_id))
+    local actions = user:getActions()
     for _, action in ipairs(actions) do
         table.insert(userInfos.self_action_perm, action.actionName)
     end
@@ -177,7 +179,8 @@ end
 
 function InterfaceUtils.sendUserCommands(receiver_id)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
-    local commands = PermissionsManager:getCommands(beammpid)
+    local user = User.getOrCreate(beammpid, MP.GetPlayerName(receiver_id))
+    local commands = user:getCommands()
     local userCommands = {}
     local commandCache = CommandsManager:GetCommands()
     for i, v in ipairs(commands) do
@@ -196,7 +199,8 @@ end
 
 function InterfaceUtils.sendGlobalCommands(receiver_id)
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id))
-    local commands = PermissionsManager:getCommands(beammpid)
+    local user = User.getOrCreate(beammpid, MP.GetPlayerName(receiver_id))
+    local commands = user:getCommands()
     local globalCommands = {}
     local commandCache = CommandsManager:GetCommands()
     for i, v in ipairs(commands) do
@@ -222,7 +226,7 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local user = UserRepository.findByBeammpid(beammpid)
+    local user = User.getOrCreate(beammpid, MP.GetPlayerName(receiver_id))
     if not user then
         return
     end
@@ -239,9 +243,9 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
     }
     
     -- Get user roles
-    local userRoles = UserRoleRepository.findByBeammpid(user.beammpid) or {}
-    for _, userRole in ipairs(userRoles) do
-        local role = RoleRepository.findById(userRole.roleID)
+
+    local roles = user:getRoles()
+    for _, role in ipairs(roles) do
         if role then
             table.insert(playerData.roles, {
                 name = role.roleName,
@@ -251,8 +255,8 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
     end
     
     -- Get user status
-    local userStatuses = UserStatusRepository.findByBeammpid(user.beammpid) or {}
-    for _, status in ipairs(userStatuses) do
+    local statuses = user:getAllStatuses()
+    for _, status in ipairs(statuses) do
         if Utils.isTruthy(status.is_status_value) then
             table.insert(playerData.status, {
                 status_type = status.status_type,
@@ -264,8 +268,9 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
     end
     
     -- Get user IPs (only if has permission)
-    if PermissionsManager:hasPermissionForAction(Utils.getPlayerBeamMPID(MP.GetPlayerName(receiver_id)), "seeAdvancedUserInfos") then
-        local userIps = UserIpRepository.findByBeammpid(user.beammpid) or {}
+
+    if user:hasPermissionForAction("seeAdvancedUserInfos") then
+        local userIps = user:getAllIps()
         for _, ipRecord in ipairs(userIps) do
             if ipRecord.ip then
                 table.insert(playerData.ips, ipRecord.ip)
@@ -294,4 +299,18 @@ function InterfaceUtils.sendRoles(id, event_name)
     end
 
     InterfaceUtils.sendTable(id, event_name, rolesfinal)
+end
+
+function InterfaceUtils.updatePlayer(id)
+    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+    local onlineplayers = MP.GetPlayers()
+    for i, v in pairs(onlineplayers) do
+        if Utils.getPlayerBeamMPID(MP.GetPlayerName(i)) == beammpid then
+            InterfaceUtils.sendPlayer(i, beammpid)
+            break
+        end
+    end
+    InterfaceUtils.resetUserInfos(id)
+    InterfaceUtils.sendUserCommands(id)
+    InterfaceUtils.sendGlobalCommands(id)
 end
