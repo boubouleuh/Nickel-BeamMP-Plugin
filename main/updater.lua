@@ -38,28 +38,31 @@ function Updater.get_git_version()
         return nil
     end
 
-    local command = "git tag --contains HEAD " .. redirect .. " > " .. temp_file
-    execute_in_dir(script_path, command)
-    local version = read_file(script_path .. temp_file)
+    -- Check current branch and switch if needed
+    execute_in_dir(script_path, "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file)
+    local current_branch = read_file(script_path .. temp_file) or "unknown"
+    
+    if current_branch ~= Updater.branch then
+        Utils.nkprint("Switching from " .. current_branch .. " to " .. Updater.branch, "info")
+        execute_in_dir(script_path, "git checkout " .. Updater.branch .. " " .. redirect)
+    end
 
+    -- Get version (tag or short hash)
+    execute_in_dir(script_path, "git describe --tags --exact-match HEAD " .. redirect .. " > " .. temp_file)
+    local version = read_file(script_path .. temp_file)
     if not version or version == "" then
-        command = "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file
-        execute_in_dir(script_path, command)
+        execute_in_dir(script_path, "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file)
         version = read_file(script_path .. temp_file) or "unknown"
     end
 
-    command = "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file
-    execute_in_dir(script_path, command)
-    local branch = read_file(script_path .. temp_file) or "unknown"
-
-    command = "git status --porcelain " .. redirect .. " > " .. temp_file
-    execute_in_dir(script_path, command)
+    -- Check if dirty
+    execute_in_dir(script_path, "git status --porcelain " .. redirect .. " > " .. temp_file)
     local status = read_file(script_path .. temp_file)
     local dirty = status and #status > 0 and "-dirty" or ""
 
     os.remove(script_path .. temp_file) 
 
-    return string.format("%s (%s)%s", version, branch, dirty)
+    return string.format("%s (%s)%s", version, Updater.branch, dirty)
 end
 
 function Updater.check()
