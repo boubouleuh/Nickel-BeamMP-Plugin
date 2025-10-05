@@ -65,7 +65,6 @@ function DatabaseManager:createTableIfNotExists(tableName, columns)
         end
       end
       local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s)", tableName, table.concat(sqliteParts, ", "))
-      Utils.nkprint("DDL(SQLite): " .. query, "info")
       local ok, err = pcall(function() DatabaseManager.db:exec(query) end)
       if not ok then
         error("Failed DDL (SQLite) for table " .. tableName .. ": " .. query .. " | " .. tostring(err))
@@ -161,23 +160,15 @@ function DatabaseManager:createTableIfNotExists(tableName, columns)
     for _, v in ipairs(otherConstraints) do table.insert(parts, v) end
     for _, v in ipairs(fkDefs) do table.insert(parts, v) end
 
-    Utils.nkprint(string.format(
-      "DDL(BuildDebug) table=%s colDefs=%d pk=%d idx=%d other=%d fk=%d firstPart='%s'",
-      tableName, #colDefs, #pkDefs, #idxDefs, #otherConstraints, #fkDefs, parts[1] or "<nil>"
-    ), "info")
-
     if (#colDefs == 0) and (#parts > 0) then
       local fallbackCol = "`_dummy_id` INT PRIMARY KEY AUTO_INCREMENT"
-      Utils.nkprint("WARN: aucune définition de colonne détectée avant contraintes pour " .. tableName .. ", insertion colonne fallback.", "warn")
       table.insert(parts, 1, fallbackCol)
     elseif parts[1] and parts[1]:match("^FOREIGN KEY") then
       local fallbackCol = "`_dummy_id` INT PRIMARY KEY AUTO_INCREMENT"
-      Utils.nkprint("WARN: première entrée est FOREIGN KEY pour " .. tableName .. ", ajout colonne fallback.", "warn")
       table.insert(parts, 1, fallbackCol)
     end
 
     local query = string.format("CREATE TABLE IF NOT EXISTS %s (%s) ENGINE=InnoDB", tableName, table.concat(parts, ", "))
-    Utils.nkprint("DDL(MySQL): " .. query, "info")
     local ok, err = pcall(function() DatabaseManager.db:exec(query) end)
     if not ok then
       error("Failed DDL (MySQL) for table " .. tableName .. ": " .. query .. " | " .. tostring(err))
@@ -427,13 +418,11 @@ function DatabaseManager:createTableForClass(class)
         else
           alterQuery = string.format("ALTER TABLE %s ADD COLUMN %s", tableName, working)
         end
-        Utils.nkprint("ALTER ADD COLUMN: " .. alterQuery, "info")
         DatabaseManager:returnQuery(alterQuery)
         if isUnique then
           local baseCol = working:match("^(%S+)%s")
           if baseCol then
             local query = string.format("CREATE UNIQUE INDEX idx_unique_%s ON %s(%s)", baseCol, tableName, baseCol)
-            Utils.nkprint("CREATE UNIQUE INDEX: " .. query, "info")
             DatabaseManager:returnQuery(query)
           end
         end
@@ -471,7 +460,6 @@ function DatabaseManager:createTableForClass(class)
             local refTableQuoted = "`" .. cleanRef .. "`"
             local rest = fkLine:match("%)%s+REFERENCES[^(]+%([^)]*%)(.+)$") or ""
             local alterFk = string.format("ALTER TABLE %s ADD CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES %s(%s)%s", tableName, constraintName, fkColsQuoted, refTableQuoted, refColsQuoted, rest)
-            Utils.nkprint("ALTER ADD FK: " .. alterFk, "info")
             local okFk, errFk = pcall(function() DatabaseManager.db:exec(alterFk) end)
             if not okFk then
               Utils.nkprint("Failed to add FK '" .. constraintName .. "': " .. tostring(errFk), "warn")
@@ -491,7 +479,6 @@ function DatabaseManager:createTableForClass(class)
         local pkCols = pendingPrimaryKey:match("PRIMARY KEY%s*%(([^)]+)%)")
         if pkCols then
           local pkAlter = string.format("ALTER TABLE %s ADD PRIMARY KEY (%s)", tableName, pkCols)
-          Utils.nkprint("ALTER ADD PRIMARY KEY: " .. pkAlter, "info")
           local okPk, errPk = pcall(function() DatabaseManager.db:exec(pkAlter) end)
           if not okPk then
             Utils.nkprint("Failed to add PRIMARY KEY on " .. tableName .. ": " .. tostring(errPk), "warn")

@@ -4,7 +4,6 @@ NickelActions = NickelActions or {}
 
 function RegisterNickelAction(name, actionData)
     NickelActions[name] = actionData
-    print("Registered action: " .. name)
 end
 
 --- init actions

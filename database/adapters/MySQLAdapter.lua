@@ -60,7 +60,6 @@ function MySQLAdapter:exec(query)
         error("Not connected to database")
     end
     if query:match("^%s*CREATE%s+TABLE") then
-        Utils.nkprint("EXEC DDL: " .. query, "info")
     end
     local cursor, error_msg = self.connection:execute(query)
     if not cursor then
@@ -70,7 +69,7 @@ function MySQLAdapter:exec(query)
     if type(cursor) == "number" then
         self.changesCount = cursor
         if cursor > 0 then
-            return 0 -- succès normalisé
+            return 0
         else
             return "nickel.nochange"
         end

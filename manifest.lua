@@ -27,6 +27,7 @@ server_scripts = {
     "/repositories/RoleActionRepository.lua",
     "/repositories/RoleCommandRepository.lua",
     "/main/config/Settings.lua",
+    '/main/updater.lua',
     "/main/online.lua",
     "/database/sqlresultcode.lua",
     "/database/adapters/DatabaseAdapter.lua",

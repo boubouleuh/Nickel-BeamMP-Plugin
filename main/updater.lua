@@ -62,7 +62,7 @@ function Updater.get_git_version()
     return string.format("%s (%s)%s", version, branch, dirty)
 end
 
-function Updater.check(cfgManager)
+function Updater.check()
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
     if not git_check then
@@ -70,7 +70,7 @@ function Updater.check(cfgManager)
         return
     end
     if FS.Exists(Utils.script_path() .. ".git") then
-        if cfgManager:GetSetting("advanced").autoupdate then
+        if ConfigManager.GetSetting("advanced").autoupdate then
             local repo_path = Utils.script_path()
             local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin dev")
             print("Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
@@ -85,9 +85,9 @@ function Updater.check(cfgManager)
                         local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin dev")
                         print("Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
                         if pullExit == 0 then
-                            Utils.RunAsync(function()
-                                Utils.hotreload()
-                            end, 2000)
+                            -- Utils.RunAsync(function()    TODO FIX HOT RELOAD WITH TREE
+                            --     Utils.hotreload()
+                            -- end, 2000)
                         else
                             Utils.nkprint("Update failed: " .. (pullOut or ""), "error")
                         end
@@ -117,3 +117,5 @@ function Updater.init_git()
     execute_in_dir(Utils.script_path(), "git checkout -b main origin/dev")
 
 end
+
+Updater.check()
