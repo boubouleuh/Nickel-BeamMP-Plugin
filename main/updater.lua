@@ -1,7 +1,7 @@
 
 Updater = {}
 
-
+Updater.branch = ConfigManager.GetSetting("advanced").branch
 local function execute_in_dir(dir, command)
     local full_command = "cd " .. dir .. " && " .. command
     return os.execute(full_command)
@@ -72,17 +72,17 @@ function Updater.check()
     if FS.Exists(Utils.script_path() .. ".git") then
         if ConfigManager.GetSetting("advanced").autoupdate then
             local repo_path = Utils.script_path()
-            local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin dev")
+            local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin " .. Updater.branch)
             print("Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
             if fetchExit == 0 then
                 local _, _, _, localHash = execute_in_dir_return(repo_path, "git rev-parse HEAD")
-                local _, _, _, remoteHash = execute_in_dir_return(repo_path, "git rev-parse origin/dev")
+                local _, _, _, remoteHash = execute_in_dir_return(repo_path, "git rev-parse origin/" .. Updater.branch)
                 localHash = localHash and localHash:gsub("%s+", "") or nil
                 remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
                 if localHash and remoteHash then
                     if localHash ~= remoteHash then
                         Utils.nkprint("New remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
-                        local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin dev")
+                        local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin " .. Updater.branch)
                         print("Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
                         if pullExit == 0 then
                             -- Utils.RunAsync(function()    TODO FIX HOT RELOAD WITH TREE
@@ -92,7 +92,7 @@ function Updater.check()
                             Utils.nkprint("Update failed: " .. (pullOut or ""), "error")
                         end
                     else
-                        Utils.nkprint("No update available (HEAD == origin/dev).", "info")
+                        Utils.nkprint("No update available (HEAD == origin/" .. Updater.branch .. ").", "info")
                     end
                 else
                     Utils.nkprint("Could not read local/remote hashes.", "warn")
@@ -113,8 +113,8 @@ end
 function Updater.init_git()
     execute_in_dir(Utils.script_path(), "git init")
     execute_in_dir(Utils.script_path(), "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
-    execute_in_dir(Utils.script_path(), "git fetch origin dev")
-    execute_in_dir(Utils.script_path(), "git checkout -b main origin/dev")
+    execute_in_dir(Utils.script_path(), "git fetch origin " .. Updater.branch)
+    execute_in_dir(Utils.script_path(), "git checkout -b main origin/" .. Updater.branch)
 
 end
 

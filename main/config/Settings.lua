@@ -58,6 +58,7 @@ function ConfigManager.init()
         },
         advanced = {
             autoupdate = true,
+            branch = "dev",
             debug = false
         },
         client = {
