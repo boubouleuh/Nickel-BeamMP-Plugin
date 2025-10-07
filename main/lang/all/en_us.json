@@ -91,9 +91,11 @@
     "commands.importLegacyData.description" : "Import legacy data from the old Nickel plugin",
 
 
-    "commands.whitelist.missing_args": "Usage : {Prefix}whitelist <add/remove> <playername>",
+    "commands.whitelist.missing_args": "Usage : {Prefix}whitelist <add/remove/clear> <playername>",
     "commands.whitelist.add.success": "Successfully added {Player} to the whitelist",
     "commands.whitelist.remove.success": "Successfully removed {Player} from the whitelist",
+    
+    "commands.whitelist.clear.success": "Successfully cleared {Count} players from the whitelist",
     "commands.whitelist.description": "Add or remove a player to/from the whitelist",
 
     "commands.help.description" : "Show every commands",

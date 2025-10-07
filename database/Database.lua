@@ -493,21 +493,35 @@ end
 function DatabaseManager:getAllEntry(class, conditions)
   local tableName = class.tableName
   local query = "SELECT * FROM " .. tableName
-
-  if conditions and #conditions > 0 then
-    local whereClauses = {}
-    for i, condition in ipairs(conditions) do
-      local columnName, columnValue = condition[1], condition[2]
-      local whereClause = string.format("%s = '%s'", columnName, tostring(columnValue))
-      table.insert(whereClauses, whereClause)
+  -- Support two formats for conditions:
+  -- 1) Array of pairs: {{"col", val}, {"col2", val2}}
+  -- 2) Associative table: {col = val, col2 = val2}
+  local whereClauses = {}
+  if conditions and type(conditions) == "table" then
+    -- If indexed array (list of pairs)
+    if conditions[1] ~= nil then
+      for i, condition in ipairs(conditions) do
+        local columnName, columnValue = condition[1], condition[2]
+        if type(columnValue) == "boolean" then columnValue = columnValue and 1 or 0 end
+        local whereClause = string.format("%s = '%s'", columnName, tostring(columnValue))
+        table.insert(whereClauses, whereClause)
+      end
+    else
+      -- Associative table
+      for columnName, columnValue in pairs(conditions) do
+        if type(columnValue) == "boolean" then columnValue = columnValue and 1 or 0 end
+        local whereClause = string.format("%s = '%s'", columnName, tostring(columnValue))
+        table.insert(whereClauses, whereClause)
+      end
     end
+  end
+
+  if #whereClauses > 0 then
     local whereClauseString = table.concat(whereClauses, " AND ")
     query = query .. " WHERE " .. whereClauseString
   end
 
-  local results = {}
-  Utils.nkprint("getAllEntry query: " .. query, "debug")
-  
+  local results = {}  
   local count = 0
   for row in DatabaseManager.db:nrows(query) do
     count = count + 1

@@ -20,6 +20,13 @@ function UserRepository.findAll()
     end)
 end
 
+--Find all whitelisted users
+function UserRepository.findAllWhitelisted()
+    return DatabaseManager:withConnection(function()
+        return DatabaseManager:getAllEntry(User, {{whitelisted = true}})
+    end)
+end
+
 ---Save user to database
 ---@param user User
 ---@return boolean
