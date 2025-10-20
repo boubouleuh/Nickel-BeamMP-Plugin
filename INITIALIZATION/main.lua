@@ -43,7 +43,6 @@ Utils.nkprint("All handlers and services initialized successfully", "info")
 
 DefaultPermissions.init()
 
-
 -- Initialize event dispatcher
 Utils.nkprint("Initializing event system...", "info")
 if EventDispatcher and EventDispatcher.load then

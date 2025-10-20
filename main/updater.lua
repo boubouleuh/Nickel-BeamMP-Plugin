@@ -23,9 +23,10 @@ local function execute_in_dir_return(dir, command)
     return success, termType, exitCode, output
 end
 
-function Updater.get_git_version()
+
+function Updater.get_git_version(path)
     local temp_file = "git_version.txt"
-    local script_path = Utils.script_path()
+
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
 
     local function read_file(file_path)
@@ -39,28 +40,28 @@ function Updater.get_git_version()
     end
 
     -- Check current branch and switch if needed
-    execute_in_dir(script_path, "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file)
-    local current_branch = read_file(script_path .. temp_file) or "unknown"
+    execute_in_dir(path, "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file)
+    local current_branch = read_file(path .. temp_file) or "unknown"
     
     if current_branch ~= Updater.branch then
         Utils.nkprint("Switching from " .. current_branch .. " to " .. Updater.branch, "info")
-        execute_in_dir(script_path, "git checkout " .. Updater.branch .. " " .. redirect)
+        execute_in_dir(path, "git checkout " .. Updater.branch .. " " .. redirect)
     end
 
     -- Get version (tag or short hash)
-    execute_in_dir(script_path, "git describe --tags --exact-match HEAD " .. redirect .. " > " .. temp_file)
-    local version = read_file(script_path .. temp_file)
+    execute_in_dir(path, "git describe --tags --exact-match HEAD " .. redirect .. " > " .. temp_file)
+    local version = read_file(path .. temp_file)
     if not version or version == "" then
-        execute_in_dir(script_path, "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file)
-        version = read_file(script_path .. temp_file) or "unknown"
+        execute_in_dir(path, "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file)
+        version = read_file(path .. temp_file) or "unknown"
     end
 
     -- Check if dirty
-    execute_in_dir(script_path, "git status --porcelain " .. redirect .. " > " .. temp_file)
-    local status = read_file(script_path .. temp_file)
+    execute_in_dir(path, "git status --porcelain " .. redirect .. " > " .. temp_file)
+    local status = read_file(path .. temp_file)
     local dirty = status and #status > 0 and "-dirty" or ""
 
-    os.remove(script_path .. temp_file) 
+    os.remove(path .. temp_file) 
 
     return string.format("%s (%s)%s", version, Updater.branch, dirty)
 end
@@ -72,6 +73,7 @@ function Updater.check()
         Utils.nkprint("Git is not installed on your system. The auto updater will not work.", "warn")
         return
     end
+    Updater.check_tree()
     if FS.Exists(Utils.script_path() .. ".git") then
         if ConfigManager.GetSetting("advanced").autoupdate then
             local repo_path = Utils.script_path()
@@ -112,6 +114,42 @@ function Updater.check()
         Utils.nkprint("Project initialized successfully!", "info")
     end
 end
+
+function Updater.check_tree()
+    local tree_path = "Resources/Server/Tree-BeamMP-Plugin/"
+    -- check update
+    if FS.Exists(tree_path .. ".git") then
+        local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(tree_path, "git fetch origin main")
+        print("Tree Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
+        if fetchExit == 0 then
+            local _, _, _, localHash = execute_in_dir_return(tree_path, "git rev-parse HEAD")
+            local _, _, _, remoteHash = execute_in_dir_return(tree_path, "git rev-parse origin/main")
+            localHash = localHash and localHash:gsub("%s+", "") or nil
+            remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
+            if localHash and remoteHash then
+                if localHash ~= remoteHash then
+                    Utils.nkprint("New Tree remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
+                    local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(tree_path, "git pull --ff-only origin main")
+                    print("Tree Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
+                    if pullExit == 0 then
+                        Utils.nkprint("Tree Framework updated successfully!", "info")
+                    else
+                        Utils.nkprint("Tree Framework update failed: " .. (pullOut or ""), "error")
+                    end
+                else
+                    Utils.nkprint("No Tree Framework update available (HEAD == origin/main).", "info")
+                end
+            else
+                Utils.nkprint("Could not read Tree Framework local/remote hashes.", "warn")
+            end
+        else
+            Utils.nkprint("Tree Framework remote fetch failed: " .. (fetchOut or ""), "error")
+        end
+    end
+end
+        
+
+
 
 function Updater.init_git()
     execute_in_dir(Utils.script_path(), "git init")
