@@ -22,35 +22,35 @@ function command.init(sender_id, sender_name, rolename, playername)
     end
 
     local target_beammpid = Utils.getPlayerBeamMPID(playername)
-
-
-    local target_user = User.getOrCreate(target_beammpid, playername)
-
-    if target_beammpid ~= nil then
-        if sender_id ~= -2 then
-            local sender_beammpid = Utils.getPlayerBeamMPID(sender_name)
-            local sender_user = User.getOrCreate(sender_beammpid, sender_name)
-            if not sender_user:canManage(target_beammpid) then
-                MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
-                return false
-            end
-            if not sender_user:canManageRole(rolename) then
-                MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
-                return false
-            end
-        end
-
-        local code = target_user:assignRole(rolename)
-
-
-        MessagesManager:SendMessage(sender_id, "database.code." .. code)
-        InterfaceUtils.updatePlayer(Utils.GetPlayerId(playername))
-        return true
-
-    else
+    if target_beammpid == nil then
         MessagesManager:SendMessage(sender_id, "player.not_found", {Player = playername})
         return false
     end
+    local target_user = User.getOrCreate(target_beammpid, playername)
+
+
+    if sender_id ~= -2 then
+        local sender_beammpid = Utils.getPlayerBeamMPID(sender_name)
+        local sender_user = User.getOrCreate(sender_beammpid, sender_name)
+        if not sender_user:canManage(target_beammpid) then
+            MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage", {Player = playername})
+            return false
+        end
+        if not sender_user:canManageRole(rolename) then
+            MessagesManager:SendMessage(sender_id, "commands.permissions.insufficient.manage_role", {Role = rolename})
+            return false
+        end
+    end
+
+    local code = target_user:assignRole(rolename)
+
+
+    MessagesManager:SendMessage(sender_id, "database.code." .. code)
+    local player_id = Utils.GetPlayerId(playername)
+
+    InterfaceUtils.updatePlayer(player_id)
+    
+    return true
 end
 
 RegisterNickelCommand("grantrole", command)

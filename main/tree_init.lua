@@ -17,7 +17,7 @@ function tree.check_tree()
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
     if not git_check then
-        Utils.nkprint("Git is not installed on your system. The auto updater will not work.", "warn")
+        Utils.nkprint("Git is not installed on your system. the plugin will not work.", "warn")
         return
     end
     local tree_path = "Resources/Server/Tree-BeamMP-Plugin/"

@@ -301,6 +301,9 @@ function InterfaceUtils.sendRoles(id, event_name)
 end
 
 function InterfaceUtils.updatePlayer(id)
+    if id < 0 then
+        return
+    end
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
