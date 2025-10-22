@@ -152,11 +152,14 @@ end
 
 
 function Updater.init_git()
-    execute_in_dir(Utils.script_path(), "git init")
-    execute_in_dir(Utils.script_path(), "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
-    execute_in_dir(Utils.script_path(), "git fetch origin " .. Updater.branch)
-    execute_in_dir(Utils.script_path(), "git checkout -b main origin/" .. Updater.branch)
-
+    local repo_path = Utils.script_path()
+    execute_in_dir(repo_path, "git init")
+    execute_in_dir(repo_path, "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
+    execute_in_dir(repo_path, "git fetch origin " .. Updater.branch)
+    -- Forcefully align the local state with the remote branch, discarding local files
+    execute_in_dir(repo_path, "git reset --hard origin/" .. Updater.branch)
+    -- Set up the local branch to track the remote branch
+    execute_in_dir(repo_path, "git branch --set-upstream-to=origin/" .. Updater.branch .. " " .. Updater.branch)
 end
 
 Updater.check()

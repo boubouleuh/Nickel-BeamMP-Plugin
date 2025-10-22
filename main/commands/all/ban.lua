@@ -8,7 +8,6 @@ local command = {
 }
 
 function command.init(sender_id, sender_name, playername, reason)
-    print("Ban command called by " .. sender_name .. " for player " .. tostring(playername) .. " with reason: " .. tostring(reason))
     if playername == nil then
         MessagesManager:SendMessage(sender_id, "commands.ban.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
@@ -25,7 +24,6 @@ function command.init(sender_id, sender_name, playername, reason)
     local beammpid = Utils.getPlayerBeamMPID(playername)
     local user = User.getOrCreate(beammpid, playername)
 
-    print(user:isBanned())
     if user:isBanned() or user:isTempBanned() then
         MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
     else

@@ -136,7 +136,6 @@ function InterfaceUtils.sendPlayers(receiver_id, offset)
     local maxPacketSize = 30000000 -- 30 MB
     local currentPacket = {}
     local currentSize = 0
-    print(players)
     for i, v in ipairs(players) do
         local playerData = Util.JsonEncode(v) 
         local playerSize = #playerData

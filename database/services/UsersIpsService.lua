@@ -15,7 +15,7 @@ function UsersIpsService:banip(ip)
     for _, value in ipairs(ips) do
         if value.ip == ip then
             value.is_banned = true
-            local result = DatabaseManager:save(value, true)
+            local result = DatabaseManager:save(value, false)
             return result
         end
     end
@@ -31,7 +31,7 @@ function UsersIpsService:banAllIps()
         if value.is_banned == 0 then
             count = count + 1
             value.is_banned = true
-            DatabaseManager:save(value, true)
+            DatabaseManager:save(value, false)
         end
     end
     return count

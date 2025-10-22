@@ -23,7 +23,7 @@ end
 
 -- Assign role to user
 function UserRoleRepository.save(userRole)
-    return DatabaseManager:save(userRole, true)
+    return DatabaseManager:save(userRole, false)
 end
 
 -- Remove role from user
@@ -45,8 +45,6 @@ function UserRoleRepository.getUserRolesWithDetails(beammpid)
     return DatabaseManager:withConnection(function()
         local roles = {}
         local userRoles = DatabaseManager:getAllEntry(UserRole, {{"beammpid", beammpid}})
-        print("UserRoles for beammpid " .. tostring(beammpid) .. ":")
-        print(userRoles)
         for _, userRole in ipairs(userRoles) do
             local role = DatabaseManager:getEntry(Role, "roleID", userRole.roleID)
             if role then

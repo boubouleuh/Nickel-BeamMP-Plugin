@@ -55,7 +55,7 @@ end
 function StatusService.createStatus(beammpid, status_type, reason, expiry_time)
     local statusEntry = UserStatus.new(beammpid, status_type, true, reason, expiry_time)
     return DatabaseManager:withConnection(function()
-        return DatabaseManager:save(statusEntry, true)
+        return DatabaseManager:save(statusEntry, false)
     end)
 end
 
