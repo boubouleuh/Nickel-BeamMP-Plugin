@@ -30,7 +30,7 @@ end
 -- LUASQL-MYSQL
 MYSQL = Tree.LoadLib("lua/5.3/mysql", "luaopen_luasql_mysql")
 if not MYSQL then
-    MYSQL = Tree.LoadLib("lua/5.g3/arm64/mysql", "luaopen_luasql_mysql")
+    MYSQL = Tree.LoadLib("lua/5.3/arm64/mysql", "luaopen_luasql_mysql")
 end
 if not MYSQL then
     error("FATAL: Could not load LUASQL-MYSQL library for any architecture.")
