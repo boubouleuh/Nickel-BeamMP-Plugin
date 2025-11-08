@@ -117,37 +117,54 @@ end
 
 function Updater.check_tree()
     local tree_path = "Resources/Server/Tree-BeamMP-Plugin/"
-    -- check update
-    if FS.Exists(tree_path .. ".git") then
+    
+    -- Load tree_init.lua to get the release configuration
+    local tree_init_path = Utils.script_path() .. "main/tree_init.lua"
+    local tree_config = dofile(tree_init_path)
+    local manual_release = tree_config and tree_config.get_release and tree_config:get_release()
+
+    if not FS.Exists(tree_path .. ".git") then
+        return
+    end
+
+    if manual_release then
+        local _, _, _, current_hash_raw = execute_in_dir_return(tree_path, "git rev-parse HEAD")
+        local current_hash = current_hash_raw and current_hash_raw:gsub("%s+", "") or ""
+        
+        execute_in_dir(tree_path, "git fetch --all --tags")
+        local _, _, _, target_hash_raw = execute_in_dir_return(tree_path, "git rev-parse " .. manual_release .. "^{commit}")
+        local target_hash = target_hash_raw and target_hash_raw:gsub("%s+", "") or ""
+
+        if current_hash ~= "" and target_hash ~= "" and current_hash ~= target_hash then
+            Utils.nkprint("Tree version ("..current_hash:sub(1,7)..") differs from pinned release ("..target_hash:sub(1,7).."). Switching...", "info")
+            execute_in_dir(tree_path, "git checkout " .. manual_release)
+        else
+            Utils.nkprint("Tree already at pinned release " .. manual_release .. " ("..current_hash:sub(1,7)..").", "info")
+        end
+    else
         local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(tree_path, "git fetch origin main")
-        print("Tree Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
         if fetchExit == 0 then
-            local _, _, _, localHash = execute_in_dir_return(tree_path, "git rev-parse HEAD")
-            local _, _, _, remoteHash = execute_in_dir_return(tree_path, "git rev-parse origin/main")
-            localHash = localHash and localHash:gsub("%s+", "") or nil
-            remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
-            if localHash and remoteHash then
-                if localHash ~= remoteHash then
-                    Utils.nkprint("New Tree remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
-                    local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(tree_path, "git pull --ff-only origin main")
-                    print("Tree Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
-                    if pullExit == 0 then
-                        Utils.nkprint("Tree Framework updated successfully!", "info")
-                    else
-                        Utils.nkprint("Tree Framework update failed: " .. (pullOut or ""), "error")
-                    end
+            local _, _, _, localHash_raw = execute_in_dir_return(tree_path, "git rev-parse HEAD")
+            local _, _, _, remoteHash_raw = execute_in_dir_return(tree_path, "git rev-parse origin/main")
+            local localHash = localHash_raw and localHash_raw:gsub("%s+", "")
+            local remoteHash = remoteHash_raw and remoteHash_raw:gsub("%s+", "")
+
+            if localHash and remoteHash and localHash ~= remoteHash then
+                Utils.nkprint("New Tree remote version detected. Pulling from origin/main...", "info")
+                local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(tree_path, "git pull --ff-only origin main")
+                if pullExit == 0 then
+                    Utils.nkprint("Tree Framework updated successfully!", "info")
                 else
-                    Utils.nkprint("No Tree Framework update available (HEAD == origin/main).", "info")
+                    Utils.nkprint("Tree Framework update failed: " .. (pullOut or ""), "error")
                 end
             else
-                Utils.nkprint("Could not read Tree Framework local/remote hashes.", "warn")
+                Utils.nkprint("No Tree Framework update available (HEAD == origin/main).", "info")
             end
         else
             Utils.nkprint("Tree Framework remote fetch failed: " .. (fetchOut or ""), "error")
         end
     end
 end
-        
 
 
 

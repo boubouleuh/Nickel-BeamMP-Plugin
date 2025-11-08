@@ -1,5 +1,12 @@
 local tree = {}
 
+
+tree.release = "25b9ec668291d4f18da3ae25ad1a6bc0eb61c92c"
+
+function tree.get_release()
+    return tree.release
+end
+
 function tree.script_path()
   local separator = package.config:sub(1, 1)
   local scriptPath = debug.getinfo(1, "S").source:sub(2):gsub("[\\/][^\\/]+$", separator)
@@ -12,26 +19,26 @@ function tree.execute_in_dir(dir, command)
     return os.execute(full_command)
 end
 
-
 function tree.check_tree()
     local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
     local git_check = os.execute("git --version " .. redirect)
     if not git_check then
-        Utils.nkprint("Git is not installed on your system. the plugin will not work.", "warn")
+        print("Git is not installed on your system. The plugin will not work.")
         return
     end
+
     local tree_path = "Resources/Server/Tree-BeamMP-Plugin/"
+    local manual_release = tree.get_release()
+
     if not FS.Exists(tree_path) then
-        print("Tree Framework not found. Cloning ...")
+        print("Tree Framework not found. Cloning...")
         tree.execute_in_dir("Resources/Server/", "git clone https://github.com/Kipstz/Tree-BeamMP-Plugin.git")
+        if manual_release then
+            print("Tree: Checking out manual release: " .. manual_release)
+            tree.execute_in_dir(tree_path, "git fetch --all --tags")
+            tree.execute_in_dir(tree_path, "git checkout " .. manual_release)
+        end
         print("Tree Framework cloned successfully!")
-    elseif not FS.Exists("Resources/Server/Tree-BeamMP-Plugin/.git") then
-        print("Tree Framework is not a Git repository. Initializing ...")
-        tree.execute_in_dir(tree_path, "git init")
-        tree.execute_in_dir(tree_path, "git remote add origin https://github.com/Kipstz/Tree-BeamMP-Plugin.git")
-        tree.execute_in_dir(tree_path, "git fetch origin main")
-        tree.execute_in_dir(tree_path, "git checkout -b main origin/main")
-        print("Tree Framework initialized successfully!")
     end
 end
 
