@@ -6,10 +6,8 @@ local config = {}
 function DatabaseManager.init()
   local configDatabaseFile = ConfigManager.GetSetting("database").file
   local configDatabaseType = ConfigManager.GetSetting("database").type or "sqlite"
-
   -- Build configuration
   config.database_type = configDatabaseType
-
   if configDatabaseType == "mysql" then
     -- MySQL configuration
     config.mysql_host = ConfigManager.GetSetting("database").host or "localhost"
@@ -982,7 +980,14 @@ function DatabaseManager:getTableColumns(tableName)
   return existingColumns
 end
 
+-- Cache for table columns to avoid repeated schema queries
+local tableColumnsCache = {}
+
 function DatabaseManager:getTableColumnsName(tableName)
+  if tableColumnsCache[tableName] then
+    return tableColumnsCache[tableName]
+  end
+
   local columns = {}
   local query
   if config.database_type == "sqlite" then
@@ -997,6 +1002,7 @@ function DatabaseManager:getTableColumnsName(tableName)
     end
   end
   
+  tableColumnsCache[tableName] = columns
   return columns
 end
 

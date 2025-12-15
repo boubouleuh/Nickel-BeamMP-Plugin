@@ -56,15 +56,15 @@ end
 ---Get existing user or create new one (optimized single transaction)
 ---@param beammpid number
 ---@param name string|nil
----@return User | nil
+---@return User
 function UserRepository.getOrCreate(beammpid, name)
-    if not beammpid then
-        return nil
-    end
     -- Try to get existing user first
     local user = DatabaseManager:withConnection(function()
         return DatabaseManager:getClassByBeammpId(User, beammpid)
     end)
+
+    print(user)
+    
     if user then
         -- User exists, check if name needs update
         if name and user.name ~= name then
