@@ -51,7 +51,7 @@ end
 
 function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
-
+    print(message)
     local prefix = ConfigManager.GetSetting("commands").prefix
 
     if string.sub(message, 1, string.len(prefix)) ~= prefix then
@@ -69,7 +69,6 @@ function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     end
 
     local callback = commandObject.init
-
     local prefixcommand = ConfigManager.GetSetting("commands").prefix .. command
  
     --command test to check if the command is equal to the prefixcommand (the command is the first word of the string)
