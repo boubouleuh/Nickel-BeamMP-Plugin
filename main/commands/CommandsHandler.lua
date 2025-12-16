@@ -51,7 +51,6 @@ end
 
 function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
     --if callback function exist
-    print(message)
     local prefix = ConfigManager.GetSetting("commands").prefix
 
     if string.sub(message, 1, string.len(prefix)) ~= prefix then

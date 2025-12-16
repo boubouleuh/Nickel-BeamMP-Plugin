@@ -4,8 +4,12 @@ local OriginalRegisterEvent = MP.RegisterEvent
 local handlers = {}
 
 local function safeCall(name, func, ...)
-    local ok, err = pcall(func, ...)
-    if not ok then print("^1[Nickel] Event Error (" .. name .. "): " .. tostring(err) .. "^r") end
+    local ok, res = pcall(func, ...)
+    if not ok then 
+        print("^1[Nickel] Event Error (" .. name .. "): " .. tostring(res) .. "^r")
+        return nil
+    end
+    return res
 end
 
 function MP.RegisterEvent(evt, handler, p3, p4)
@@ -19,7 +23,10 @@ function MP.RegisterEvent(evt, handler, p3, p4)
         local dispatch = "Nickel_Evt_" .. evt
         _G[dispatch] = function(...)
             if handlers[evt] then
-                for _, item in ipairs(handlers[evt]) do safeCall(evt, item.fn, ...) end
+                for _, item in ipairs(handlers[evt]) do 
+                    local res = safeCall(evt, item.fn, ...)
+                    if res ~= nil then return res end
+                end
             end
         end
         OriginalRegisterEvent(evt, dispatch)

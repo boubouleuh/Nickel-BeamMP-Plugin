@@ -58,7 +58,8 @@ function ConfigManager.init()
         },
         advanced = {
             autoupdate = true,
-            branch = "dev",
+            update_type = "tags", -- "tags" or "commit"
+            target = "main",
             debug = false
         },
         client = {
@@ -98,11 +99,23 @@ function ConfigManager.init()
         configChanged = true
     end
 
-    for key, _ in pairs(ConfigManager.config) do
-        if defaultConfig[key] == nil then
-            ConfigManager.config[key] = nil
-            configChanged = true
+    local function recursiveCleanup(existing, default)
+        local changed = false
+        for key, value in pairs(existing) do
+            if default[key] == nil then
+                existing[key] = nil
+                changed = true
+            elseif type(value) == "table" and type(default[key]) == "table" then
+                if recursiveCleanup(value, default[key]) then
+                    changed = true
+                end
+            end
         end
+        return changed
+    end
+
+    if recursiveCleanup(ConfigManager.config, defaultConfig) then
+        configChanged = true
     end
 
     if configChanged then

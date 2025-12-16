@@ -1,129 +1,105 @@
-
 Updater = {}
+Updater.target = ConfigManager.GetSetting("advanced").target or "main"
 
-Updater.branch = ConfigManager.GetSetting("advanced").branch
-local function execute_in_dir(dir, command)
-    local full_command = "cd " .. dir .. " && " .. command
-    return os.execute(full_command)
+local function exec(path, cmd)
+    return os.execute("cd " .. path .. " && " .. cmd)
 end
 
-local function execute_in_dir_return(dir, command)
-    local temp_file = os.tmpname()
-    local full_command = "cd " .. dir .. " && " .. command .. " > " .. temp_file .. " 2>&1"
-    local success, termType, exitCode = os.execute(full_command)
+local function exec_ret(path, cmd)
+    local tmp = os.tmpname()
+    local ok, type, code = os.execute("cd " .. path .. " && " .. cmd .. " > " .. tmp .. " 2>&1")
+    local f = io.open(tmp, "r")
+    local out = f and f:read("*a") or ""
+    if f then f:close() end
+    os.remove(tmp)
+    return ok, code, (out:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+local function clean(str) return str and str:gsub("[\r\n%s]+", "") or "" end
+
+local function update_tags(path)
+    exec(path, "git fetch --tags origin")
+
+    local _, code, current = exec_ret(path, "git describe --tags --exact-match HEAD")
+    if code ~= 0 then current = nil else current = clean(current) end
     
-    local file = io.open(temp_file, "r")
-    local output = ""
-    if file then
-        output = file:read("*a")
-        file:close()
-        os.remove(temp_file)
+    local _, _, latest = exec_ret(path, "git describe --tags --abbrev=0 origin/" .. Updater.target)
+    latest = clean(latest)
+
+    if not latest or latest == "" then
+        return Utils.nkprint("No remote tags found.", "info")
     end
+
+    if current and current ~= "" then
+        if latest ~= current then
+            Utils.nkprint("New tag available: " .. current .. " -> " .. latest, "info")
+            local _, code, out = exec_ret(path, "git checkout tags/" .. latest)
+            if code ~= 0 then Utils.nkprint("Checkout failed: " .. out, "error") end
+        else
+            Utils.nkprint("Up to date (tag: " .. current .. ")", "info")
+        end
+        return
+    end
+
+    local _, code, _ = exec_ret(path, "git merge-base --is-ancestor tags/" .. latest .. " HEAD")
     
-    return success, termType, exitCode, output
+    if code == 0 then
+        Utils.nkprint("Local version is ahead of latest tag (" .. latest .. "). Skipping update.", "info")
+    else
+        Utils.nkprint("Local version is older than tag " .. latest .. ". Updating...", "info")
+        local _, code, out = exec_ret(path, "git checkout tags/" .. latest)
+        if code ~= 0 then Utils.nkprint("Checkout failed: " .. out, "error") end
+    end
 end
 
+local function update_target(path)
+    exec(path, "git fetch origin " .. Updater.target)
+    local _, _, localH = exec_ret(path, "git rev-parse HEAD")
+    local _, _, remoteH = exec_ret(path, "git rev-parse origin/" .. Updater.target)
+    
+    if clean(localH) ~= clean(remoteH) then
+        Utils.nkprint("Updating target " .. Updater.target .. "...", "info")
+        local _, code, out = exec_ret(path, "git pull --ff-only origin " .. Updater.target)
+        if code ~= 0 then Utils.nkprint("Update failed: " .. out, "error") end
+    else
+        Utils.nkprint("Target " .. Updater.target .. " is up to date.", "info")
+    end
+end
 
 function Updater.get_git_version(path)
-    local temp_file = "git_version.txt"
-
-    local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
-
-    local function read_file(file_path)
-        local file = io.open(file_path, "r")
-        if file then
-            local content = file:read("*a"):gsub("[\r\n%s]+", "")
-            file:close()
-            return content
-        end
-        return nil
-    end
-
-    -- Check current branch and switch if needed
-    execute_in_dir(path, "git rev-parse --abbrev-ref HEAD " .. redirect .. " > " .. temp_file)
-    local current_branch = read_file(path .. temp_file) or "unknown"
+    local _, code, version = exec_ret(path, "git describe --tags --exact-match HEAD")
     
-    if current_branch ~= Updater.branch then
-        Utils.nkprint("Switching from " .. current_branch .. " to " .. Updater.branch, "info")
-        execute_in_dir(path, "git checkout " .. Updater.branch .. " " .. redirect)
+    if code ~= 0 then
+        local _, _, hash = exec_ret(path, "git rev-parse --short HEAD")
+        version = clean(hash) or "unknown"
+    else
+        version = clean(version)
     end
-
-    -- Get version (tag or short hash)
-    execute_in_dir(path, "git describe --tags --exact-match HEAD " .. redirect .. " > " .. temp_file)
-    local version = read_file(path .. temp_file)
-    if not version or version == "" then
-        execute_in_dir(path, "git rev-parse --short HEAD " .. redirect .. " > " .. temp_file)
-        version = read_file(path .. temp_file) or "unknown"
-    end
-
-    -- Check if dirty
-    execute_in_dir(path, "git status --porcelain " .. redirect .. " > " .. temp_file)
-    local status = read_file(path .. temp_file)
-    local dirty = status and #status > 0 and "-dirty" or ""
-
-    os.remove(path .. temp_file) 
-
-    return string.format("%s (%s)%s", version, Updater.branch, dirty)
+    
+    local _, _, status = exec_ret(path, "git status --porcelain")
+    local dirty = (status and #status > 0) and "-dirty" or ""
+    
+    return string.format("%s (%s)%s", version, Updater.target, dirty)
 end
 
 function Updater.check()
-    local redirect = MP.GetOSName() == "windows" and "2>nul" or "2>/dev/null"
-    local git_check = os.execute("git --version " .. redirect)
-    if not git_check then
-        Utils.nkprint("Git is not installed on your system. The auto updater will not work.", "warn")
-        return
+    local path = Utils.script_path()
+    if not FS.Exists(path .. ".git") then
+        Utils.nkprint("Initializing Git...", "warn")
+        exec(path, "git init")
+        exec(path, "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
+        exec(path, "git fetch origin " .. Updater.target)
+        exec(path, "git reset --hard origin/" .. Updater.target)
+        exec(path, "git branch --set-upstream-to=origin/" .. Updater.target .. " " .. Updater.target)
     end
-    
-    if FS.Exists(Utils.script_path() .. ".git") then
-        if ConfigManager.GetSetting("advanced").autoupdate then
-            local repo_path = Utils.script_path()
-            local fetchSuccess, fetchTerm, fetchExit, fetchOut = execute_in_dir_return(repo_path, "git fetch origin " .. Updater.branch)
-            print("Git fetch result:", fetchSuccess, fetchTerm, fetchExit, fetchOut)
-            if fetchExit == 0 then
-                local _, _, _, localHash = execute_in_dir_return(repo_path, "git rev-parse HEAD")
-                local _, _, _, remoteHash = execute_in_dir_return(repo_path, "git rev-parse origin/" .. Updater.branch)
-                localHash = localHash and localHash:gsub("%s+", "") or nil
-                remoteHash = remoteHash and remoteHash:gsub("%s+", "") or nil
-                if localHash and remoteHash then
-                    if localHash ~= remoteHash then
-                        Utils.nkprint("New remote version detected: " .. localHash .. " -> " .. remoteHash, "info")
-                        local pullSuccess, pullTerm, pullExit, pullOut = execute_in_dir_return(repo_path, "git pull --ff-only origin " .. Updater.branch)
-                        print("Git pull result:", pullSuccess, pullTerm, pullExit, pullOut)
-                        if pullExit == 0 then
-                            -- Utils.RunAsync(function()    TODO FIX HOT RELOAD WITH TREE
-                            --     Utils.hotreload()
-                            -- end, 2000)
-                        else
-                            Utils.nkprint("Update failed: " .. (pullOut or ""), "error")
-                        end
-                    else
-                        Utils.nkprint("No update available (HEAD == origin/" .. Updater.branch .. ").", "info")
-                    end
-                else
-                    Utils.nkprint("Could not read local/remote hashes.", "warn")
-                end
-            else
-                Utils.nkprint("Remote fetch failed: " .. (fetchOut or ""), "error")
-            end
-        else
-            Utils.nkprint("Auto-updates are disabled. To enable them, set 'autoupdate' to 'true' in the configuration file.", "warn")
-        end
-    else
-        Utils.nkprint("This project is not a Git repository. Initializing ...", "warn")
-        Updater.init_git()
-        Utils.nkprint("Project initialized successfully!", "info")
-    end
-end
 
-function Updater.init_git()
-    local repo_path = Utils.script_path()
-    execute_in_dir(repo_path, "git init")
-    execute_in_dir(repo_path, "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
-    execute_in_dir(repo_path, "git fetch origin " .. Updater.branch)
-    -- Forcefully align the local state with the remote branch, discarding local files
-    execute_in_dir(repo_path, "git reset --hard origin/" .. Updater.branch)
-    -- Set up the local branch to track the remote branch
-    execute_in_dir(repo_path, "git branch --set-upstream-to=origin/" .. Updater.branch .. " " .. Updater.branch)
+    if not ConfigManager.GetSetting("advanced").autoupdate then return end
+
+    if ConfigManager.GetSetting("advanced").update_type == "tags" then
+        update_tags(path)
+    else
+        update_target(path)
+    end
 end
 
 Updater.check()
