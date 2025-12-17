@@ -1,4 +1,4 @@
-<center><img src="readme_img/image.png" alt="Logo" width="50%"/></center>
+<div align="center"><img src="readme_img/image.png" alt="Logo" width="50%"/></div>
 
 
 <h1><a href="https://discord.gg/6apG8dNcJF">Community Discord</a></h1>
