@@ -23,8 +23,41 @@ local function update_tags(path)
     local _, code, current = exec_ret(path, "git describe --tags --exact-match HEAD")
     if code ~= 0 then current = nil else current = clean(current) end
     
-    local _, _, latest = exec_ret(path, "git describe --tags --abbrev=0 origin/" .. Updater.target)
-    latest = clean(latest)
+    local allow_prerelease = ConfigManager.GetSetting("advanced").allow_prerelease
+    local latest = nil
+
+    -- Get all tags merged into target, sorted by version descending
+    local _, code, out = exec_ret(path, "git tag --merged origin/" .. Updater.target .. " --sort=-v:refname")
+    
+    if code == 0 and out then
+        for tag in out:gmatch("[^\r\n]+") do
+            tag = clean(tag)
+            if tag ~= "" then
+                if allow_prerelease then
+                    latest = tag
+                    break
+                else
+                    -- Exclude pre-releases (containing hyphen)
+                    if not tag:match("-") then
+                        latest = tag
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    if not latest or latest == "" then
+        -- Fallback: try git describe
+        local _, _, desc = exec_ret(path, "git describe --tags --abbrev=0 origin/" .. Updater.target)
+        latest = clean(desc)
+        
+        -- If we found a tag but it's a pre-release and we don't allow them, check if we should skip
+        if latest and latest ~= "" and not allow_prerelease and latest:match("-") then
+             Utils.nkprint("Latest tag found is a pre-release ("..latest..") but allow_prerelease is false. Skipping update.", "info")
+             return
+        end
+    end
 
     if not latest or latest == "" then
         return Utils.nkprint("No remote tags found.", "info")

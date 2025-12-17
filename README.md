@@ -1,4 +1,4 @@
-<img src="readme_img/nickel_banner.png" alt="Logo" width="100%"/>
+<center><img src="readme_img/image.png" alt="Logo" width="50%"/></center>
 
 
 <h1><a href="https://discord.gg/6apG8dNcJF">Community Discord</a></h1>
@@ -9,32 +9,23 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
 ## Installation
 
-- ### Ubuntu
-    Go to the Resources/Server path on your server and run these commands:
+### Method 1: Git (Recommended)
+This method allows the **auto-updater** to work automatically.
+Run this command in your `Resources/Server` folder:
 
-    `$ git clone https://github.com/boubouleuh/Nickel-BeamMP-Plugin`
+```bash
+git clone -b dev https://github.com/boubouleuh/Nickel-BeamMP-Plugin
+```
 
-    `$ cd Nickel-BeamMP-Plugin`
+*Note: You need `git` installed on your server.*
 
-    `$ git checkout dev`
-    
-    Now head to the <a href="#first-setup">First Setup</a> section.
-- ### Debian
-    Go to the Resources/Server path on your server and run these commands: 
+### Method 2: Manual (ZIP)
+1. Download the [Latest Release](https://github.com/boubouleuh/Nickel-BeamMP-Plugin/releases).
+2. Extract the content into `Resources/Server/Nickel-BeamMP-Plugin`.
+3. *Note: Auto-updates might not work without Git.*
 
-    `$ sudo apt install git wget curl`
-
-    `$ git clone https://github.com/boubouleuh/Nickel-BeamMP-Plugin`
-
-    `$ cd Nickel-BeamMP-Plugin`
-
-    `$ git checkout dev`
-
-    Now head to the <a href="#first-setup">First Setup</a> section.
-- ### Windows
-    If you really need to run it on Windows, you will need either WSL or Docker or an other solution to have a virtual Linux environment.
-
-    BeamMP use Lua 5.4 for the windows version for now and i cant handle it. 
+### Windows Users
+BeamMP on Windows uses Lua 5.4 which may cause compatibility issues. It is recommended to host on Linux (WSL, Docker, or VPS).
 
 <h2 id="first-setup">First setup</h2>
 
@@ -43,7 +34,7 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
 
     `/grantrole administrator yourUsernameHere` Yes, replace "yourUsernameHere" with your username.
 
-    You can also use this command to add Moderators and other roles.
+    You can also use this command to add Moderators and other roles. Use `/listroles` to see all available roles.
 
 
 ## Commands
@@ -71,36 +62,98 @@ Introducing Nickel, a lightweight and powerful moderation plugin for BeamMP. Thi
  - `broadcast <message>` Send a message to all players
  - `whitelist <add/remove> <playername>` Add or remove a player from the whitelist
  - `countdown <duration>` Start a countdown
+ - `reload` Reload the plugin
+ - `debug` Toggle debug mode
 
-## Database Configuration
+## Configuration
 
-Nickel supports multiple database types for data persistence:
+The configuration is located in `NickelConfig.toml`. It is automatically generated on the first run.
 
-### SQLite (Default)
-SQLite is the default database and requires no additional setup:
+### General Settings
+
 ```toml
-[sync]
-database_type = "sqlite"
-database_file = "database/nickel.sqlite"
+[commands]
+prefix = "/"            # Command prefix
+
+[misc]
+join_message = "[{Role}] {Player} joined the server" # Message sent when a player joins
+chat_log = true         # Log chat messages to console
+
+[langs]
+server_language = "en_us"       # Server language
+force_server_language = false   # Force server language for all players
+
+[conditions]
+whitelist = false       # Enable whitelist mode
+guest = false           # Allow guest players (unauthenticated)
 ```
 
-### MySQL
-For larger deployments or multi-server setups, MySQL is supported:
+### Database Configuration
+
+Nickel supports SQLite (default) and MySQL.
+
+**SQLite:**
 ```toml
-[sync]
-database_type = "mysql"
-mysql_host = "localhost"
-mysql_port = 3306
-mysql_database = "nickel_beammp"
-mysql_username = "your_username"
-mysql_password = "your_password"
+[database]
+type = "sqlite"
+file = "database/nickel.sqlite"
 ```
 
-**Requirements for MySQL:**
-- MySQL server installation
-- `luasql-mysql` library (install using `scripts/install_mysql.sh`)
+**MySQL:**
+```toml
+[database]
+type = "mysql"
+host = "localhost"
+port = 3306
+name = "nickel_beammp"
+username = "root"
+password = "password"
+ssl = false
+```
 
-For detailed setup instructions, see `database/DATABASE_CONFIG.md` and `database/MIGRATION_GUIDE.md`.
+### Discord Integration
+
+You can set up webhooks to log events to Discord.
+
+```toml
+[discord]
+chat_webhook = ""       # Webhook URL for chat logs
+vehicle_webhook = ""    # Webhook URL for vehicle spawn logs
+player_webhook = ""     # Webhook URL for player join/leave logs
+```
+
+### Client & Interface
+
+Settings related to the client-side interface and environment.
+
+```toml
+[client]
+b64avatar = true        # Use base64 avatars
+interface = false       # Enable the custom Nickel interface
+
+[client.interfaceValues]
+showNameplates = true   # Show player nameplates
+
+[client.environment]
+temperature = 20
+time = [10, 20]         # Start time [hour, minute]
+gravity = -9.81
+wind = 0
+weather = "sunny"
+```
+
+### Advanced & Auto-Updater
+
+Configure the built-in auto-updater and debug mode.
+
+```toml
+[advanced]
+debug = false            # Enable debug mode
+autoupdate = true        # Enable/Disable auto-updates
+update_type = "tags"     # "tags" (stable releases) or "commits" (latest changes)
+target = "main"          # Branch name (e.g., "main", "dev") or Tag name
+allow_prerelease = false # Allow updating to pre-release tags (e.g. v1.0.0-beta)
+```
 
 
 

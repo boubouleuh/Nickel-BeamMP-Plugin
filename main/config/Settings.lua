@@ -60,6 +60,7 @@ function ConfigManager.init()
             autoupdate = true,
             update_type = "tags", -- "tags" or "commit"
             target = "main",
+            allow_prerelease = false,
             debug = false
         },
         client = {

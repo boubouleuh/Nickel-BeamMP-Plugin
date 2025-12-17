@@ -73,10 +73,9 @@ local function onFileChanged(path)
     
     -- Security & Loop prevention
     if not path:find(root, 1, true) then return end
-    if path:match("%.log$") or path:match("%.json$") or path:match("%.toml$") then return end
-    if path:match("temp_file") then return end
-    if path:match("%.db$") or path:match("%.sqlite") then return end -- Ignore DB writes
-    if path:match("%.git") then return end
+    
+    -- Only allow .lua files
+    if not path:match("%.lua$") then return end
 
     -- Debounce (2 seconds)
     local now = os.time()
