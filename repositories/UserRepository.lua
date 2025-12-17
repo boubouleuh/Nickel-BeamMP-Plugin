@@ -62,8 +62,6 @@ function UserRepository.getOrCreate(beammpid, name)
     local user = DatabaseManager:withConnection(function()
         return DatabaseManager:getClassByBeammpId(User, beammpid)
     end)
-
-    print(user)
     
     if user then
         -- User exists, check if name needs update
