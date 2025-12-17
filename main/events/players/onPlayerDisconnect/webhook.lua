@@ -11,7 +11,7 @@ return function(player_id)
             local embedDescription = "**" .. playerName ..  " left " .. Utils.getMapName() .. " **"
             local color = 0xFF0000
             
-            Utils.sendDiscordMessage(
+            Online.sendDiscordMessage(
                 webhook,
                 "",                     
                 username,
