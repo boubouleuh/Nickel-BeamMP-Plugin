@@ -128,7 +128,11 @@ local function scanRecursive(dir, list)
     -- Files
     local files = FS.ListFiles(dir)
     if files then
-        for _, f in pairs(files) do list[dir .. "/" .. f] = true end
+        for _, f in pairs(files) do 
+            if f:match("%.lua$") then
+                list[dir .. "/" .. f] = true 
+            end
+        end
     end
     -- Directories
     local dirs = FS.ListDirectories(dir)
@@ -150,8 +154,7 @@ local function initFileWatcher()
         -- Check for new files
         for path, _ in pairs(current) do
             if not knownFiles[path] then
-                if not path:match("%.log$") and not path:match("temp_file") and 
-                   not path:match("%.db$") and not path:match("%.git") and not path:match("%.sqlite") then
+                if path:match("%.lua$") then
                     print("^3[Nickel] New file: " .. path .. " -> Reloading...^r")
                     changeDetected = true
                     break
@@ -163,8 +166,7 @@ local function initFileWatcher()
         if not changeDetected then
             for path, _ in pairs(knownFiles) do
                 if not current[path] then
-                    if not path:match("%.log$") and not path:match("temp_file") and 
-                       not path:match("%.db$") and not path:match("%.git") and not path:match("%.sqlite") then
+                    if path:match("%.lua$") then
                         print("^3[Nickel] File deleted: " .. path .. " -> Reloading...^r")
                         changeDetected = true
                         break
