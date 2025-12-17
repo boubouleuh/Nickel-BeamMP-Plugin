@@ -59,7 +59,7 @@ function ConfigManager.init()
         advanced = {
             autoupdate = true,
             update_type = "tags", -- "tags" or "commit"
-            target = "main",
+            target = "dev",
             allow_prerelease = false,
             debug = false
         },
