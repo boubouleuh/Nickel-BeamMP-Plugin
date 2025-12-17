@@ -64,6 +64,14 @@ local function update_tags(path)
     end
 
     if current and current ~= "" then
+        -- Check if we are trying to downgrade (if latest is an ancestor of current, current is newer)
+        local _, is_ancestor_code, _ = exec_ret(path, "git merge-base --is-ancestor tags/" .. latest .. " tags/" .. current)
+        
+        if is_ancestor_code == 0 and latest ~= current then
+             Utils.nkprint("Current version ("..current..") is ahead of latest configured version ("..latest.."). Skipping downgrade.", "info")
+             return
+        end
+
         if latest ~= current then
             Utils.nkprint("New tag available: " .. current .. " -> " .. latest, "info")
             local _, code, out = exec_ret(path, "git checkout tags/" .. latest)

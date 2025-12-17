@@ -2,11 +2,6 @@
 RegisterPlayer = {}
 
 function RegisterPlayer.register(beammpid, name, ip, isguest)
-    if not beammpid then
-        Utils.nkprint("[registerPlayer] Invalid BeamMP ID for player: " .. (name or "Unknown"), "error")
-        return "Invalid player data"
-    end
-
     if not isguest then
         local user = User.getOrCreate(beammpid, name)
 
