@@ -1,12 +1,12 @@
 
-
-local command = {
+local command = RegisterCommand("mute", {
     type = "user",
     args = {
         {name = "playername", type = "string"},
         {name = "reason", type = "string"}
     }
-}
+})
+
 --- command
 function command.init(sender_id, sender_name, playername, reason)
     if playername == nil then
@@ -38,5 +38,3 @@ function command.init(sender_id, sender_name, playername, reason)
 
     return true
 end
-
-RegisterNickelCommand("mute", command)

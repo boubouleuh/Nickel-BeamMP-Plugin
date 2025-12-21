@@ -1,10 +1,10 @@
-
-local command = {
+local command = RegisterCommand("broadcast", {
     type="global",
     args = {
         {name = "message", type = "string"}
     }
-}
+})
+
 --- command
 function command.init(sender_id, sender_name, message)
     if message == nil then
@@ -16,5 +16,3 @@ function command.init(sender_id, sender_name, message)
   
     return true
 end
-
-RegisterNickelCommand("broadcast", command)

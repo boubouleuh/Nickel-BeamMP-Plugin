@@ -1,11 +1,10 @@
-
-local command = {
+local command = RegisterCommand("ban", {
     type = "user",
     args = {
         {name = "playername", type = "string"},
         {name = "reason", type = "string"}
     }
-}
+})
 
 function command.init(sender_id, sender_name, playername, reason)
     if playername == nil then
@@ -40,5 +39,3 @@ function command.init(sender_id, sender_name, playername, reason)
 
     return true
 end
-
-RegisterNickelCommand("ban", command)

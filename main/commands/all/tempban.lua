@@ -1,13 +1,12 @@
 
-
-local command = {
+local command = RegisterCommand("tempban", {
     type = "user",
     args = {
         {name = "playername", type = "string"},
         {name = "time", type = "string"},
         {name = "reason", type = "string"}
     }
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, playername, time, reason)
@@ -43,5 +42,3 @@ function command.init(sender_id, sender_name, playername, time, reason)
     
     return true
 end
-
-RegisterNickelCommand("tempban", command)

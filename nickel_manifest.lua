@@ -50,4 +50,5 @@ server_scripts = {
     "/main/client/initInterface.lua",
     "/main/events/dispatcher.lua",
     "/INITIALIZATION/main.lua",
+    "main/extensions.lua",
 }

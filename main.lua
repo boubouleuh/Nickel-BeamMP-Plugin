@@ -14,5 +14,5 @@ local Tree = dofile(root_path .. "Tree/init.lua")
 _G.Tree = Tree
 
 print("[Nickel] Initializing via Tree framework...")
-Tree.LoadManifest(root_path .. "nickel_manifest.lua")
+Tree.LoadManifest(root_path .. "nickel_manifest.lua", true)
 print("[Nickel] Initialization complete.")

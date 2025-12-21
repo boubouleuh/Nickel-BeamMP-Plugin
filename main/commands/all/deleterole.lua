@@ -1,9 +1,8 @@
-
-local command = {
+local command = RegisterCommand("deleterole", {
     args = {
         {name = "rolename", type = "string"}
     }
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, rolename)
@@ -27,5 +26,3 @@ function command.init(sender_id, sender_name, rolename)
     
     return true
 end
-
-RegisterNickelCommand("deleterole", command)

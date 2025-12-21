@@ -1,18 +1,14 @@
 
-local utils = require("utils.misc")
+local command = RegisterCommand("testCommand", {
+    type = "global",
+    args = {
+        {name = "message", type = "string"} --this is for showing it in the interface
+    }
+})
 
-local command = {}
+function command.init(sender_id, sender_name, managers, message) --add parameters here
 
-function command.init(sender_id, sender_name, managers, playername, reason) --add parameters here
-    local permManager = managers.permManager
-    local msgManager = managers.msgManager      --Yes here you have access to everything, there will be a documentation maybe..
-    local cfgManager = managers.cfgManager
-    local dbManager = managers.dbManager
-
-    msgManager:SendMessage(sender_id, "the test is successfull")
-    --msgManager:SendMessage(sender_id, "commands.ban.missing_args", cfgManager.config.commands.prefix) you can also do things like that to translate things
+    MessagesManager:SendMessage(sender_id, "the test is successfull")
 
     return true --if the command is successfull otherwise you will need to return false !
 end
-
-return command

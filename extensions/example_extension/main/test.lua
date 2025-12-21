@@ -1,0 +1,5 @@
+
+
+
+
+print("example extension loaded")

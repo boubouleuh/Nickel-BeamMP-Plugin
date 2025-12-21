@@ -1,7 +1,6 @@
-
-local command = {
+local command = RegisterCommand("reload", {
     type = "console",
-}
+})
 
 --- command
 function command.init(sender_id, sender_name)
@@ -9,5 +8,3 @@ function command.init(sender_id, sender_name)
 
     return true
 end
-
-RegisterNickelCommand("reload", command)

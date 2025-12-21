@@ -1,12 +1,11 @@
 
-
-local command = {
+local command = RegisterCommand("whitelist", {
+    type = "user",
     args = {
         {name = "addORremove", type = "string"},
         {name = "playername", type = "string"}
     }
-}
-
+})
 --- command
 function command.init(sender_id, sender_name, action, playername)
     if not Utils.element_exist_in_table(action, {"add", "remove", "clear"}) then
@@ -55,5 +54,3 @@ function command.init(sender_id, sender_name, action, playername)
 
     return true
 end
-
-RegisterNickelCommand("whitelist", command)

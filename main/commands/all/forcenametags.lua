@@ -1,9 +1,8 @@
 
-
-local command = {
+local command = RegisterCommand("forcenametags", {
     type = "global",
     args = {}
-}
+})
 
 --- command
 function command.init(sender_id, sender_name)
@@ -39,5 +38,3 @@ function command.init(sender_id, sender_name)
     
     return true
 end
-
-RegisterNickelCommand("forcenametags", command)

@@ -1,10 +1,9 @@
 
 
-
-local command = {
+local command = RegisterCommand("listroles", {
     type = "global",
     args = {}
-}
+})
 
 --- command
 function command.init(sender_id, sender_name)
@@ -17,5 +16,3 @@ function command.init(sender_id, sender_name)
     end)
     return true
 end
-
-RegisterNickelCommand("listroles", command)

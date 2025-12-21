@@ -1,10 +1,10 @@
 
-
-local command = {
+local command = RegisterCommand("help", {
     type="global",
     args = {
     }
-}
+})
+
 --- command
 function command.init(sender_id, sender_name)
     local prefix = ConfigManager.GetSetting("commands").prefix
@@ -29,5 +29,3 @@ function command.init(sender_id, sender_name)
 
     return true
 end
-
-RegisterNickelCommand("help", command)

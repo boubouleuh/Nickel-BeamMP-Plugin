@@ -1,5 +1,5 @@
 ---@meta
-local Nickel = {}
+Nickel = {}
 _G.Nickel = Nickel
 
 -- Snapshot globals to protect them during reload
@@ -38,9 +38,9 @@ function Nickel.LoadDir(dir)
     end
 end
 
-function Nickel.LoadManifest(path)
-    Nickel.ManifestPath = path
-    local env = {}
+function Nickel.LoadManifest(path, isMain)
+    if isMain then Nickel.ManifestPath = path end
+    local env = setmetatable({}, { __index = _G })
     local chunk = loadfile(path, "t", env)
     if not chunk then return print("^1[Nickel] Manifest Error: " .. path .. "^r") end
     chunk()
@@ -80,11 +80,20 @@ local function onFileChanged(path)
     -- Debounce (2 seconds)
     local now = os.time()
     if os.difftime(now, lastReloadTime) < 2 then return end
-    
-    print("^3[Nickel] File changed: " .. path .. " -> Reloading...^r")
     lastReloadTime = now
+
+    -- Check for extension change
+    local extName = path:match("/extensions/([^/]+)/")
+    if extName then
+        local manifest = root .. "extensions/" .. extName .. "/ext_manifest.lua"
+        if FS.Exists(manifest) then
+            print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
+            Nickel.LoadManifest(manifest)
+            return
+        end
+    end
     
-    -- Delay slightly to ensure file write is complete? No, usually fine.
+    print("^3[Nickel] Core file changed: " .. path .. " -> Full Reloading...^r")
     Nickel.Reload()
 end
 _G.Nickel_HotReload = onFileChanged

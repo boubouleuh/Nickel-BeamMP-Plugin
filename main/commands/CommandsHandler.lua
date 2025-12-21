@@ -2,10 +2,20 @@ CommandsManager = {}
 
 NickelCommands = NickelCommands or {}
 
-function RegisterNickelCommand(name, commandData)
+function RegisterCommand(name, commandData)
+    commandData = commandData or {}
+    
+    -- Détection automatique de l'extension via le chemin du fichier appelant
+    local source = debug.getinfo(2, "S").source
+    -- Cherche le dossier après "extensions/" dans le chemin
+    local extensionName = source:match("extensions[/\\]([^/\\]+)")
+    
+    commandData.extension = extensionName or "nickel"
+    
     NickelCommands[name] = commandData
+    
+    return commandData 
 end
-
 --- init commands
 function CommandsManager.init()
     local commandCount = Utils.tableLength(NickelCommands)
@@ -15,7 +25,6 @@ function CommandsManager.init()
         local command = Command.new(commandName)
         DatabaseManager:save(command)
         
-        commandData.extension = 'nickel'
         commandData.description = MessagesManager:GetMessage(-2, "commands." .. commandName .. ".description") or "No description"
     end
 

@@ -1,12 +1,11 @@
 
-
-local command = {
+local command = RegisterCommand("dm", {
     type = "user",
     args = {
         {name = "target_name", type = "string"},
         {name = "message", type = "string"}
     }
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, target_name, message)
@@ -29,5 +28,3 @@ function command.init(sender_id, sender_name, target_name, message)
 
     return true
 end
-
-RegisterNickelCommand("dm", command)

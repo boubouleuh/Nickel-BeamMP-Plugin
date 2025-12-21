@@ -1,7 +1,6 @@
-
-local command = {
+local command = RegisterCommand("debug", {
     type = "console",
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, field)
@@ -11,5 +10,3 @@ function command.init(sender_id, sender_name, field)
 
     return true
 end
-
-RegisterNickelCommand("debug", command)

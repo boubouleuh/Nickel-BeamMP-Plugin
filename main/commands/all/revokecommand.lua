@@ -1,11 +1,10 @@
 
-
-local command = {
+local command = RegisterCommand("revokecommand", {
     args = {
         {name = "commandName", type = "string"},
         {name = "rolename", type = "string"}
     }
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, commandName, rolename)
@@ -49,7 +48,5 @@ function command.init(sender_id, sender_name, commandName, rolename)
     
     return true
 end
-
-RegisterNickelCommand("revokecommand", command)
 
 

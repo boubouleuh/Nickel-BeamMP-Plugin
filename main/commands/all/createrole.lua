@@ -1,11 +1,10 @@
 
-
-local command = {
+local command = RegisterCommand("createrole", {
     args = {
         {name = "rolename", type = "string"},
         {name = "permlvl", type = "string"}
     }
-}
+})
 
 --- command
 function command.init(sender_id, sender_name, rolename, permlvl)
@@ -36,5 +35,3 @@ function command.init(sender_id, sender_name, rolename, permlvl)
     
     return true
 end
-
-RegisterNickelCommand("createrole", command)
