@@ -11,3 +11,5 @@ version.txt
 NickelConfig.toml
 reloader.lua
 database/nickel.sqlite
+extensions/*
+!extensions/example_extension/
