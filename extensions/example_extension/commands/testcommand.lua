@@ -1,12 +1,12 @@
 
-local command = RegisterCommand("testCommand", {
+local command = RegisterCommand("testcommand", {
     type = "global",
     args = {
         {name = "message", type = "string"} --this is for showing it in the interface
     }
 })
 
-function command.init(sender_id, sender_name, managers, message) --add parameters here
+function command.init(sender_id, sender_name) --add parameters here
 
     MessagesManager:SendMessage(sender_id, "the test is successfull")
 

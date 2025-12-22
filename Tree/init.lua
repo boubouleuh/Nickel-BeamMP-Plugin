@@ -1,10 +1,11 @@
 ---@meta
+local globalEnv = _G
 Nickel = {}
-_G.Nickel = Nickel
+globalEnv.Nickel = Nickel
 
 -- Snapshot globals to protect them during reload
 local protectedGlobals = {}
-for k, _ in pairs(_G) do protectedGlobals[k] = true end
+for k, _ in pairs(globalEnv) do protectedGlobals[k] = true end
 
 protectedGlobals["Nickel"] = true
 protectedGlobals["Tree"] = true
@@ -28,30 +29,80 @@ function Nickel.LoadLib(path, func)
     return lib()
 end
 
-function Nickel.LoadDir(dir)
+function Nickel.LoadDir(dir, useProtection)
     local files = FS.ListFiles(dir)
     if not files then return end
     for _, f in pairs(files) do
-        local full = dir .. "/" .. f
-        if FS.IsDirectory(full) then Nickel.LoadDir(full)
-        elseif f:sub(-4) == ".lua" then dofile(full) end
+        if f ~= "." and f ~= ".." then
+            local full = dir .. "/" .. f
+            if FS.IsDirectory(full) then Nickel.LoadDir(full, useProtection)
+            elseif f:sub(-4) == ".lua" then 
+                if useProtection then
+                    Nickel.LoadExtensionFile(full)
+                else
+                    dofile(full)
+                end
+            end
+        end
     end
 end
 
-function Nickel.LoadManifest(path, isMain)
+function Nickel.LoadExtensionFile(path)
+    local env = setmetatable({}, {
+        __index = globalEnv,
+        __newindex = function(t, k, v)
+            if k == "Nickel" then
+                print("^1[Nickel] Security Warning: Attempt to overwrite global 'Nickel' in " .. path .. "^r")
+                return
+            end
+            
+            if Nickel.IsGlobalProtected and Nickel.IsGlobalProtected(k) then
+                print("^1[Nickel] Security Warning: Attempt to overwrite core global '" .. k .. "' in " .. path .. "^r")
+                return
+            end
+
+            globalEnv[k] = v
+        end
+    })
+    rawset(env, "_G", env)
+    
+    local chunk, err = loadfile(path, "t", env)
+    if not chunk then 
+        print("^1[Nickel] Error loading " .. path .. ": " .. tostring(err) .. "^r")
+        return nil
+    end
+    return chunk()
+end
+
+function Nickel.IsExtensionEnabled(path)
+    local env = setmetatable({}, { __index = globalEnv })
+    local chunk = loadfile(path, "t", env)
+    if not chunk then return false end
+    pcall(chunk)
+    return env.enabled
+end
+
+function Nickel.LoadManifest(path, isMain, useProtection)
     if isMain then Nickel.ManifestPath = path end
-    local env = setmetatable({}, { __index = _G })
+    local env = setmetatable({}, { __index = globalEnv })
     local chunk = loadfile(path, "t", env)
     if not chunk then return print("^1[Nickel] Manifest Error: " .. path .. "^r") end
     chunk()
     
     local root = Nickel.Path:gsub("Tree/$", "")
+    if not env.enabled then return end
     for _, p in ipairs(env.server_scripts or {}) do
         local clean = p:gsub("^/", "")
-        if clean:sub(-2) == "/*" then Nickel.LoadDir(root .. clean:sub(1, -3))
+        if clean:sub(-2) == "/*" then Nickel.LoadDir(root .. clean:sub(1, -3), useProtection)
         else 
             local f = root .. clean
-            if FS.Exists(f) then dofile(f) else print("^3[Nickel] Missing: " .. f .. "^r") end
+            if FS.Exists(f) then 
+                if useProtection then
+                    Nickel.LoadExtensionFile(f)
+                else
+                    dofile(f)
+                end
+            else print("^3[Nickel] Missing: " .. f .. "^r") end
         end
     end
 end
@@ -74,7 +125,6 @@ local function onFileChanged(path)
     -- Security & Loop prevention
     if not path:find(root, 1, true) then return end
     
-    -- Only allow .lua files
     if not path:match("%.lua$") then return end
 
     -- Debounce (2 seconds)
@@ -89,6 +139,10 @@ local function onFileChanged(path)
         if FS.Exists(manifest) then
             print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
             Nickel.LoadManifest(manifest)
+            -- Reload extension events
+            if ExtensionsManager and ExtensionsManager.reloadExtension then
+                ExtensionsManager.reloadExtension(extName)
+            end
             return
         end
     end
@@ -101,10 +155,13 @@ _G.Nickel_HotReload = onFileChanged
 function Nickel.Reload()
     print("^3[Nickel] Hot Reloading...^r")
     
+    -- Unprotect BEFORE doing anything else
+    if Nickel.UnprotectCore then Nickel.UnprotectCore() end
+
     -- Reset Globals (Clear anything not present at startup)
-    for k, _ in pairs(_G) do
+    for k, _ in pairs(globalEnv) do
         if not protectedGlobals[k] then
-            _G[k] = nil
+            globalEnv[k] = nil
         end
     end
 
@@ -127,13 +184,12 @@ end
 MP.RegisterEvent("onFileChanged", "Nickel_HotReload")
 
 -- Update protected globals to include everything loaded by init.lua
-for k, _ in pairs(_G) do protectedGlobals[k] = true end
+for k, _ in pairs(globalEnv) do protectedGlobals[k] = true end
 
 -- File Watcher for new files (Polling)
 local knownFiles = {}
 
 local function scanRecursive(dir, list)
-    -- Files
     local files = FS.ListFiles(dir)
     if files then
         for _, f in pairs(files) do 
@@ -142,7 +198,6 @@ local function scanRecursive(dir, list)
             end
         end
     end
-    -- Directories
     local dirs = FS.ListDirectories(dir)
     if dirs then
         for _, d in pairs(dirs) do scanRecursive(dir .. "/" .. d, list) end
@@ -194,5 +249,63 @@ local function initFileWatcher()
     if Nickel.SetTimeout then Nickel.SetTimeout(2000, poll) end
 end
 initFileWatcher()
+
+-- Security: Protect Nickel Core
+local protectedData = {}
+local isProtected = false
+local coreGlobals = {}
+
+function Nickel.ProtectCore()
+    if isProtected then return end
+    
+    -- Snapshot current globals as Core Globals
+    coreGlobals = {}
+    for k, _ in pairs(globalEnv) do
+        coreGlobals[k] = true
+    end
+    
+    -- Move all current Nickel members to protected storage
+    for k, v in pairs(Nickel) do
+        protectedData[k] = v
+        Nickel[k] = nil
+    end
+    
+    local mt = {
+        __index = protectedData,
+        __newindex = function(t, k, v)
+            if protectedData[k] ~= nil then
+                print("^1[Nickel] Security Warning: Attempt to overwrite core member 'Nickel." .. tostring(k) .. "'^r")
+                return
+            end
+            protectedData[k] = v
+        end,
+        __pairs = function() return pairs(protectedData) end
+        -- __metatable removed to allow UnprotectCore to work
+    }
+    
+    setmetatable(Nickel, mt)
+    isProtected = true
+    print("^2[Nickel] Core Protected.^r")
+end
+
+function Nickel.UnprotectCore()
+    if not isProtected then return end
+    
+    -- Remove metatable first
+    setmetatable(Nickel, nil)
+    
+    -- Restore members from protected storage
+    for k, v in pairs(protectedData) do
+        Nickel[k] = v
+    end
+    
+    protectedData = {}
+    coreGlobals = {}
+    isProtected = false
+end
+
+function Nickel.IsGlobalProtected(k)
+    return coreGlobals[k]
+end
 
 return Nickel

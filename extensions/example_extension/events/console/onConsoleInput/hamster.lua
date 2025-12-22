@@ -1,6 +1,5 @@
-
-return function(cmd)
+return function(cmd) -- event example, try typing hamster in the console :D
     if cmd == "hamster" then
-        return true, "Hamster command received! 🐹"
+        return "Hamster command received! 🐹"
     end
 end

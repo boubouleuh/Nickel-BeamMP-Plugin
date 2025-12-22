@@ -33,7 +33,21 @@ function MP.RegisterEvent(evt, handler, p3, p4)
     end
 
     local fn = type(handler) == "function" and handler or _G[handler]
-    if fn then table.insert(handlers[evt], { fn = fn, name = name }) end
+    if fn then
+        local found = false
+        if name ~= "anonymous" then
+            for i, item in ipairs(handlers[evt]) do
+                if item.name == name then
+                    handlers[evt][i] = { fn = fn, name = name }
+                    found = true
+                    break
+                end
+            end
+        end
+        if not found then
+            table.insert(handlers[evt], { fn = fn, name = name })
+        end
+    end
 
     if timerMs then
         MP.CreateEventTimer(evt, timerMs)

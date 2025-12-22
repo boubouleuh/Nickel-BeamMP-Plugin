@@ -66,6 +66,7 @@ function CommandsManager:CreateCommand(sender_id, message, allowSpaceOnLastArg)
         return
     end
 
+    message = string.lower(message)
     local command = string.match(message, "%S+")
     local commandWithoutPrefix = string.sub(command, 2)
 

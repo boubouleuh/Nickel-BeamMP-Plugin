@@ -45,7 +45,18 @@ function DatabaseManager.init()
   end
 end
 
-function DatabaseManager:createTableIfNotExists(tableName, columns)
+function DatabaseManager:createTableIfNotExists(class)
+  -- Register class for final schema sync
+  if not DatabaseManager.registeredClasses then DatabaseManager.registeredClasses = {} end
+  local found = false
+  for _, c in ipairs(DatabaseManager.registeredClasses) do
+    if c.tableName == class.tableName then found = true break end
+  end
+  if not found then table.insert(DatabaseManager.registeredClasses, class) end
+
+  local tableName = class.tableName
+  local columns = class:getColumns()
+
   local processed = {}
   for _, col in ipairs(columns) do
     local trimmed = col:gsub("^%s+", ""):gsub("%s+$", "")
@@ -345,43 +356,44 @@ function DatabaseManager:save(class, canupdate)
 end
 
 
-function DatabaseManager:createTableForClass(class)
+function DatabaseManager:createTableForClass(class, allowDrop)
+  DatabaseManager:createTableIfNotExists(class)
 
   local tableName = class.tableName
   local columns = class:getColumns()
   local existingColumns = DatabaseManager:getTableColumns(tableName)
 
-  if not next(existingColumns) then
-    DatabaseManager:createTableIfNotExists(tableName, columns)
-  else
-      local existingColumnsFinal = {}
-      local columnsFinal = {}
+  local existingColumnsFinal = {}
+  local columnsFinal = {}
 
-      local foreignConstraints = {}
+  local foreignConstraints = {}
 
-      for key2, _ in pairs(existingColumns) do
-          table.insert(existingColumnsFinal, key2)
-      end
+  for key2, _ in pairs(existingColumns) do
+      table.insert(existingColumnsFinal, key2)
+  end
 
-      for key, column in ipairs(columns) do
-        local colName = column:match("^(%S+)")
-        if colName and colName:upper() == "FOREIGN" then
-          table.insert(foreignConstraints, column)
-        end
-        local finalKey = Utils.get_key_for_value(existingColumnsFinal, colName)
-        if finalKey ~= nil then
-          columnsFinal[finalKey] = colName
-        end
-      end
+  for key, column in ipairs(columns) do
+    local colName = column:match("^(%S+)")
+    if colName and colName:upper() == "FOREIGN" then
+      table.insert(foreignConstraints, column)
+    end
+    local finalKey = Utils.get_key_for_value(existingColumnsFinal, colName)
+    if finalKey ~= nil then
+      columnsFinal[finalKey] = colName
+    end
+  end
 
-      for key, column in ipairs(existingColumnsFinal) do
+  if allowDrop then
+        Utils.nkprint("Syncing schema for " .. tableName .. ". DB Columns: " .. table.concat(existingColumnsFinal, ", "), "debug")
+        for key, column in ipairs(existingColumnsFinal) do
 
-        if columnsFinal[key] == nil then
-         
-          local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
+          if columnsFinal[key] == nil then
           
-          DatabaseManager:returnQuery(alterQuery)
-          -- DatabaseManager.db:exec(alterQuery)
+            local alterQuery = string.format("ALTER TABLE %s DROP COLUMN %s", tableName, column)
+            Utils.nkprint("Dropping unused column " .. column .. " from table " .. tableName, "info")
+            DatabaseManager:returnQuery(alterQuery)
+            -- DatabaseManager.db:exec(alterQuery)
+          end
         end
       end
 
@@ -484,8 +496,94 @@ function DatabaseManager:createTableForClass(class)
         end
       end
     end
+
+end
+
+---Extend a database table with new columns dynamically
+---@param class table The object class (e.g. User)
+---@param newColumns table List of column definitions (e.g. {"money INTEGER DEFAULT 0"})
+function DatabaseManager:extendTable(class, newColumns)
+  if not class or not class.getColumns then
+    Utils.nkprint("Invalid class provided to extendTable", "error")
+    return
   end
 
+  -- Initialize extension storage if needed
+  if not class._extendedColumns then
+    class._extendedColumns = {}
+    
+    -- Hook getColumns only once
+    local originalGetColumns = class.getColumns
+    class.getColumns = function()
+      local columns = originalGetColumns()
+      for _, col in ipairs(class._extendedColumns) do
+        table.insert(columns, col)
+      end
+      return columns
+    end
+  end
+
+  -- Add new columns if they don't exist
+  for _, newCol in ipairs(newColumns) do
+    local exists = false
+    for _, existing in ipairs(class._extendedColumns) do
+      if existing == newCol then 
+        exists = true 
+        break 
+      end
+    end
+    
+    if not exists then
+      table.insert(class._extendedColumns, newCol)
+    end
+  end
+
+  -- Apply schema changes
+  DatabaseManager:withConnection(function()
+    DatabaseManager:createTableForClass(class)
+  end)
+end
+
+---Add a column by inferring type from a default value
+---@param class table The object class
+---@param name string Column name
+---@param defaultValue any The default value (used to infer type)
+function DatabaseManager:addValue(class, name, defaultValue)
+  local colType = "VARCHAR(255)" -- Default fallback
+  local valType = type(defaultValue)
+  
+  if valType == "number" then
+    -- Check if integer
+    if math.type then -- Lua 5.3+
+      if math.type(defaultValue) == "integer" then
+        colType = "INTEGER"
+      else
+        colType = "DOUBLE"
+      end
+    else
+      -- Fallback for older Lua or if math.type not available
+      if defaultValue % 1 == 0 then
+        colType = "INTEGER"
+      else
+        colType = "DOUBLE"
+      end
+    end
+  elseif valType == "boolean" then
+    colType = "BOOLEAN"
+  elseif valType == "string" then
+    colType = "VARCHAR(255)"
+  end
+
+  -- Use the existing extendTable with the table format
+  -- We construct the column definition manually
+  local colDef = string.format("%s %s DEFAULT %s", name, colType, tostring(defaultValue))
+  
+  -- Handle string quoting for default value
+  if valType == "string" then
+    colDef = string.format("%s %s DEFAULT '%s'", name, colType, defaultValue)
+  end
+
+  DatabaseManager:extendTable(class, {colDef})
 end
 
 function DatabaseManager:getAllEntry(class, conditions)
@@ -1052,6 +1150,16 @@ function DatabaseManager:withConnection(callback)
     error(err)
   end
   return table.unpack(results)
+end
+
+function DatabaseManager:syncSchemas()
+  if not DatabaseManager.registeredClasses then return end
+  Utils.nkprint("Finalizing database schema sync (dropping unused columns)...", "info")
+  DatabaseManager:withConnection(function()
+    for _, class in ipairs(DatabaseManager.registeredClasses) do
+      DatabaseManager:createTableForClass(class, true) -- allowDrop = true
+    end
+  end)
 end
 
 

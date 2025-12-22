@@ -1,7 +1,7 @@
 author = 'Bouboule'
 description = 'Nickel plugin'
 version = '3.0.0'
-files_dir = "main/.."
+enabled = true
 server_scripts = {
     "/INITIALIZATION/loadlibs.lua",
     "/main/SessionManager.lua",
