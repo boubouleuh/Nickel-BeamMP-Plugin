@@ -23,4 +23,4 @@ function User:removeMoney(amount)
     self:setMoney(current - amount)
 end
 
-Utils.nkprint("[Extension] Money system loaded and User table updated!", "info")
+Utils.nkprint("[example_extension] Money system loaded and User table updated!", "info")

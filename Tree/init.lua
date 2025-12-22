@@ -89,20 +89,47 @@ function Nickel.LoadManifest(path, isMain, useProtection)
     if not chunk then return print("^1[Nickel] Manifest Error: " .. path .. "^r") end
     chunk()
     
-    local root = Nickel.Path:gsub("Tree/$", "")
+    local pluginRoot = Nickel.Path:gsub("Tree/$", "")
+    local manifestDir = path:match("(.*/)") or pluginRoot
+
     if not env.enabled then return end
+    
     for _, p in ipairs(env.server_scripts or {}) do
         local clean = p:gsub("^/", "")
-        if clean:sub(-2) == "/*" then Nickel.LoadDir(root .. clean:sub(1, -3), useProtection)
+        if clean:sub(-2) == "/*" then 
+            local relativeDir = clean:sub(1, -3)
+            local targetDir = manifestDir .. relativeDir
+            
+            if FS.ListFiles(targetDir) then
+                Nickel.LoadDir(targetDir, useProtection)
+            else
+                -- Fallback to plugin root (Legacy support)
+                targetDir = pluginRoot .. relativeDir
+                if FS.ListFiles(targetDir) then
+                    Nickel.LoadDir(targetDir, useProtection)
+                end
+            end
         else 
-            local f = root .. clean
+            local f = manifestDir .. clean
             if FS.Exists(f) then 
                 if useProtection then
                     Nickel.LoadExtensionFile(f)
                 else
                     dofile(f)
                 end
-            else print("^3[Nickel] Missing: " .. f .. "^r") end
+            else 
+                -- Fallback to plugin root (Legacy support)
+                local f_legacy = pluginRoot .. clean
+                if FS.Exists(f_legacy) then 
+                    if useProtection then
+                        Nickel.LoadExtensionFile(f_legacy)
+                    else
+                        dofile(f_legacy)
+                    end
+                else
+                    print("^3[Nickel] Missing: " .. f .. "^r") 
+                end
+            end
         end
     end
 end

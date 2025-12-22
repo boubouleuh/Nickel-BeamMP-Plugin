@@ -1,7 +1,7 @@
 
 
-local user = User.getOrCreate(39917, "bouboule")
-if user then
+local user = User.getOrCreate(39917, "bouboule") --Hard coded user for the example, but you are more likely to do it in a command or an event so thosse parameters will be available from it
+if user and ExampleConfig.get("auto_add_money") then
     user:addMoney(100)
-    print("The player has " .. user:getMoney() .. "$")
+    print("[example_extension] The player has " .. user:getMoney() .. "$")
 end

@@ -103,6 +103,99 @@ function ExtensionsManager.eventDispatcher.load(eventCategory, extensionName)
     end
 end
 
+ExtensionsManager.configManager = {}
+--config helper for extensions
+function ExtensionsManager.configManager.loadConfig(defaultConfig, filename, extensionName)
+    if not extensionName then
+        local info = debug.getinfo(2, "S")
+        if info and info.source then
+            local path = info.source
+            if path:sub(1, 1) == "@" then path = path:sub(2) end
+            extensionName = path:match("/extensions/([^/]+)/")
+        end
+    end
 
+    if not extensionName then
+        Utils.nkprint("Failed to infer extension name for config loading.", "error")
+        return
+    end
+
+    local configChanged = false
+    local configPath = Utils.script_path() .. "extensions/" .. extensionName .. filename
+    
+    local configData = {}
+    if FS.Exists(configPath) then
+        configData = TOML.decodeFromFile(configPath) or {}
+    end
+    
+    local function mergeTables(existing, default)
+        for k, v in pairs(default) do
+            if existing[k] == nil then
+                existing[k] = v
+            elseif type(v) == "table" and type(existing[k]) == "table" then
+                mergeTables(existing[k], v)
+            end
+        end
+    end
+    local function needsMerge(existing, default)
+        if type(existing) ~= "table" or type(default) ~= "table" then
+            return true
+        end
+        for k, v in pairs(default) do
+            if existing[k] == nil then
+                return true
+            elseif type(v) == "table" then
+                if needsMerge(existing[k], v) then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+    if needsMerge(configData, defaultConfig) then
+        mergeTables(configData, defaultConfig)
+        configChanged = true
+    end
+    local function recursiveCleanup(existing, default)
+        local changed = false
+        for key, value in pairs(existing) do
+            if default[key] == nil then
+                existing[key] = nil
+                changed = true
+            elseif type(value) == "table" and type(default[key]) == "table" then
+                if recursiveCleanup(value, default[key]) then
+                    changed = true
+                end
+            end
+        end
+        return changed
+    end
+    if recursiveCleanup(configData, defaultConfig) then
+        configChanged = true
+    end
+    if configChanged then
+        TOML.encodeToFile(configData, {
+            file = configPath,
+            overwrite = true
+        })
+    end
+
+    local configInstance = {}
+    configInstance.data = configData
+    
+    function configInstance.get(key)
+        return configInstance.data[key]
+    end
+
+    function configInstance.set(key, value)
+        configInstance.data[key] = value
+        TOML.encodeToFile(configInstance.data, {
+            file = configPath,
+            overwrite = true
+        })
+    end
+
+    return configInstance
+end
 
 ExtensionsManager.init()
