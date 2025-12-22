@@ -1,7 +1,7 @@
 author = 'Bouboule'
 description = 'example extension'
 version = '1.0.0'
-enabled = true
+enabled = false
 server_scripts = {
     "/extensions/example_extension/main/money.lua",
     "/extensions/example_extension/main/test.lua",
