@@ -254,21 +254,17 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
       break
     end
   end
+  local updatePlaceholders = {}
   for key, value in pairs(object) do
     table.insert(columns, key)
     if type(value) == "table" then
-      -- Convert table to a string representation
       value = Utils.table_to_string(value)
     elseif type(value) == "boolean" then
-      if value then
-        value = 1
-      else
-        value = 0
-      end
+      value = value and 1 or 0
     end
 
-    table.insert(values, tostring(value))
-    table.insert(updateColumns, string.format("%s = '%s'", key, tostring(value)))
+    table.insert(values, value)
+    table.insert(updatePlaceholders, string.format("%s = ?", key))
   end
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   Utils.nkprint(selectQuery, "debug")
@@ -282,10 +278,13 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   if count > 0 and canupdate then
 
       -- Update query with a placeholder for the WHERE clause
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updateColumns, ", "), firstColumn)
+      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updatePlaceholders, ", "), firstColumn)
 
-      -- Execute the query using prepareAndExecute with the bound value for the WHERE clause
-      return DatabaseManager:prepareAndExecute(updateQuery, object[firstColumn])
+      -- Execute the query using prepareAndExecute with bound values (all columns) and the WHERE value appended
+      local params = {}
+      for _, v in ipairs(values) do table.insert(params, v) end
+      table.insert(params, object[firstColumn])
+      return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(params))
   else
     local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)

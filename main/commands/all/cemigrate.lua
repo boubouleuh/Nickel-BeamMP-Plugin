@@ -40,24 +40,19 @@ function command.init(sender_id, sender_name)
             local name = key
             local beammpid = nil
             
-            -- Try to extract ID from name if present "Name ID: 123"
-            local namePart, idPart = key:match("^(.*)%s+ID:%s*(%d+)$")
-            if namePart and idPart then
-                name = namePart
-                beammpid = tonumber(idPart)
+
+            -- Try to find in DB first
+            local existingUser = DatabaseManager:getEntry(User, "name", name)
+            if existingUser then
+                beammpid = existingUser.beammpid
             else
-                -- Try to find in DB first
-                local existingUser = DatabaseManager:getEntry(User, "name", name)
-                if existingUser then
-                    beammpid = existingUser.beammpid
-                else
-                    -- slow
-                    local id = Utils.getPlayerBeamMPID(name)
-                    if id and id ~= -1 then
-                        beammpid = id
-                    end
+                -- slow
+                local id = Utils.getPlayerBeamMPID(name)
+                if id and id ~= -1 then
+                    beammpid = id
                 end
             end
+           
 
             if not beammpid then
                  skipped = skipped + 1
@@ -66,14 +61,6 @@ function command.init(sender_id, sender_name)
                 
                 if userData.whitelisted ~= nil then
                     user.whitelisted = userData.whitelisted
-                end
-                
-                if userData.level then
-                    local level = tonumber(userData.level)
-                    local role = RoleRepository.findByPermissionLevel(level)
-                    if role then
-                        user:assignRole(role.roleName)
-                    end
                 end
 
                 if userData.banned then

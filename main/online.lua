@@ -9,6 +9,9 @@ local https = {request = function(url)
         
         if response then
             local file = io.open("temp.txt", "r")
+            if not file then
+                return "", 404
+            end
             local content = file:read("*all")
             file:close()
             os.remove("temp.txt")
