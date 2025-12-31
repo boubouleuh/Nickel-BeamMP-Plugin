@@ -25,14 +25,14 @@ function InterfaceManager.init(id, offset)
         serverInfos.server_version = major .. "." .. minor .. "." .. patch
         serverInfos.server_name = Utils.getBeamMPConfig().General.Name
     
-        SetTimeout(50, function() InterfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos) end)
-        SetTimeout(50, function() InterfaceUtils.resetUserInfos(id) end)
-        SetTimeout(50, function() InterfaceUtils.sendRoles(id, "NKgetRoles") end)
-        SetTimeout(50, function() InterfaceUtils.sendUserCommands(id) end)
-        SetTimeout(50, function() InterfaceUtils.sendGlobalCommands(id) end)
+        Nickel.SetTimeout(50, function() InterfaceUtils.sendTable(id, "NKgetServerInfos", serverInfos) end)
+        Nickel.SetTimeout(50, function() InterfaceUtils.resetUserInfos(id) end)
+        Nickel.SetTimeout(50, function() InterfaceUtils.sendRoles(id, "NKgetRoles") end)
+        Nickel.SetTimeout(50, function() InterfaceUtils.sendUserCommands(id) end)
+        Nickel.SetTimeout(50, function() InterfaceUtils.sendGlobalCommands(id) end)
     end
 
-    SetTimeout(50, function() InterfaceUtils.sendPlayers(id, offset) end)
+    Nickel.SetTimeout(50, function() InterfaceUtils.sendPlayers(id, offset) end)
 
     MP.TriggerLocalEvent("syncEnvironment", id, Util.JsonEncode(ConfigManager.GetSetting("client").environment), true)
     MP.TriggerLocalEvent("syncInterfaceValues", id, Util.JsonEncode(ConfigManager.GetSetting("client").interfaceValues), nil, true)
