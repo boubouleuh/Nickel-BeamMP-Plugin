@@ -3,7 +3,6 @@
 /versionwithdatabaseID
 /database/db.sqlite
 /bin
-/data
 /player_avatars/*
 !/player_avatars/default_avatar
 latest_commit.txt

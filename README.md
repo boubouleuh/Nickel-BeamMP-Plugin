@@ -64,6 +64,8 @@ BeamMP on Windows uses Lua 5.4 which may cause compatibility issues. It is recom
  - `countdown <duration>` Start a countdown
  - `reload` Reload the plugin
  - `debug` Toggle debug mode
+ - `nkmigrate` Migrate old nickel data from the /data folder
+ - `cemigrate` Migrate cobalt playerPermissions.json to nickel (SLOW) (place it in the /data folder of the plugin)
 
 ## Configuration
 
