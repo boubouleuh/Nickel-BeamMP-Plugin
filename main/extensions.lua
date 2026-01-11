@@ -111,7 +111,7 @@ function ExtensionsManager.configManager.loadConfig(defaultConfig, filename, ext
         if info and info.source then
             local path = info.source
             if path:sub(1, 1) == "@" then path = path:sub(2) end
-            extensionName = path:match("/extensions/([^/]+)/")
+            extensionName = path:match("[\\/]extensions[\\/]([^\\/]+)[\\/]")
         end
     end
 
@@ -121,7 +121,7 @@ function ExtensionsManager.configManager.loadConfig(defaultConfig, filename, ext
     end
 
     local configChanged = false
-    local configPath = Utils.script_path() .. "extensions/" .. extensionName .. filename
+    local configPath = FS.ConcatPaths(Utils.script_path(), "extensions", extensionName, filename)
     
     local configData = {}
     if FS.Exists(configPath) then

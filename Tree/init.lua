@@ -147,10 +147,10 @@ loadMod("colors.lua")
 local lastReloadTime = 0
 local function onFileChanged(path)
     local root = Nickel.Path:gsub("Tree/$", "")
-    path = path:gsub("\\", "/")
+    local pathSafe = path:gsub("\\", "/")
     
     -- Security & Loop prevention
-    if not path:find(root, 1, true) then return end
+    if not pathSafe:find(root, 1, true) then return end
     
     if not path:match("%.lua$") then return end
 
@@ -160,7 +160,7 @@ local function onFileChanged(path)
     lastReloadTime = now
 
     -- Check for extension change
-    local extName = path:match("/extensions/([^/]+)/")
+    local extName = pathSafe:match("/extensions/([^/]+)/")
     if extName then
         local manifest = root .. "extensions/" .. extName .. "/ext_manifest.lua"
         if FS.Exists(manifest) then

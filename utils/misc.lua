@@ -4,10 +4,17 @@ Utils = {}
 ---script_path
 ---@return string --get the script path
 function Utils.script_path()
-  local separator = package.config:sub(1, 1)
-  local scriptPath = debug.getinfo(1, "S").source:sub(2):gsub("[\\/][^\\/]+$", separator)
-  local scriptDir = scriptPath:gsub(separator .. "utils" .. separator .. "$", separator)
-  return scriptDir
+  local str = debug.getinfo(1, "S").source
+  if str:sub(1, 1) == "@" then
+    str = str:sub(2)
+  end
+  str = str:gsub("\\", "/")
+  str = str:match("(.*/)")
+  str = str:gsub("utils/$", "")
+    if package.config:sub(1, 1) == "\\" then
+    str = str:gsub("/", "\\")
+  end
+  return str
 end
 
 function Utils.capitalize(str)

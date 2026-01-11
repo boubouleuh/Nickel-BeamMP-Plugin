@@ -8,7 +8,7 @@ local https = {request = function(url)
         end
         
         if response then
-            local file = io.open("temp.txt", "r")
+            local file = io.open("temp.txt", "rb")
             if not file then
                 return "", 404
             end
@@ -43,7 +43,7 @@ end
 function Online.getPlayerB64Img(beammpid)
 
     local file_path = string.format(Utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)
-    local file = io.open(file_path, "r")
+    local file = io.open(file_path, "rb")
 
     if file then
         local image = file:read("*all")
@@ -51,7 +51,7 @@ function Online.getPlayerB64Img(beammpid)
         return MIME.b64(image)
     else
         local file_path = string.format(Utils.script_path() .. "/player_avatars/default_avatar.png")
-        local file = io.open(file_path, "r")
+        local file = io.open(file_path, "rb")
         local image = file:read("*all")
         file:close() -- Close the file
         return MIME.b64(image)
