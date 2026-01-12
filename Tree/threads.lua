@@ -58,20 +58,6 @@ local function newThread(func)
     local co = coroutine.create(func)
     threads[id] = { co = co, wakeTime = 0 }
     
-    -- Start immediately
-    local ok, result = coroutine.resume(co)
-    if not ok then
-        print("^1[Nickel] Thread Start Error ("..id.."): " .. tostring(result) .. "^r")
-        threads[id] = nil
-    else
-        if coroutine.status(co) ~= "dead" then
-             local wait = tonumber(result) or 0
-             threads[id].wakeTime = (os.clock() * 1000) + wait
-        else
-             threads[id] = nil
-        end
-    end
-    
     return id
 end
 

@@ -40,6 +40,47 @@ function Online.getPlayerJson(playername)
     end
 end
 
+function Online.downloadInterface()
+    local url = "https://api.github.com/repos/boubouleuh/Nickel-Interface/releases/latest"
+    
+    local body, code = https.request(url)
+    
+    if code == 200 then
+        local release_data = Util.JsonDecode(body)
+                local zip_url = nil
+        if release_data and release_data.assets then
+            for _, asset in ipairs(release_data.assets) do
+                if asset.name:match("%.zip$") then
+                    zip_url = asset.browser_download_url
+                    break
+                end
+            end
+        end
+        
+        if not zip_url then
+            Utils.nkprint("No ZIP file found in GitHub release", "warn")
+            return ""
+        end
+        
+        local zip_body, zip_code = https.request(zip_url)
+        
+        if zip_code == 200 then
+            local file_path = InterfaceChecker.zipPath or "Resources/Client/nickel-interface.zip"
+            
+            local file = io.open(file_path, "wb")
+            if file then
+                file:write(zip_body)
+                file:close()
+                Utils.nkprint("Interface downloaded successfully: " .. file_path, "info")
+                return file_path
+            end
+            InterfaceChecker.CheckForInterfaceMod()
+        end
+    else
+        Utils.nkprint("Failed to fetch GitHub release. Status code: " .. code, "error")
+        return ""
+    end
+end
 function Online.getPlayerB64Img(beammpid)
 
     local file_path = string.format(Utils.script_path() .. "/player_avatars/%s_avatar.png", beammpid)

@@ -1,6 +1,5 @@
-local command = RegisterCommand("reload", {
-    type = "console",
-})
+local command = RegisterCommand("reload")
+command.consoleOnly = true
 
 --- command
 function command.init(sender_id, sender_name)

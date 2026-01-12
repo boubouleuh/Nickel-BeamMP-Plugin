@@ -1,5 +1,6 @@
 InterfaceChecker = {}
 InterfaceChecker.isInstalled = false
+InterfaceChecker.zipPath = nil
 local SIGNATURE_FILE = "lua/ge/extensions/nickel.lua"
 
 function InterfaceChecker.CheckForInterfaceMod()
@@ -82,6 +83,7 @@ function InterfaceChecker.CheckForInterfaceMod()
     if foundZipPath then
         Utils.nkprint("Interface Mod found in: " .. foundZipPath, "info")
         InterfaceChecker.isInstalled = true
+        InterfaceChecker.zipPath = foundZipPath
         return true, foundZipPath
     else
         Utils.nkprint("Interface Mod not found in " .. searchDir .. " (Signature: " .. SIGNATURE_FILE .. ")", "warn")

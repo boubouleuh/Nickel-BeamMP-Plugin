@@ -68,7 +68,7 @@ function DefaultPermissions.init()
 
     -- Check each command to see if it has an associated role
     for _, command in ipairs(everyCommands) do
-        if not commandRoles[command.commandID] then
+        if not commandRoles[command.commandID] and not NickelCommands[command.commandName].consoleOnly then
             Utils.nkprint(string.format("Command '%s' (ID: %d) is not associated with any role. Use the command '%sgrantcommand %s <role>' to assign it to a role.", command.commandName, command.commandID, ConfigManager.GetSetting("commands").prefix , command.commandName), "warn")
         end
     end

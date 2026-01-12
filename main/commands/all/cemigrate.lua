@@ -1,5 +1,5 @@
 local command = RegisterCommand("cemigrate")
-
+command.consoleOnly = true
 function command.init(sender_id, sender_name)
     Utils.nkprint("Starting Cobalt migration...", "info")
     local dataPath = Utils.script_path() .. "data/playerPermissions.json"

@@ -1,4 +1,5 @@
 local command = RegisterCommand("nkmigrate")
+command.consoleOnly = true
 
 --- command
 function command.init(sender_id, sender_name)

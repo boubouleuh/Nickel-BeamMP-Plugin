@@ -98,6 +98,8 @@
     "commands.whitelist.clear.success": "Successfully cleared {Count} players from the whitelist",
     "commands.whitelist.description": "Add or remove a player to/from the whitelist",
 
+    "commands.interface.missing_args" : "Usage : {Prefix}interface <install/uninstall>",
+    
     "commands.help.description" : "Show every commands",
 
     "commands.guest_not_compatible" : "This command cant be used against guests players",

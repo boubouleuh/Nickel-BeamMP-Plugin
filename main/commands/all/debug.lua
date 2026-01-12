@@ -1,7 +1,5 @@
-local command = RegisterCommand("debug", {
-    type = "console",
-})
-
+local command = RegisterCommand("debug")
+command.consoleOnly = true
 --- command
 function command.init(sender_id, sender_name, field)
     if field == "events" then
