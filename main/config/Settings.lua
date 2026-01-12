@@ -65,7 +65,6 @@ function ConfigManager.init()
         },
         client = {
             b64avatar = true,
-            interface = false,
             environment = {
                 temperature = 20,
                 time = {10, 20},

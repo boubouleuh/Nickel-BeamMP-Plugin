@@ -48,6 +48,7 @@ server_scripts = {
     "/main/registerPlayer.lua",
     "/main/client/interfaceUtils.lua",
     "/main/client/initInterface.lua",
+    "/main/interface_checker.lua",
     "/main/events/dispatcher.lua",
     "/INITIALIZATION/main.lua",
     "main/extensions.lua",

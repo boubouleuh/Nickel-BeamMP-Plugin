@@ -1,5 +1,5 @@
 return function(id)
-    if ConfigManager.GetSetting("client").interface then
+    if InterfaceChecker.isInstalled then
         local playerName = MP.GetPlayerName(id)
         local beammpid = Utils.getPlayerBeamMPID(playerName)
         

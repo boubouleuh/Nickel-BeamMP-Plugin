@@ -1,13 +1,13 @@
 return function(id)
-    if ConfigManager.GetSetting("client").interface then
-        local disconnectedPlayerName = MP.GetPlayerName(id)
-        local disconnectedBeammpid = Utils.getPlayerBeamMPID(disconnectedPlayerName)
+    if InterfaceChecker.isInstalled then
+        local playerName = MP.GetPlayerName(id)
+        local beammpid = Utils.getPlayerBeamMPID(playerName)
         
-        if disconnectedBeammpid then
+        if beammpid then
             local onlineplayers = MP.GetPlayers()
             for player_id, _ in pairs(onlineplayers) do
                 if player_id ~= id then
-                    MP.TriggerClientEventJson(player_id, "playerDisconnected", string.format('{"beammpid": %d}', disconnectedBeammpid))
+                    MP.TriggerClientEventJson(player_id, "playerDisconnected", string.format('{"beammpid": %d}', beammpid))
                 end
             end
         end
