@@ -1,9 +1,4 @@
 ---@class User
----@field tableName string
----@field beammpid number
----@field name string
----@field whitelisted boolean
----@field language string|nil
 User = {}
 User.tableName = "Users"
 

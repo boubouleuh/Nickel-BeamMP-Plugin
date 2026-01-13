@@ -105,6 +105,7 @@ end
 
 ExtensionsManager.configManager = {}
 --config helper for extensions
+---@return ConfigInstance
 function ExtensionsManager.configManager.loadConfig(defaultConfig, filename, extensionName)
     if not extensionName then
         local info = debug.getinfo(2, "S")
@@ -179,7 +180,7 @@ function ExtensionsManager.configManager.loadConfig(defaultConfig, filename, ext
             overwrite = true
         })
     end
-
+    ---@class ConfigInstance
     local configInstance = {}
     configInstance.data = configData
     
