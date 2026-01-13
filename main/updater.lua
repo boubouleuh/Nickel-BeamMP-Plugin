@@ -130,7 +130,8 @@ function Updater.check()
         exec(path, "git init")
         exec(path, "git remote add origin https://github.com/boubouleuh/Nickel-BeamMP-Plugin.git")
         exec(path, "git fetch origin " .. Updater.target)
-        exec(path, "git reset --hard origin/" .. Updater.target)
+        exec(path, "git checkout -B " .. Updater.target)
+        exec(path, "git reset origin/" .. Updater.target)
         exec(path, "git branch --set-upstream-to=origin/" .. Updater.target .. " " .. Updater.target)
     end
 
