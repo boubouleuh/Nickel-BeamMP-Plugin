@@ -7,7 +7,7 @@ return function(id)
             local onlineplayers = MP.GetPlayers()
             for player_id, _ in pairs(onlineplayers) do
                 if player_id ~= id then
-                    MP.TriggerClientEventJson(player_id, "playerDisconnected", string.format('{"beammpid": %d}', beammpid))
+                    MP.TriggerClientEventJson(player_id, "playerDisconnected", { beammpid = beammpid })
                 end
             end
         end
