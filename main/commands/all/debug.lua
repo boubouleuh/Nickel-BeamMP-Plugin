@@ -4,6 +4,8 @@ command.consoleOnly = true
 function command.init(sender_id, sender_name, field)
     if field == "events" then
         Nickel.ListEvents()
+    elseif field == "globals" then
+        Nickel.ListGlobals()
     end
 
     return true

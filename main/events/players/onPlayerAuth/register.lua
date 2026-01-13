@@ -3,11 +3,6 @@ return function(player_name, player_role, is_guest, identifiers)
     local beammpid = identifiers["beammp"]
     local ip = identifiers["ip"]
     
-    if not beammpid then
-        Utils.nkprint("[onPlayerAuth] Invalid BeamMP ID for player: " .. player_name, "error")
-        return "Invalid player data"
-    end
-
     local result = RegisterPlayer.register(beammpid, player_name, ip, is_guest)
     
     if result then

@@ -81,3 +81,26 @@ function Nickel.ListEvents()
         end
     end
 end
+
+function Nickel.ListGlobals()
+    local core, ext = {}, {}
+    for k, v in pairs(_G) do
+        if (Nickel.IsGlobalProtected and Nickel.IsGlobalProtected(k)) or k == "_G" then
+            table.insert(core, k)
+        else
+            table.insert(ext, k)
+        end
+    end
+    table.sort(core)
+    table.sort(ext)
+
+    print("^3[Nickel] --- Core Globals ---^r")
+    for _, k in ipairs(core) do
+        print("  - " .. tostring(k) .. " : " .. tostring(_G[k]))
+    end
+
+    print("^3[Nickel] --- Extension Globals ---^r")
+    for _, k in ipairs(ext) do
+        print("  - " .. tostring(k) .. " : " .. tostring(_G[k]))
+    end
+end
