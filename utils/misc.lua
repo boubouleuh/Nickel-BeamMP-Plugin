@@ -235,7 +235,7 @@ end
 
 ---nkprint
 ---@param message string
----@param type string Can be "warn", "error", "info" or "debug"
+---@param type string Can be "warn", "error", "info", "important" or "debug"
 ---@return nil
 function Utils.nkprint(message, type)
   
@@ -245,6 +245,8 @@ function Utils.nkprint(message, type)
         print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|ERROR] " .. message, "red"))
     elseif type == "info" then
         print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|INFO] " .. message, "blue"))
+    elseif type == "important" then
+        print(Utils.print_color("[NICKEL", "gray") .. Utils.print_color("|IMPORTANT] " .. message, "magenta"))
     elseif type == "debug" then
       -- Miscellanous
       if ConfigManager and ConfigManager.GetSetting and ConfigManager.GetSetting("advanced") and ConfigManager.GetSetting("advanced").debug then
