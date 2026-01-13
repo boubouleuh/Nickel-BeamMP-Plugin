@@ -178,10 +178,47 @@ function Utils.getPlayerBeamMPID(player_name) --Playername only used when using 
 end
 
 function Utils.getBeamMPConfig() 
+  local config = { General = {} } -- Default structure to avoid nil indexing
   local existingConfigPath = "ServerConfig.toml"
   if FS.Exists(existingConfigPath) then
-      return TOML.decodeFromFile(existingConfigPath)
+      local loaded_config = TOML.decodeFromFile(existingConfigPath)
+      if loaded_config then
+          config = loaded_config
+      end
   end
+
+  -- Ensure General table exists
+  if not config.General then config.General = {} end
+
+  -- Helper function to apply env vars
+  local function applyEnv(field, key, type)
+      local val = os.getenv(key)
+      if val then
+          if type == "boolean" then
+              config.General[field] = (val == "true" or val == "1")
+          elseif type == "number" then
+              config.General[field] = tonumber(val)
+          else
+              config.General[field] = val
+          end
+      end
+  end
+
+  -- Apply environment variables overrides
+  applyEnv("Debug", "BEAMMP_DEBUG", "boolean")
+  applyEnv("Private", "BEAMMP_PRIVATE", "boolean")
+  applyEnv("Port", "BEAMMP_PORT", "number")
+  applyEnv("MaxCars", "BEAMMP_MAX_CARS", "number")
+  applyEnv("MaxPlayers", "BEAMMP_MAX_PLAYERS", "number")
+  applyEnv("Map", "BEAMMP_MAP", "string")
+  applyEnv("Name", "BEAMMP_NAME", "string")
+  applyEnv("Description", "BEAMMP_DESCRIPTION", "string")
+  applyEnv("Tags", "BEAMMP_TAGS", "string")
+  applyEnv("ResourceFolder", "BEAMMP_RESOURCE_FOLDER", "string")
+  applyEnv("AuthKey", "BEAMMP_AUTH_KEY", "string")
+  applyEnv("LogChat", "BEAMMP_LOG_CHAT", "boolean")
+
+  return config
 end
 
 function Utils.getMapName()
