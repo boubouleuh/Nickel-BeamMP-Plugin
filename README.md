@@ -1,3 +1,6 @@
+# <div align="center"><a href="https://www.buymeacoffee.com/bouboule" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a></div>
+
+
 <div align="center"><img src="readme_img/image.png" alt="Logo" width="50%"/></div>
 
 
@@ -25,7 +28,12 @@ git clone -b dev https://github.com/boubouleuh/Nickel-BeamMP-Plugin
 3. *Note: Auto-updates might not work without Git.*
 
 ### Windows Users
-BeamMP on Windows uses Lua 5.4 which may cause compatibility issues. It is recommended to host on Linux (WSL, Docker, or VPS).
+
+BeamMP on Windows uses Lua 5.4, which may cause compatibility issues. It is recommended to host your BeamMP server on Linux (WSL, Docker, or VPS) for the best experience.
+
+> [!IMPORTANT]
+> You **can** use this early windows BeamMP server build: [Download here](https://github.com/BeamMP/BeamMP-Server/actions/runs/20884082042/artifacts/5086528586) (a GitHub account may be required).  
+> This build will load Nickel, but it has **not been thoroughly tested** and may be unstable.
 
 <h2 id="first-setup">First setup</h2>
 
