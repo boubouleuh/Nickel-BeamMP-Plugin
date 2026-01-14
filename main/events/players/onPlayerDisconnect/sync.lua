@@ -1,6 +1,6 @@
 
 return function(id)
-    if MP.isPlayerGuest(id) then
+    if MP.IsPlayerGuest(id) then
         return
     end
     local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
