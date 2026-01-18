@@ -1,0 +1,53 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_title:
+        description: 'Release Title'
+        required: false
+        type: string
+      prerelease:
+        description: 'Pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Prepare Release Artifacts
+      run: |
+        mkdir release_build
+        rsync -av --progress ./ release_build/ \
+          --exclude '.git' \
+          --exclude '.github' \
+          --exclude '*.sqlite' \
+          --exclude '*.db' \
+          --exclude 'NickelConfig.toml' \
+          --exclude 'release_build'
+
+    - name: Create ZIP archive
+      run: |
+        cd release_build
+        zip -r ../Nickel-BeamMP-Plugin.zip .
+        cd ..
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: ${{ inputs.release_title }}
+        files: Nickel-BeamMP-Plugin.zip
+        draft: false
+        prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || contains(github.ref, '-') }}
