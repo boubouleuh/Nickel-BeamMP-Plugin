@@ -6,6 +6,10 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
+      tag_name:
+        description: 'Tag Name (e.g. v3.0.6)'
+        required: true
+        type: string
       release_title:
         description: 'Release Title'
         required: false
@@ -47,7 +51,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        name: ${{ inputs.release_title }}
+        tag_name: ${{ inputs.tag_name || github.ref_name }}
+        name: ${{ inputs.release_title || inputs.tag_name || github.ref_name }}
         files: Nickel-BeamMP-Plugin.zip
         draft: false
         prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || contains(github.ref, '-') }}
