@@ -4,9 +4,10 @@ local OriginalRegisterEvent = MP.RegisterEvent
 local handlers = {}
 
 local function safeCall(name, func, ...)
-    local ok, res = pcall(func, ...)
+    local ok, res = xpcall(func, debug.traceback, ...)
     if not ok then 
-        print("^1[Nickel] Event Error (" .. name .. "): " .. tostring(res) .. "^r")
+        Nickel.reportError(res)
+        print("^1[Nickel] Event Error (" .. name .. "): " .. res .. "^r")
         return nil
     end
     return res

@@ -27,7 +27,8 @@ local function tick()
             if now >= data.wakeTime then
                 local ok, result = coroutine.resume(data.co)
                 if not ok then
-                    print("^1[Nickel] Thread Error ("..id.."): " .. tostring(result) .. "^r")
+                    Nickel.reportError(result)
+                    print("^1[Nickel] Thread Error ("..id.."): " .. result .. "^r")
                     threads[id] = nil
                 else
                     if coroutine.status(data.co) == "dead" then

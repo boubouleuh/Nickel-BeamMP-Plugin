@@ -11,12 +11,102 @@ protectedGlobals["Nickel"] = true
 protectedGlobals["Tree"] = true
 protectedGlobals["_G"] = true
 
+Nickel.https = {request = function(url)
+    local response = ""
+
+    if MP.GetOSName() == "Windows" then
+        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
+        else
+            response = os.execute("wget -q -O temp.txt " .. url)
+        end
+        
+        if response then
+            local file = io.open("temp.txt", "rb")
+            if not file then
+                return "", 404
+            end
+            local content = file:read("*all")
+            file:close()
+            os.remove("temp.txt")
+            return content, 200
+        else
+            return "", 404
+        end
+    end
+,
+post = function(url, body, headers)
+    local response = ""
+
+    if MP.GetOSName() == "Windows" then
+        local psBody = body:gsub('"', '""')
+        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -Method Post -Body \\"' .. psBody .. '\\" -ContentType \'application/json\' -OutFile temp.txt"')
+    else
+        local escapedBody = body:gsub("'", "'\\''")
+        response = os.execute("wget -q --header='Content-Type: application/json' --post-data='" .. escapedBody .. "' '" .. url .. "' -O temp.txt")
+    end
+
+    if response then
+        local file = io.open("temp.txt", "rb")
+        if not file then
+            return "", 404
+        end
+        local content = file:read("*all")
+        file:close()
+        os.remove("temp.txt")
+        return content, 200
+    else
+        return "", 404
+    end
+end
+}
+
+function Nickel.reportError(err)
+        if Nickel.AutoErrorReporting == false then return end
+        local body = Util.JsonEncode({
+            message = err,
+            version = Nickel.Version,
+            os = MP.GetOSName(),
+        })
+        res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
+        print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
+end
+
+local originalPcall = pcall
+function pcall(func, ...)
+    local results = table.pack(xpcall(func, debug.traceback, ...))
+    if not results[1] then
+        Nickel.reportError(results[2])
+    end
+    return table.unpack(results, 1, results.n)
+end
+
 local function getPath()
     local str = debug.getinfo(2, "S").source
     if str:sub(1, 1) == "@" then str = str:sub(2) end
     return str:match("(.*/)")
 end
 Nickel.Path = getPath()
+
+function Nickel.GetGitVersion()
+    local root = Nickel.Path:gsub("Tree/$", "")
+    local headFile = io.open(root .. ".git/HEAD", "r")
+    if not headFile then return "Unknown" end
+    local head = headFile:read("*line")
+    headFile:close()
+    
+    if head:match("ref: ") then
+        local ref = head:sub(6)
+        local refFile = io.open(root .. ".git/" .. ref, "r")
+        if refFile then
+            local hash = refFile:read("*line")
+            refFile:close()
+            return hash:sub(1, 7)
+        end
+    else
+        return head:sub(1, 7)
+    end
+    return "Unknown"
+end
 
 function Nickel.LoadLib(path, func)
     local root = Nickel.Path:gsub("Tree/$", "")
@@ -25,7 +115,11 @@ function Nickel.LoadLib(path, func)
     func = func or "luaopen_" .. (path:match(".*/([^/]+)$") or path):gsub("-", "_")
     
     local lib, err = package.loadlib(full, func)
-    if not lib then return print("^1[Nickel] Lib Error: " .. full .. "\n" .. tostring(err) .. "^r") end
+    if not lib then 
+        Nickel.reportError(err)
+        return print("^1[Nickel] Lib Error: " .. full .. "\n" .. err .. "^r") 
+
+    end
     return lib()
 end
 
@@ -40,7 +134,10 @@ function Nickel.LoadDir(dir, useProtection)
                 if useProtection then
                     Nickel.LoadExtensionFile(full)
                 else
-                    dofile(full)
+                    local ok, err = pcall(dofile, full)
+                    if not ok then
+                        print("^1[Nickel] Error loading " .. full .. ": " .. tostring(err) .. "^r")
+                    end
                 end
             end
         end
@@ -68,7 +165,8 @@ function Nickel.LoadExtensionFile(path)
     
     local chunk, err = loadfile(path, "t", env)
     if not chunk then 
-        print("^1[Nickel] Error loading " .. path .. ": " .. tostring(err) .. "^r")
+        Nickel.reportError(err)
+        print("^1[Nickel] Error loading " .. path .. ": " .. err .. "^r")
         return nil
     end
     return chunk()
@@ -86,9 +184,17 @@ function Nickel.LoadManifest(path, isMain, useProtection)
     if isMain then Nickel.ManifestPath = path end
     local env = setmetatable({}, { __index = globalEnv })
     local chunk = loadfile(path, "t", env)
-    if not chunk then return print("^1[Nickel] Manifest Error: " .. path .. "^r") end
+    if not chunk then Nickel.reportError(err) return print("^1[Nickel] Manifest Error: " .. path .. "^r") end
     chunk()
     
+    if isMain and env.version then
+        Nickel.Version = env.version
+    end
+
+    if isMain and env.auto_error_reporting ~= nil then
+        Nickel.AutoErrorReporting = env.auto_error_reporting
+    end
+
     local pluginRoot = Nickel.Path:gsub("Tree/$", "")
     local manifestDir = path:match("(.*/)") or pluginRoot
 
@@ -115,7 +221,10 @@ function Nickel.LoadManifest(path, isMain, useProtection)
                 if useProtection then
                     Nickel.LoadExtensionFile(f)
                 else
-                    dofile(f)
+                    local ok, err = pcall(dofile, f)
+                    if not ok then
+                        print("^1[Nickel] Error loading " .. f .. ": " .. tostring(err) .. "^r")
+                    end
                 end
             else 
                 -- Fallback to plugin root (Legacy support)
@@ -124,7 +233,10 @@ function Nickel.LoadManifest(path, isMain, useProtection)
                     if useProtection then
                         Nickel.LoadExtensionFile(f_legacy)
                     else
-                        dofile(f_legacy)
+                        local ok, err = pcall(dofile, f_legacy)
+                        if not ok then
+                            print("^1[Nickel] Error loading " .. f_legacy .. ": " .. tostring(err) .. "^r")
+                        end
                     end
                 else
                     print("^3[Nickel] Missing: " .. f .. "^r") 
@@ -136,7 +248,7 @@ end
 
 local function loadMod(f)
     local c, e = loadfile(Nickel.Path .. f)
-    if c then c(Nickel) else print("^1[Nickel] Mod Error ("..f.."): " .. tostring(e) .. "^r") end
+    if c then c(Nickel) else Nickel.reportError(e) print("^1[Nickel] Mod Error ("..f.."): " .. e .. "^r") end
 end
 
 loadMod("events.lua")
@@ -337,5 +449,6 @@ end
 function Nickel.IsGlobalProtected(k)
     return coreGlobals[k]
 end
+
 
 return Nickel

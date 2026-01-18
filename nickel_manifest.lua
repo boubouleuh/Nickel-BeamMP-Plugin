@@ -1,7 +1,8 @@
 author = 'Bouboule'
 description = 'Nickel plugin'
-version = '3.0.0'
+version = Nickel.GetGitVersion()
 enabled = true
+auto_error_reporting = true
 server_scripts = {
     "/INITIALIZATION/loadlibs.lua",
     "/main/SessionManager.lua",

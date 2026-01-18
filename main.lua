@@ -24,11 +24,22 @@ if MP.GetOSName() == "Windows" then
 end
 
 local root_path = get_current_path()
-local Tree = dofile(root_path .. "Tree/init.lua")
+local ok, Tree = pcall(dofile, root_path .. "Tree/init.lua")
 
+if not ok then
+    print("^1[Nickel] CRITICAL ERROR: Failed to load Tree framework.^r")
+    print(tostring(Tree))
+    return
+end
+
+print("[Nickel] Loaded Tree framework.")
 -- Make Tree global if needed, or just use it locally to load manifest
 _G.Tree = Tree
 
 print("[Nickel] Initializing via Tree framework...")
-Tree.LoadManifest(root_path .. "nickel_manifest.lua", true)
-print("[Nickel] Initialization complete.")
+local success, err = pcall(Tree.LoadManifest, root_path .. "nickel_manifest.lua", true)
+if not success then
+    print("^1[Nickel] Manifest loading failed: " .. tostring(err) .. "^r")
+else
+    print("[Nickel] Initialization complete.")
+end

@@ -1,33 +1,9 @@
-local https = {request = function(url)
-    local response = ""
-
-    if MP.GetOSName() == "Windows" then
-        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -OutFile temp.txt"')
-        else
-            response = os.execute("wget -q -O temp.txt " .. url)
-        end
-        
-        if response then
-            local file = io.open("temp.txt", "rb")
-            if not file then
-                return "", 404
-            end
-            local content = file:read("*all")
-            file:close()
-            os.remove("temp.txt")
-            return content, 200
-        else
-            return "", 404
-        end
-    end
-}
-
 Online = {}
 
 function Online.getPlayerJson(playername)
     
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
-    local body, code = https.request(url)
+    local body, code = Nickel.https.request(url)
     
     -- Check if the request was successful (status code 200)
     if code == 200 then
@@ -43,7 +19,7 @@ end
 function Online.downloadInterface()
     local url = "https://api.github.com/repos/boubouleuh/Nickel-Interface/releases/latest"
     
-    local body, code = https.request(url)
+    local body, code = Nickel.https.request(url)
     
     if code == 200 then
         local release_data = Util.JsonDecode(body)
@@ -62,7 +38,7 @@ function Online.downloadInterface()
             return ""
         end
         
-        local zip_body, zip_code = https.request(zip_url)
+        local zip_body, zip_code = Nickel.https.request(zip_url)
         
         if zip_code == 200 then
             local file_path = InterfaceChecker.zipPath or "Resources/Client/nickel-interface.zip"
@@ -169,7 +145,7 @@ end
 function Online.savePlayerAvatarImg(playername, size)
     local url = string.format("https://forum.beammp.com/u/%s.json", playername)
 
-    local body, code, headers, status = https.request(url)
+    local body, code, headers, status = Nickel.https.request(url)
     
     -- Check if the request was successful (status code 200)
     if code == 200 then
@@ -178,7 +154,7 @@ function Online.savePlayerAvatarImg(playername, size)
         local json = Util.JsonDecode(body)
    
         local url2 = string.format("https://forum.beammp.com/%s", json.user.avatar_template:gsub(placeholder, size))
-        local body2, code2, headers2, status2 = https.request(url2)
+        local body2, code2, headers2, status2 = Nickel.https.request(url2)
 
         if code2 == 200 then
             local file_path = string.format(Utils.script_path() .. "/player_avatars/%s_avatar.png", json.user.id)
@@ -206,7 +182,7 @@ function Online.getServerIP()
 
     local url = "https://api.ipify.org/?format=raw"
 
-    local body, code, headers, status = https.request(url)
+    local body, code, headers, status = Nickel.https.request(url)
     
     -- Check if the request was successful (status code 200)
     if code == 200 then

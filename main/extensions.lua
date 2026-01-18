@@ -1,5 +1,4 @@
 ExtensionsManager = {}
-
 function ExtensionsManager.init()
     local extensionsPath = Utils.script_path() .. "extensions"
     local dirs = FS.ListDirectories(extensionsPath)
