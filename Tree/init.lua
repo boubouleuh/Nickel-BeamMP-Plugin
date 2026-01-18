@@ -194,6 +194,9 @@ function Nickel.Reload()
 
     if Nickel.ResetEvents then Nickel.ResetEvents() end
     
+    -- Re-load threads to restore the tick system
+    loadMod("threads.lua")
+    
     -- Re-register hot reload listener as ResetEvents cleared it
     MP.RegisterEvent("onFileChanged", "Nickel_HotReload")
     

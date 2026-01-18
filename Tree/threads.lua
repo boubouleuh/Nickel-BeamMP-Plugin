@@ -55,7 +55,7 @@ local function newThread(func)
     counter = counter + 1
     local id = counter
     
-    local co = coroutine.create(func)
+    local co = coroutine.create(function() func(id) end)
     threads[id] = { co = co, wakeTime = 0 }
     
     return id
@@ -66,17 +66,17 @@ local function CreateThread(fn)
 end
 
 local function SetTimeout(ms, fn)
-    return newThread(function()
+    return newThread(function(id)
         Wait(ms)
-        fn()
+        fn(id)
     end)
 end
 
 local function SetInterval(ms, fn)
-    return newThread(function()
+    return newThread(function(id)
         while true do
             Wait(ms)
-            fn()
+            fn(id)
         end
     end)
 end
