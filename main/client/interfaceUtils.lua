@@ -224,11 +224,10 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
         error("Error in sendPlayer: receiver_id is negative, if you try to send to all players, please loop into every players manually to call this function")
     end
 
-    local user = User.getOrCreate(beammpid, MP.GetPlayerName(receiver_id))
+    local user = User.getOrCreate(beammpid, nil)
     if not user then
         return
     end
-
     local onlinePlayers = MP.GetPlayers()
     local playerData = {
         beammpid = user.beammpid,
@@ -282,7 +281,7 @@ function InterfaceUtils.sendPlayer(receiver_id, beammpid)
     end
 
     InterfaceUtils.resetUserInfos(receiver_id)
-    InterfaceUtils.sendTable(receiver_id, "NKinsertPlayers", {playerData})
+    InterfaceUtils.sendTable(receiver_id, "NKinsertPlayers", playerData)
 end
 
 --- send every roles to client
@@ -299,19 +298,13 @@ function InterfaceUtils.sendRoles(id, event_name)
     InterfaceUtils.sendTable(id, event_name, rolesfinal)
 end
 
-function InterfaceUtils.updatePlayer(id)
-    if id < 0 then
-        return
-    end
-    local beammpid = Utils.getPlayerBeamMPID(MP.GetPlayerName(id))
+function InterfaceUtils.updatePlayer(beammpid)
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        if Utils.getPlayerBeamMPID(MP.GetPlayerName(i)) == beammpid then
-            InterfaceUtils.sendPlayer(i, beammpid)
-            break
-        end
+        print("sending update for player " .. beammpid .. " to player id " .. i)
+        InterfaceUtils.sendPlayer(i, beammpid)
+        InterfaceUtils.resetUserInfos(i)
+        InterfaceUtils.sendUserCommands(i)
+        InterfaceUtils.sendGlobalCommands(i)
     end
-    InterfaceUtils.resetUserInfos(id)
-    InterfaceUtils.sendUserCommands(id)
-    InterfaceUtils.sendGlobalCommands(id)
 end

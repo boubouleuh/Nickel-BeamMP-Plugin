@@ -239,6 +239,66 @@ function DatabaseManager:prepareAndExecute(query, ...)
     error("Failed to execute query after " .. max_attempts .. " attempts (database locked)")
 end
 
+-- Cache for table columns to avoid repeated schema queries
+DatabaseManager.columnTypesCache = {}
+
+function DatabaseManager:getColumnType(class, colName)
+    local tableName = class.tableName
+    if not DatabaseManager.columnTypesCache[tableName] then
+        DatabaseManager.columnTypesCache[tableName] = {}
+        local columns = class:getColumns()
+        for _, raw in ipairs(columns) do
+            local name, rest = raw:match("^(%S+)%s+(.+)$")
+            if name then
+                name = name:gsub("`", "")
+                local upperRest = rest:upper()
+                if upperRest:find("INT") or upperRest:find("DECIMAL") or upperRest:find("DOUBLE") or upperRest:find("FLOAT") or upperRest:find("NUMERIC") then
+                   DatabaseManager.columnTypesCache[tableName][name] = "number"
+                elseif upperRest:find("BOOL") then
+                   DatabaseManager.columnTypesCache[tableName][name] = "boolean"
+                else
+                   DatabaseManager.columnTypesCache[tableName][name] = "string"
+                end
+            end
+        end
+    end
+    return DatabaseManager.columnTypesCache[tableName][colName]
+end
+
+function DatabaseManager:mapRowToClass(class, row)
+    if not row then return nil end
+    local instance = class.new()
+    
+    for key, value in pairs(row) do
+        local targetType = DatabaseManager:getColumnType(class, key)
+        -- Fallback to instance default type if available
+        if not targetType and instance[key] ~= nil then
+             targetType = type(instance[key])
+        end
+        
+        if targetType == "number" then
+            instance[key] = tonumber(value) or value
+        elseif targetType == "boolean" then
+            if type(value) == "string" then
+                if value == "1" or value == "true" then instance[key] = true
+                else instance[key] = false end
+            elseif type(value) == "number" then
+                instance[key] = (value ~= 0)
+            else
+                instance[key] = value
+            end
+        -- Handle table parsing
+        elseif type(value) == "string" and value:find("^{") then
+            instance[key] = Utils.string_to_table(value)
+        else
+            instance[key] = value
+        end
+    end
+    -- Keep tableName
+    instance.tableName = class.tableName
+    return instance
+end
+
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
 
   Utils.nkprint("TABLENAME = " .. tableName, "debug")
@@ -308,7 +368,7 @@ function DatabaseManager:getEntry(class, columnName, columnValue)
   stmt:bind_values(columnValue)
   local results = {}
   for row in stmt:nrows() do
-    table.insert(results, row)
+    table.insert(results, DatabaseManager:mapRowToClass(class, row))
     break
   end
   stmt:finalize()
@@ -620,17 +680,7 @@ function DatabaseManager:getAllEntry(class, conditions)
   local count = 0
   for row in DatabaseManager.db:nrows(query) do
     count = count + 1
-    local result = class.new()
-
-    for key, value in pairs(row) do
-      if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = Utils.string_to_table(value)
-        result[key] = parsedList
-      else
-          result[key] = value
-      end
-    end
-
+    local result = DatabaseManager:mapRowToClass(class, row)
     table.insert(results, result)
   end
 
@@ -646,17 +696,7 @@ function DatabaseManager:getClassByBeammpId(class, beammpid)
   local result = nil
 
   for row in DatabaseManager.db:nrows(query) do
-    result = class.new()
-
-    for key, value in pairs(row) do
-      if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = Utils.string_to_table(value)
-        result[key] = parsedList  -- Direct assignment instead of setKey
-      else
-        result[key] = value  -- Direct assignment instead of setKey
-      end
-    end
-
+    result = DatabaseManager:mapRowToClass(class, row)
     break -- Assuming beammpid is unique, so we break after finding the first match
   end
 
@@ -670,23 +710,7 @@ function DatabaseManager:getAllClassByBeammpId(class, beammpid)
 
   local i = 1
   for row in DatabaseManager.db:nrows(query) do
-    -- Create new object instance
-    local obj = class.new()
-    
-    -- Set all properties from database row
-    for key, value in pairs(row) do
-      if type(value) == "string" and value:find("{") and value:find("}") then
-        local parsedList = Utils.string_to_table(value)
-        obj[key] = parsedList  -- Direct assignment instead of setKey
-      else
-        obj[key] = value  -- Direct assignment instead of setKey
-      end
-    end
-    
-    -- Ensure tableName is set correctly
-    obj.tableName = tableName
-    
-    result[i] = obj
+    result[i] = DatabaseManager:mapRowToClass(class, row)
     i = i + 1
   end
 

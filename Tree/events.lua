@@ -27,15 +27,18 @@ function MP.RegisterEvent(evt, handler, p3, p4)
     if not handlers[evt] then
         handlers[evt] = {}
         local dispatch = "Nickel_Evt_" .. evt
-        _G[dispatch] = function(...)
-            if handlers[evt] then
-                for _, item in ipairs(handlers[evt]) do 
-                    local res = safeCall(evt, item.fn, ...)
-                    if res ~= nil then return res end
+        
+        if not _G[dispatch] then 
+            _G[dispatch] = function(...)
+                if handlers[evt] then
+                    for _, item in ipairs(handlers[evt]) do 
+                        local res = safeCall(evt, item.fn, ...)
+                        if res ~= nil then return res end
+                    end
                 end
             end
+            OriginalRegisterEvent(evt, dispatch)
         end
-        OriginalRegisterEvent(evt, dispatch)
     end
 
     local fn = type(handler) == "function" and handler or _G[handler]

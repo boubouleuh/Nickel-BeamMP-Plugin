@@ -44,7 +44,7 @@ function command.init(sender_id, sender_name, rolename, playername)
 
 
         MessagesManager:SendMessage(sender_id, "database.code." .. code)
-        InterfaceUtils.updatePlayer(Utils.GetPlayerId(playername))
+        InterfaceUtils.updatePlayer(target_beammpid)
         return true
     else
         MessagesManager:SendMessage(sender_id, "player.not_found", {Player = playername})

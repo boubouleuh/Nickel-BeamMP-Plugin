@@ -33,6 +33,7 @@ function EventDispatcher.load(eventCategory)
         end
 
         if config and config.timer then
+            MP.CancelEventTimer(eventName)
             MP.CreateEventTimer(eventName, config.interval)
             Utils.nkprint("[dispatcher] Created timer for event: " .. eventName, "debug")
         end
