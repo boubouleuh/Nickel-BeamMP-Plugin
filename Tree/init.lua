@@ -38,8 +38,16 @@ post = function(url, body, headers)
     local response = ""
 
     if MP.GetOSName() == "Windows" then
-        local psBody = body:gsub('"', '""')
-        response = os.execute('powershell -Command "Invoke-WebRequest -Uri ' .. url .. ' -Method Post -Body \\"' .. psBody .. '\\" -ContentType \'application/json\' -OutFile temp.txt"')
+        local bodyFile = io.open("nickel_temp_body.json", "w")
+        if bodyFile then
+            bodyFile:write(body)
+            bodyFile:close()
+            response = os.execute('powershell -Command "try { Invoke-WebRequest -Uri ' .. url .. ' -Method Post -InFile nickel_temp_body.json -ContentType \'application/json\' -OutFile temp.txt } catch { Write-Host $_ }"')
+            os.remove("nickel_temp_body.json")
+        else
+            print("[Nickel] Failed to create temp body file")
+            return "", 500
+        end
     else
         local escapedBody = body:gsub("'", "'\\''")
         response = os.execute("wget -q --header='Content-Type: application/json' --post-data='" .. escapedBody .. "' '" .. url .. "' -O temp.txt")
