@@ -12,3 +12,4 @@ reloader.lua
 database/nickel.sqlite
 extensions/*
 !extensions/example_extension/
+.nickel_instance_id

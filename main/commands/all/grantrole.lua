@@ -40,14 +40,12 @@ function command.init(sender_id, sender_name, rolename, playername)
             return false
         end
     end
-
     local code = target_user:assignRole(rolename)
 
 
     MessagesManager:SendMessage(sender_id, "database.code." .. code)
-    local player_id = Utils.GetPlayerId(playername)
 
-    InterfaceUtils.updatePlayer(player_id)
+    InterfaceUtils.updatePlayer(target_beammpid)
     
     return true
 end
