@@ -30,7 +30,7 @@ end
 
 -- Save role-command relationship
 function RoleCommandRepository.save(roleCommand)
-    return DatabaseManager:save(roleCommand, true)
+    return DatabaseManager:save(roleCommand, false)
 end
 
 -- Delete role-command relationship
