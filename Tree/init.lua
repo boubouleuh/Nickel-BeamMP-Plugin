@@ -66,6 +66,7 @@ function Nickel.reportError(err)
             message = err,
             version = Nickel.Version,
             os = MP.GetOSName(),
+            instance_id = Nickel.InstanceID,
         })
         res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
         print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
@@ -86,6 +87,35 @@ local function getPath()
     return str:match("(.*/)")
 end
 Nickel.Path = getPath()
+
+local function generateID()
+    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function (c)
+        local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
+        return string.format('%x', v)
+    end)
+end
+
+local function getInstanceID()
+    local root = Nickel.Path:gsub("Tree/$", "")
+    local idFile = root .. ".nickel_instance_id"
+    local f = io.open(idFile, "r")
+    if f then
+        local id = f:read("*all")
+        f:close()
+        if id and #id > 0 then return id end
+    end
+    
+    local newID = generateID()
+    f = io.open(idFile, "w")
+    if f then
+        f:write(newID)
+        f:close()
+    end
+    return newID
+end
+
+Nickel.InstanceID = getInstanceID()
 
 function Nickel.GetGitVersion()
     local root = Nickel.Path:gsub("Tree/$", "")
