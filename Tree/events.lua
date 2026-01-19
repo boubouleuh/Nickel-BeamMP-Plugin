@@ -1,6 +1,11 @@
 ---@meta
 local Nickel = ...
-local OriginalRegisterEvent = MP.RegisterEvent
+-- VV this should fix the c stack overflow (need test)
+if not _G.Nickel_OriginalRegisterEvent then
+    _G.Nickel_OriginalRegisterEvent = MP.RegisterEvent
+end
+local OriginalRegisterEvent = _G.Nickel_OriginalRegisterEvent
+
 local handlers = {}
 
 local function safeCall(name, func, ...)
