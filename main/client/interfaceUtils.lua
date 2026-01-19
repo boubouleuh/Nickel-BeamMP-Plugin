@@ -301,7 +301,6 @@ end
 function InterfaceUtils.updatePlayer(beammpid)
     local onlineplayers = MP.GetPlayers()
     for i, v in pairs(onlineplayers) do
-        print("sending update for player " .. beammpid .. " to player id " .. i)
         InterfaceUtils.sendPlayer(i, beammpid)
         InterfaceUtils.resetUserInfos(i)
         InterfaceUtils.sendUserCommands(i)
