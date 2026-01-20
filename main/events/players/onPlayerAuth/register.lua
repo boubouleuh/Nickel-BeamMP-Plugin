@@ -1,5 +1,5 @@
 
-return function(player_name, player_role, is_guest, identifiers)
+return Event(function(player_name, player_role, is_guest, identifiers)
     local beammpid = identifiers["beammp"]
     local ip = identifiers["ip"]
     
@@ -13,4 +13,4 @@ return function(player_name, player_role, is_guest, identifiers)
 
     Utils.nkprint("[onPlayerAuth] Player authorized: " .. player_name .. " (ID: " .. beammpid .. ")", "info")
     return nil
-end
+end)

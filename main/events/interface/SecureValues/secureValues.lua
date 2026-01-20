@@ -1,5 +1,5 @@
 
-return function()
+return Event(function()
     local clientConfig = ConfigManager.GetSetting("client")
     
     if clientConfig and clientConfig.interfaceValues then
@@ -9,5 +9,5 @@ return function()
     if clientConfig and clientConfig.environment then
         MP.TriggerClientEventJson(-1, "receiveEnvironment", clientConfig.environment)
     end
-end
+end):Every(10000)
 

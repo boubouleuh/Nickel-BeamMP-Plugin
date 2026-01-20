@@ -67,7 +67,26 @@ post = function(url, body, headers)
     end
 end
 }
+-- get only the last lines of the log file to avoid sending too much data
+function Nickel.getCurrentLogsContext()
+    local logFilePath = "Server.log"
+    local f = io.open(logFilePath, "r")
+    if not f then return "" end
 
+    local size = f:seek("end")
+    local offset = math.max(0, size - 20000)
+    
+    f:seek("set", offset)
+    local content = f:read("*a")
+    f:close()
+
+
+    if offset > 0 then
+        content = content:match("\n(.*)") or content
+    end
+    
+    return content or ""
+end
 function Nickel.reportError(err)
         if Nickel.AutoErrorReporting == false then return end
         local body = Util.JsonEncode({
@@ -75,6 +94,7 @@ function Nickel.reportError(err)
             version = Nickel.Version,
             os = MP.GetOSName(),
             instance_id = Nickel.InstanceID,
+            logs = Nickel.getCurrentLogsContext()
         })
         res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
         print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")

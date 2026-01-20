@@ -1,5 +1,5 @@
 
-return function(NotRejected, id, name, message)
+return Event(function(NotRejected, id, name, message)
 
     local webhook = ConfigManager.GetSetting("discord").chat_webhook
     if webhook and webhook ~= "" then
@@ -27,4 +27,4 @@ return function(NotRejected, id, name, message)
         )
 
     end
-end
+end)

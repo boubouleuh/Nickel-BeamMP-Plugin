@@ -1,4 +1,4 @@
-return function(id, interfaceValues, force)
+return Event(function(id, interfaceValues, force)
     local interfaceValues = Util.JsonDecode(interfaceValues)
     if force == nil then
         force = false
@@ -23,4 +23,4 @@ return function(id, interfaceValues, force)
         ConfigManager.SetSetting("client.interfaceValues", interfaceValues)
         MP.TriggerClientEventJson(-1, "getInterfaceValues", interfaceValues)
     end
-end
+end)

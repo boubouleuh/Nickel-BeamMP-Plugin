@@ -1,5 +1,5 @@
 
-return function(player_id, player_name, message)
+return Event(function(player_id, player_name, message)
     local beammpid = Utils.getPlayerBeamMPID(player_name)
     if not beammpid then
         return CommandsManager:CreateCommand(player_id, message, true)
@@ -19,4 +19,4 @@ return function(player_id, player_name, message)
     end
     
     return false
-end
+end)

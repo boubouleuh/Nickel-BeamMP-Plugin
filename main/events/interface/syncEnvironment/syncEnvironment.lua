@@ -1,7 +1,6 @@
 
 
-return function(id, environment, force)
-    print("SYNC ENV EVENT TRIGGERED")
+return Event(function(id, environment, force)
     local client_env = Util.JsonDecode(environment)
 
     if force == nil then
@@ -20,12 +19,11 @@ return function(id, environment, force)
 
         if not user:hasPermissionForAction("editEnvironment") then
             MP.TriggerClientEventJson(id, "receiveEnvironment", server_env)
-            print("sync environnment for playerName " .. playerName)
             return
         end
     
         ConfigManager.SetSetting("client.environment", client_env)
         MP.TriggerClientEventJson(-1, "receiveEnvironment", client_env)
     end
-end
+end)
 

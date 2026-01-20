@@ -1,7 +1,6 @@
 local lastCallTime = {}
 local cooldown = 2 -- Cooldown period in seconds
-
-return function(id, data)
+return Event(function(id, data)
     local currentTime = os.time()
 
     if lastCallTime[id] == nil or currentTime - lastCallTime[id] >= cooldown then
@@ -13,7 +12,7 @@ return function(id, data)
             CommandsManager:CreateCommand(id, fullCommand, true)
         end
     end
-end
+end)
 
 
 

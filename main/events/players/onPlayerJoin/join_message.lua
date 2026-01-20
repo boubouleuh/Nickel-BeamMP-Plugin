@@ -1,5 +1,5 @@
 
-return function(id)
+return Event(function(id)
     local playerName = MP.GetPlayerName(id)
     local beammpid = Utils.getPlayerBeamMPID(playerName)
     
@@ -15,4 +15,4 @@ return function(id)
             })
         end
     end
-end
+end)
