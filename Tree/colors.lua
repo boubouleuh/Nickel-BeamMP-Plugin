@@ -1,4 +1,3 @@
----@meta
 local Nickel = ...
 ---Color code support for BeamMP console output
 ---@class Nickel.Colors

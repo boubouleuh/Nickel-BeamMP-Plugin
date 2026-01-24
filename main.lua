@@ -10,6 +10,11 @@ local function get_current_path()
 end
 
 if MP.GetOSName() == "Windows" then
+    if _VERSION == "Lua 5.4" then
+        print("[Nickel] Error : Sorry Nickel cant work on this server binary, please read the readme.md file to be helped using the required binary")
+        print("[Nickel] Discord if you want to ask for help : https://discord.gg/h5P84FFw7B")
+        return
+    end
     os.execute("chcp 65001")
         print("^ this is just to set utf-8 encoding on windows console so emoji print correctly ^")
 

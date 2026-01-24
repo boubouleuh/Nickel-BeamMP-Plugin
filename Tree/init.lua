@@ -1,4 +1,3 @@
----@meta
 local globalEnv = _G
 Nickel = {}
 globalEnv.Nickel = Nickel

@@ -1,4 +1,3 @@
----@meta
 Nickel = ...
 local threads = {} -- ID -> { co = coroutine, wakeTime = number }
 local counter = 0

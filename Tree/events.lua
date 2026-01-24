@@ -1,4 +1,3 @@
----@meta
 local Nickel = ...
 -- VV this should fix the c stack overflow (need test)
 if not _G.Nickel_OriginalRegisterEvent then
