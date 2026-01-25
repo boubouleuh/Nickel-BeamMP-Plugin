@@ -9,7 +9,7 @@ for k, _ in pairs(globalEnv) do protectedGlobals[k] = true end
 protectedGlobals["Nickel"] = true
 protectedGlobals["Tree"] = true
 protectedGlobals["_G"] = true
-
+Nickel.IsReloading = false
 Nickel.https = {request = function(url)
     local response = ""
 
@@ -350,6 +350,8 @@ _G.Nickel_HotReload = onFileChanged
 
 function Nickel.Reload()
     print("^3[Nickel] Hot Reloading...^r")
+    if Nickel.IsReloading then return end
+    Nickel.IsReloading = true
     
     -- Unprotect BEFORE doing anything else
     if Nickel.UnprotectCore then Nickel.UnprotectCore() end
@@ -377,6 +379,7 @@ function Nickel.Reload()
     if Nickel.TriggerEvent then Nickel.TriggerEvent("onInit") end
 
     print("^2[Nickel] Reload Complete.^r")
+    Nickel.IsReloading = false
 end
 
 -- Initial registration
