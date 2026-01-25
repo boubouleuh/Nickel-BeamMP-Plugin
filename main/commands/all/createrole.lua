@@ -12,6 +12,8 @@ function command.init(sender_id, sender_name, rolename, permlvl)
         MessagesManager:SendMessage(sender_id, "commands.createrole.missing_args", {Prefix = ConfigManager.GetSetting("commands").prefix})
         return false
     end
+    
+    rolename = Utils.capitalize(rolename)
 
     local permlvl_num = tonumber(permlvl)
     if not permlvl_num then
