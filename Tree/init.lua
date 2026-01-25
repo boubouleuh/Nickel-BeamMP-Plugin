@@ -390,6 +390,7 @@ local knownFiles = {}
 
 local function scanRecursive(dir, list)
     local files = FS.ListFiles(dir)
+    if (type(files) ~= "table") then return end
     if files then
         for _, f in pairs(files) do 
             if f:match("%.lua$") then
