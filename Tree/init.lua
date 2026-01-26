@@ -335,10 +335,6 @@ local function onFileChanged(path)
         if FS.Exists(manifest) then
             print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
             Nickel.LoadManifest(manifest)
-            -- Reload extension events
-            if ExtensionsManager and ExtensionsManager.reloadExtension then
-                ExtensionsManager.reloadExtension(extName)
-            end
             return
         end
     end
@@ -350,12 +346,11 @@ _G.Nickel_HotReload = onFileChanged
 
 function Nickel.Reload()
     print("^3[Nickel] Hot Reloading...^r")
-    if Nickel.IsReloading then return end
-    Nickel.IsReloading = true
     
     -- Unprotect BEFORE doing anything else
     if Nickel.UnprotectCore then Nickel.UnprotectCore() end
-
+    if Nickel.IsReloading then Nickel.ProtectCore() return end
+    Nickel.IsReloading = true
     -- Reset Globals (Clear anything not present at startup)
     for k, _ in pairs(globalEnv) do
         if not protectedGlobals[k] then
@@ -379,7 +374,9 @@ function Nickel.Reload()
     if Nickel.TriggerEvent then Nickel.TriggerEvent("onInit") end
 
     print("^2[Nickel] Reload Complete.^r")
+    if Nickel.UnprotectCore then Nickel.UnprotectCore() end
     Nickel.IsReloading = false
+    Nickel.ProtectCore()
 end
 
 -- Initial registration
