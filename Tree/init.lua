@@ -102,8 +102,11 @@ end
 local originalPcall = pcall
 function pcall(func, ...)
     local results = table.pack(xpcall(func, debug.traceback, ...))
+    --if its an extension error dont report it
     if not results[1] then
-        Nickel.reportError(results[2])
+        if not results[2]:find("extensions.lua") then
+            Nickel.reportError(results[2])
+        end
     end
     return table.unpack(results, 1, results.n)
 end
@@ -222,7 +225,7 @@ function Nickel.LoadExtensionFile(path)
     
     local chunk, err = loadfile(path, "t", env)
     if not chunk then 
-        Nickel.reportError(err)
+        -- Nickel.reportError(err) Nah dont report extensions errors since its probably user fault
         print("^1[Nickel] Error loading " .. path .. ": " .. err .. "^r")
         return nil
     end

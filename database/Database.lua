@@ -607,7 +607,7 @@ end
 ---@param class table The object class
 ---@param name string Column name
 ---@param defaultValue any The default value (used to infer type)
-function DatabaseManager:addValue(class, name, defaultValue)
+function DatabaseManager:addColumn(class, name, defaultValue)
   local colType = "VARCHAR(255)" -- Default fallback
   local valType = type(defaultValue)
   
