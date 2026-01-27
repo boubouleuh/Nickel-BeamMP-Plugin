@@ -254,7 +254,7 @@ end
 ---@param player_name string
 ---@return number
 function Utils.GetPlayerId(player_name)
-    return MP.GetPlayerIdByName(player_name)
+    return MP.GetPlayerIDByName(player_name)
 end
 
 
