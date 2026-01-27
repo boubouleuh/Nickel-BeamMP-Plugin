@@ -1,6 +1,6 @@
 
 local defaultMoney = 0
-DatabaseManager:addValue(User, "money", defaultMoney)   -- Add money field to User table
+DatabaseManager:addColumn(User, "money", defaultMoney)   -- Add money field to User table
 
 
 -- Injecting money methods into User class

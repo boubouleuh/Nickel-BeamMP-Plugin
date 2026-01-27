@@ -9,7 +9,7 @@ for k, _ in pairs(globalEnv) do protectedGlobals[k] = true end
 protectedGlobals["Nickel"] = true
 protectedGlobals["Tree"] = true
 protectedGlobals["_G"] = true
-
+Nickel.IsReloading = false
 Nickel.https = {request = function(url)
     local response = ""
 
@@ -102,8 +102,11 @@ end
 local originalPcall = pcall
 function pcall(func, ...)
     local results = table.pack(xpcall(func, debug.traceback, ...))
+    --if its an extension error dont report it
     if not results[1] then
-        Nickel.reportError(results[2])
+        if not results[2]:find("extensions.lua") then
+            Nickel.reportError(results[2])
+        end
     end
     return table.unpack(results, 1, results.n)
 end
@@ -222,7 +225,7 @@ function Nickel.LoadExtensionFile(path)
     
     local chunk, err = loadfile(path, "t", env)
     if not chunk then 
-        Nickel.reportError(err)
+        -- Nickel.reportError(err) Nah dont report extensions errors since its probably user fault
         print("^1[Nickel] Error loading " .. path .. ": " .. err .. "^r")
         return nil
     end
@@ -335,10 +338,6 @@ local function onFileChanged(path)
         if FS.Exists(manifest) then
             print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
             Nickel.LoadManifest(manifest)
-            -- Reload extension events
-            if ExtensionsManager and ExtensionsManager.reloadExtension then
-                ExtensionsManager.reloadExtension(extName)
-            end
             return
         end
     end
@@ -353,7 +352,8 @@ function Nickel.Reload()
     
     -- Unprotect BEFORE doing anything else
     if Nickel.UnprotectCore then Nickel.UnprotectCore() end
-
+    if Nickel.IsReloading then Nickel.ProtectCore() return end
+    Nickel.IsReloading = true
     -- Reset Globals (Clear anything not present at startup)
     for k, _ in pairs(globalEnv) do
         if not protectedGlobals[k] then
@@ -377,6 +377,9 @@ function Nickel.Reload()
     if Nickel.TriggerEvent then Nickel.TriggerEvent("onInit") end
 
     print("^2[Nickel] Reload Complete.^r")
+    if Nickel.UnprotectCore then Nickel.UnprotectCore() end
+    Nickel.IsReloading = false
+    Nickel.ProtectCore()
 end
 
 -- Initial registration

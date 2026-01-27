@@ -45,14 +45,15 @@ DefaultPermissions.init()
 
 -- Initialize event dispatcher
 Utils.nkprint("Initializing event system...", "info")
-if EventDispatcher and EventDispatcher.load then
-    EventDispatcher.load("console")
-    EventDispatcher.load("init")
-    EventDispatcher.load("chat")
-    EventDispatcher.load("players")
-    EventDispatcher.load("interface")
-    EventDispatcher.load("vehicles")
-    Utils.nkprint("Event system fully initialized", "info")
-end
+
+EventDispatcher.setPath(Utils.script_path() .. "main/events/")
+EventDispatcher.load("console")
+EventDispatcher.load("init")
+EventDispatcher.load("chat")
+EventDispatcher.load("players")
+EventDispatcher.load("interface")
+EventDispatcher.load("vehicles")
+Utils.nkprint("Event system fully initialized", "info")
+
 
 Utils.nkprint("Nickel Plugin fully initialized!", "info")

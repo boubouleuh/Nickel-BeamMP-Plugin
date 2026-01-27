@@ -11,6 +11,6 @@ return Event(function(player_name, player_role, is_guest, identifiers)
         return result
     end
 
-    Utils.nkprint("[onPlayerAuth] Player authorized: " .. player_name .. " (ID: " .. beammpid .. ")", "info")
+    Utils.nkprint("[onPlayerAuth] Player authorized: " .. player_name .. " (ID: " .. (beammpid or "guest") .. ")", "info")
     return nil
 end)

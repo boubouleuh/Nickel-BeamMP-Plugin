@@ -17,6 +17,25 @@ function Utils.script_path()
   return str
 end
 
+function Utils.extension_path()
+  local str = debug.getinfo(2, "S").source
+  if str:sub(1, 1) == "@" then
+    str = str:sub(2)
+  end
+  str = str:gsub("\\", "/")
+  
+  local extensionName = str:match("extensions/([^/]+)/")
+  
+  if not extensionName then
+      error("Utils.extension_path() called from outside an extension: " .. str)
+  end
+  local root = str:match("(.*/extensions/[^/]+/)")
+  if package.config:sub(1, 1) == "\\" then
+    root = root:gsub("/", "\\")
+  end
+  return root
+end
+
 function Utils.capitalize(str)
   return (str:gsub("^%l", string.upper))
 end
