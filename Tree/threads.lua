@@ -5,6 +5,7 @@ local counter = 0
 -- Global tick timer configuration
 local TICK_RATE = 50 -- ms (20 ticks/second)
 local TIMER_ID = "Nickel_JobSystem_Tick"
+local TIME = 0 -- Monotonic time in ms based on ticks
 
 --- Yields the current coroutine for a specified amount of time
 ---@param ms number Time to wait in milliseconds
@@ -20,7 +21,9 @@ end
 
 --- job system loop
 local function tick()
-    local now = os.clock() * 1000
+    TIME = TIME + TICK_RATE
+    local now = TIME
+    
     for id, data in pairs(threads) do
         if data.co and coroutine.status(data.co) ~= "dead" then
             if now >= data.wakeTime then
