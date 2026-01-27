@@ -235,13 +235,7 @@ end
 ---@param player_name string
 ---@return number
 function Utils.GetPlayerId(player_name)
-  local players = MP.GetPlayers()
-  for key, value in pairs(players) do
-      if value == player_name then
-          return key
-      end
-  end
-  return -1
+    return MP.GetPlayerIdByName(player_name)
 end
 
 
