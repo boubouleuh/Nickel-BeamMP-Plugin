@@ -9,6 +9,13 @@ for k, _ in pairs(globalEnv) do protectedGlobals[k] = true end
 protectedGlobals["Nickel"] = true
 protectedGlobals["Tree"] = true
 protectedGlobals["_G"] = true
+
+function Nickel.PreserveGlobal(name)
+    if type(name) == "string" then
+        protectedGlobals[name] = true
+    end
+end
+
 Nickel.IsReloading = false
 Nickel.https = {request = function(url)
     local response = ""

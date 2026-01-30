@@ -1,12 +1,14 @@
 
 return Event(function(NotRejected, player_id, vehicle_id, data)
-
     local webhook = ConfigManager.GetSetting("discord").vehicle_webhook
     local username = "Nickel Vehicle Logger"
     local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
 
-
-    local embedDescription = "**Spawned car " .. vehicle_id .. "**"
+    local data2 = Utils.parseBeamData(data)
+    local newveh = data2.jbm
+    local beammpid = Utils.getPlayerBeamMPID(player_id)
+    SessionManager.set(beammpid, "vehicles", MP.GetPlayerVehicles(player_id))
+    local embedDescription = "**Spawned " .. newveh .. "**"
     local color = NotRejected and 0x00FF00 or 0xFF0000
     local name = MP.GetPlayerName(player_id) or "Unknown Player"
     Online.sendDiscordMessage(
