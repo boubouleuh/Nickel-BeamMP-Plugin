@@ -17,7 +17,7 @@ end
 
 local function clean(str) return str and str:gsub("[\r\n%s]+", "") or "" end
 
-local function update_tags(path)
+local function update_tags(path, force)
     exec(path, "git fetch --tags origin")
 
     local _, code, current = exec_ret(path, "git describe --tags --exact-match HEAD")
@@ -67,13 +67,17 @@ local function update_tags(path)
         -- Check if we are trying to downgrade (if latest is an ancestor of current, current is newer)
         local _, is_ancestor_code, _ = exec_ret(path, "git merge-base --is-ancestor tags/" .. latest .. " tags/" .. current)
         
-        if is_ancestor_code == 0 and latest ~= current then
+        if not force and is_ancestor_code == 0 and latest ~= current then
              Utils.nkprint("Current version ("..current..") is ahead of latest configured version ("..latest.."). Skipping downgrade.", "info")
              return
         end
 
-        if latest ~= current then
+        if force or latest ~= current then
             Utils.nkprint("New tag available: " .. current .. " -> " .. latest, "info")
+            if force then
+                Utils.nkprint("Force update: Stashing local changes...", "info")
+                exec(path, "git stash push -m \"Nickel AutoUpdate Stash\"")
+            end
             local _, code, out = exec_ret(path, "git checkout tags/" .. latest)
             if code ~= 0 then Utils.nkprint("Checkout failed: " .. out, "error") end
         else
@@ -84,17 +88,34 @@ local function update_tags(path)
 
     local _, code, _ = exec_ret(path, "git merge-base --is-ancestor tags/" .. latest .. " HEAD")
     
-    if code == 0 then
+    if not force and code == 0 then
         Utils.nkprint("Local version is ahead of latest tag (" .. latest .. "). Skipping update.", "info")
     else
         Utils.nkprint("Local version is older than tag " .. latest .. ". Updating...", "info")
+        if force then
+            Utils.nkprint("Force update: Stashing local changes...", "info")
+            exec(path, "git stash push -m \"Nickel AutoUpdate Stash\"")
+        end
         local _, code, out = exec_ret(path, "git checkout tags/" .. latest)
         if code ~= 0 then Utils.nkprint("Checkout failed: " .. out, "error") end
     end
 end
 
-local function update_target(path)
+local function update_target(path, force)
     exec(path, "git fetch origin " .. Updater.target)
+    if force then
+        Utils.nkprint("Force update: Stashing local changes...", "info")
+        exec(path, "git stash push -m \"Nickel AutoUpdate Stash\"")
+
+        local _, code, out = exec_ret(path, "git reset --hard origin/" .. Updater.target)
+        if code ~= 0 then 
+            Utils.nkprint("Force update failed: " .. out, "error") 
+        else
+            Utils.nkprint("Force updated target " .. Updater.target .. " (local changes stashed).", "info")
+        end
+        return
+    end
+
     local _, _, localH = exec_ret(path, "git rev-parse HEAD")
     local _, _, remoteH = exec_ret(path, "git rev-parse origin/" .. Updater.target)
     
@@ -123,7 +144,8 @@ function Updater.get_git_version(path)
     return string.format("%s (%s)%s", version, Updater.target, dirty)
 end
 
-function Updater.check()
+function Updater.check(force)
+    if force == nil then force = false end
     local path = Utils.script_path()
     if not FS.Exists(path .. ".git") then
         Utils.nkprint("Initializing Git...", "warn")
@@ -135,12 +157,12 @@ function Updater.check()
         exec(path, "git branch --set-upstream-to=origin/" .. Updater.target .. " " .. Updater.target)
     end
 
-    if not ConfigManager.GetSetting("advanced").autoupdate then return end
+    if not ConfigManager.GetSetting("advanced").autoupdate and not force then return end
 
     if ConfigManager.GetSetting("advanced").update_type == "tags" then
-        update_tags(path)
+        update_tags(path, force)
     else
-        update_target(path)
+        update_target(path, force)
     end
 end
 
