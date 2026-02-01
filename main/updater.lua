@@ -26,38 +26,27 @@ local function update_tags(path, force)
     local allow_prerelease = ConfigManager.GetSetting("advanced").allow_prerelease
     local latest = nil
 
-    -- Get all tags merged into target, sorted by version descending
-    local _, code, out = exec_ret(path, "git tag --merged origin/" .. Updater.target .. " --sort=-v:refname")
-    
-    if code == 0 and out then
-        for tag in out:gmatch("[^\r\n]+") do
-            tag = clean(tag)
-            if tag ~= "" then
-                if allow_prerelease then
-                    latest = tag
-                    break
-                else
-                    -- Exclude pre-releases (containing hyphen)
-                    if not tag:match("-") then
-                        latest = tag
-                        break
-                    end
-                end
-            end
-        end
+    -- Use GitHub API to check for releases
+    local apiUrl = "https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases"
+    local _, _, jsonStr = exec_ret(path, "wget -qO - --header='User-Agent: Nickel' " .. apiUrl)
+
+    if jsonStr and jsonStr ~= "" and Util and Util.JsonDecode then
+        releases = Util.JsonDecode(jsonStr)
     end
 
-    if not latest or latest == "" then
-        -- Fallback: try git describe
-        local _, _, desc = exec_ret(path, "git describe --tags --abbrev=0 origin/" .. Updater.target)
-        latest = clean(desc)
-        
-        -- If we found a tag but it's a pre-release and we don't allow them, check if we should skip
-        if latest and latest ~= "" and not allow_prerelease and latest:match("-") then
-             Utils.nkprint("Latest tag found is a pre-release ("..latest..") but allow_prerelease is false. Skipping update.", "info")
-             return
+    if releases and type(releases) == "table" then
+        for _, release in ipairs(releases) do
+            -- If we allow pre-releases OR if the release is NOT marked as pre-release on GitHub
+            if allow_prerelease or not release.prerelease then
+                latest = release.tag_name
+                break
+            end
         end
+    else
+         Utils.nkprint("Failed to fetch/decode releases from GitHub API.", "warn")
     end
+
+
 
     if not latest or latest == "" then
         return Utils.nkprint("No remote tags found.", "info")
@@ -72,7 +61,7 @@ local function update_tags(path, force)
              return
         end
 
-        if force or latest ~= current then
+        if latest ~= current then
             Utils.nkprint("New tag available: " .. current .. " -> " .. latest, "info")
             if force then
                 Utils.nkprint("Force update: Stashing local changes...", "info")
