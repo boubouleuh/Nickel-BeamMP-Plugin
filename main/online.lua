@@ -127,10 +127,11 @@ function Online.sendDiscordMessage(webhook, message, username, avatar, embedTitl
 
     local cmd
     if MP.GetOSName() == "Windows" then
-        local psJson = json:gsub('"', '""')
+        -- Encode to Base64 to avoid shell escaping issues and JSON corruption
+        local b64Json = MIME.b64(json):gsub("\n", ""):gsub("\r", "")
         cmd = string.format(
-            'powershell -Command "Invoke-WebRequest -Uri \'%s\' -Method Post -Body \\"%s\\" -ContentType \'application/json\'"',
-            webhook, psJson
+            'powershell -Command "$json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(\'%s\')); Invoke-WebRequest -Uri \'%s\' -Method Post -Body $json -ContentType \'application/json\' -UseBasicParsing | Out-Null"',
+            b64Json, webhook
         )
     else
         cmd = string.format(

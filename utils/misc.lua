@@ -175,14 +175,19 @@ function Utils.split(input, delimiter)
 end
 
 ---getPlayerBeamMPID
----@param player_name string
+---@param player_nameORid string|number
 ---@return number
-function Utils.getPlayerBeamMPID(player_name) --Playername only used when using the web api
+function Utils.getPlayerBeamMPID(player_nameORid) --Playername only used when using the web api
 
-  local player_id = Utils.GetPlayerId(player_name)
+  local player_id
+  if type(player_nameORid) == "string" then
+    player_id = Utils.GetPlayerId(player_nameORid)
+  else
+    player_id = player_nameORid
+  end
   local identifiers = MP.GetPlayerIdentifiers(player_id)
   if player_id == -1 then
-        local playerJson = Online.getPlayerJson(player_name)
+        local playerJson = Online.getPlayerJson(player_nameORid)
         local beamid
         if playerJson ~= nil then
             beamid = playerJson.user.id
@@ -391,4 +396,10 @@ function Utils.isTruthy(value)
         return lower == "true" or lower == "1"
     end
     return false
+end
+
+
+function Utils.parseBeamData(data)
+    local jsonPart = data:match("({.*})")
+    return Util.JsonDecode(jsonPart)
 end

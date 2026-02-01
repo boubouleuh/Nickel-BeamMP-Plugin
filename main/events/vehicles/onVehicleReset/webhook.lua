@@ -5,8 +5,15 @@ return Event(function(player_id, vehicle_id, data)
     local username = "Nickel Vehicle Logger"
     local avatar = "https://cdn.discordapp.com/icons/1073280205826826261/377e11e72cf395b7dcacda78621e473e.png?size=512"
 
-
-    local embedDescription = "**Reseted car " .. vehicle_id .. "**"
+    local beammpid = Utils.getPlayerBeamMPID(player_id)
+    local oldveh = Utils.parseBeamData(SessionManager.getData(beammpid, "vehicles", nil)[vehicle_id])
+    local newveh = Utils.parseBeamData(MP.GetPlayerVehicles(player_id)[vehicle_id])
+    if not Utils.deepCompare(oldveh, newveh) then
+        SessionManager.set(beammpid, "vehicles", MP.GetPlayerVehicles(player_id))
+        return
+    end
+    SessionManager.set(beammpid, "vehicles", MP.GetPlayerVehicles(player_id))
+    local embedDescription = "**Reseted  " .. newveh.jbm .. "**"
     local color = 0x00FF00
     local name = MP.GetPlayerName(player_id) or "Unknown Player"
     Online.sendDiscordMessage(

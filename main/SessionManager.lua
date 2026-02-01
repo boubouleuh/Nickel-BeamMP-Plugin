@@ -1,5 +1,8 @@
-SessionManager = {}
-SessionManager.playerSessions = {}
+SessionManager = SessionManager or {}
+if Nickel.PreserveGlobal then
+    Nickel.PreserveGlobal("SessionManager")
+end
+SessionManager.playerSessions = SessionManager.playerSessions or {}
 
 -- Get or create player session
 function SessionManager.get(beammpid)
