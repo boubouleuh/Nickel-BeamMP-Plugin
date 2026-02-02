@@ -5,7 +5,7 @@ local SIGNATURE_FILE = "lua/ge/extensions/nickel.lua"
 
 function InterfaceChecker.CheckForInterfaceMod()
     local isWindows = MP.GetOSName() == "Windows"
-    local searchDir = "Resources/Client/"
+    local searchDir = Utils.getBeamMPConfig().General.ResourceFolder .. "/Client/"
     
     if isWindows then
         searchDir = searchDir:gsub("/", "\\")

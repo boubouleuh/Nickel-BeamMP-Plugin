@@ -41,7 +41,7 @@ function Online.downloadInterface()
         local zip_body, zip_code = Nickel.https.request(zip_url)
         
         if zip_code == 200 then
-            local file_path = InterfaceChecker.zipPath or "Resources/Client/nickel-interface.zip"
+            local file_path = InterfaceChecker.zipPath or Utils.getBeamMPConfig().General.ResourceFolder .. "/Client/nickel-interface.zip"
             
             local file = io.open(file_path, "wb")
             if file then
