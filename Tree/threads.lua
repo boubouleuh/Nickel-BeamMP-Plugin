@@ -48,6 +48,7 @@ local function tick()
 end
 
 MP.RegisterEvent(TIMER_ID, tick)
+MP.CancelEventTimer(TIMER_ID)
 MP.CreateEventTimer(TIMER_ID, TICK_RATE)
 
 --- Creates a new thread (coroutine)

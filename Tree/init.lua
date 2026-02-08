@@ -79,19 +79,32 @@ function Nickel.getCurrentLogsContext()
     local f = io.open(logFilePath, "r")
     if not f then return "" end
 
-    local size = f:seek("end")
-    local offset = math.max(0, size - 20000)
-    
-    f:seek("set", offset)
-    local content = f:read("*a")
-    f:close()
+    local first_lines = {}
+    local last_lines = {}
+    local count = 0
 
+    for line in f:lines() do
+        count = count + 1
+        if count <= 100 then
+            table.insert(first_lines, line)
+        end
 
-    if offset > 0 then
-        content = content:match("\n(.*)") or content
+        table.insert(last_lines, line)
+        if #last_lines > 100 then
+            table.remove(last_lines, 1)
+        end
     end
-    
-    return content or ""
+    f:close()
+    local result
+    if count <= 100 then
+        result = "\27[0m----[LOGS STARTING]----\n" .. table.concat(first_lines, "\n")
+    else
+        result = "\27[0m----[LOGS STARTING]----\n" .. table.concat(first_lines, "\n") .. "\n\27[0m----[LOGS BEFORE ERROR]----\n" .. table.concat(last_lines, "\n")
+    end
+
+
+    result = result:gsub("[^\n]*%[CHAT%][^\n]*\n", "\27[31m[CHAT MESSAGE TRUNCATED]\27[0m\n")
+    return result
 end
 function Nickel.reportError(err)
         if Nickel.AutoErrorReporting == false then return end
@@ -104,6 +117,7 @@ function Nickel.reportError(err)
         })
         res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
         print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
+        print("^1[Nickel] If you need support please join the discord https://discord.gg/h5P84FFw7B ^r")
 end
 
 local originalPcall = pcall
