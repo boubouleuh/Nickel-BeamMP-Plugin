@@ -17,9 +17,9 @@ function UserStatus.getColumns()
     return {
         "id INTEGER PRIMARY KEY AUTOINCREMENT",
         "beammpid INTEGER NOT NULL",
-    "status_type VARCHAR(191)",
+        "status_type VARCHAR(191)",
         "is_status_value BOOLEAN NOT NULL",
-    "reason VARCHAR(191)",
+        "reason VARCHAR(191)",
         "expiry_time DATETIME",
         "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
     }

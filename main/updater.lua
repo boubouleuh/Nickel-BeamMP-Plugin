@@ -29,8 +29,8 @@ local function update_tags(path, force)
     -- Use GitHub API to check for releases
     local apiUrl = "https://api.github.com/repos/boubouleuh/Nickel-BeamMP-Plugin/releases"
     local _, _, jsonStr = exec_ret(path, "wget -qO - --header='User-Agent: Nickel' " .. apiUrl)
-
-    if jsonStr and jsonStr ~= "" and Util and Util.JsonDecode then
+    local releases
+    if jsonStr and jsonStr ~= "" then
         releases = Util.JsonDecode(jsonStr)
     end
 

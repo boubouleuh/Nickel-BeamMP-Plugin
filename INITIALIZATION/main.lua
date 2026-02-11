@@ -5,17 +5,16 @@ end
 -- Create all database tables
 Utils.nkprint("Creating database tables...", "info")
 DatabaseManager:withConnection(function()
-    -- Simple table creation using getColumns functions directly
-    DatabaseManager:createTableForClass(User, false)
-    DatabaseManager:createTableForClass(UserIp, false)
-    DatabaseManager:createTableForClass(UserStatus, false)
-    DatabaseManager:createTableForClass(Role, false)
-    DatabaseManager:createTableForClass(Command, false)
-    DatabaseManager:createTableForClass(UserRole, false)
-    DatabaseManager:createTableForClass(Action, false)
-    DatabaseManager:createTableForClass(RoleAction, false)
-    DatabaseManager:createTableForClass(RoleCommand, false)
-    DatabaseManager:createTableForClass(Infos, false)
+    DatabaseManager:createTableIfNotExists(User)
+    DatabaseManager:createTableIfNotExists(UserIp)
+    DatabaseManager:createTableIfNotExists(UserStatus)
+    DatabaseManager:createTableIfNotExists(Role)
+    DatabaseManager:createTableIfNotExists(Command)
+    DatabaseManager:createTableIfNotExists(UserRole)
+    DatabaseManager:createTableIfNotExists(Action)
+    DatabaseManager:createTableIfNotExists(RoleAction)
+    DatabaseManager:createTableIfNotExists(RoleCommand)
+    DatabaseManager:createTableIfNotExists(Infos)
 end)
 
 -- Initialize info entry for database launch

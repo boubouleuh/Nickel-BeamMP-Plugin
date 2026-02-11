@@ -54,4 +54,5 @@ server_scripts = {
     "/main/events/dispatcher.lua",
     "/INITIALIZATION/main.lua",
     "main/extensions.lua",
+    "database/sync.lua"
 }

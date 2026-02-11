@@ -103,7 +103,7 @@ function Nickel.getCurrentLogsContext()
     end
 
 
-    result = result:gsub("[^\n]*%[CHAT%][^\n]*\n", "\27[31m[CHAT MESSAGE TRUNCATED]\27[0m\n")
+    result = result:gsub("[^\n]*%[CHAT%][^\n]*\n", "\27[31m[CHAT MESSAGE TRUNCATED]\27[0m\n"):gsub("[^\n]*%|CHAT%][^\n]*\n", "\27[31m[CHAT MESSAGE TRUNCATED]\27[0m\n")
     return result
 end
 function Nickel.reportError(err)

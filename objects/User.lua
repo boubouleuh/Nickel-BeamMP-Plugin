@@ -260,21 +260,27 @@ end
 
 -- Permission checks
 function User:canConnect()
-    if self:isBanned() or self:isTempBanned() then
-        return false, "banned"
+    if self:isTempBanned() then
+        local status = self:getStatus("istempbanned")
+        return false, "banned", status and status.reason or "Temporarily banned"
+    end
+
+    if self:isBanned() then
+        local status = self:getStatus("isbanned")
+        return false, "banned", status and status.reason or "Banned"
     end
     
     if self:isIpBanned() then
-        return false, "ip_banned"
+        return false, "ip_banned", "Your IP address is banned from this server"
     end
     
     if ConfigManager.GetSetting("conditions").whitelist then
         if not self:isWhitelisted() then
-            return false, "not_whitelisted"
+            return false, "not_whitelisted", MessagesManager:GetMessage(-1, "conditions.whitelist_required")
         end
     end
     
-    return true, "allowed"
+    return true, "allowed", nil
 end
 
 function User:canSpeak()

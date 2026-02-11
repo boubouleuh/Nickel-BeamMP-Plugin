@@ -32,7 +32,6 @@ function ExtensionsManager.init()
     else
         Utils.nkprint("No extensions found or loaded.", "warn")
     end
-    DatabaseManager:syncSchemas()
 end
 
 ExtensionsManager.configManager = {}
