@@ -11,7 +11,7 @@ return Event(function(NotRejected, player_id, vehicle_id, data)
     local newveh = Utils.parseBeamData(data).jbm
     local embedDescription = ""
     if oldveh ~= newveh then
-        embedDescription = "**Spawned " .. newveh .. "**"
+        embedDescription = "**Switched from " .. oldveh .. " to " .. newveh .. "**"
     else
         embedDescription = "**Edited " .. newveh .. "**"
     end

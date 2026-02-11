@@ -204,15 +204,15 @@ function Nickel.LoadLib(path, func)
     return lib()
 end
 
-function Nickel.LoadDir(dir, useProtection)
+function Nickel.LoadDir(dir, isExtension)
     local files = FS.ListFiles(dir)
     if not files then return end
     for _, f in pairs(files) do
         if f ~= "." and f ~= ".." then
             local full = dir .. "/" .. f
-            if FS.IsDirectory(full) then Nickel.LoadDir(full, useProtection)
+            if FS.IsDirectory(full) then Nickel.LoadDir(full, isExtension)
             elseif f:sub(-4) == ".lua" then 
-                if useProtection then
+                if isExtension then
                     Nickel.LoadExtensionFile(full)
                 else
                     local ok, err = pcall(dofile, full)
@@ -261,7 +261,7 @@ function Nickel.IsExtensionEnabled(path)
     return env.enabled
 end
 
-function Nickel.LoadManifest(path, isMain, useProtection)
+function Nickel.LoadManifest(path, isMain, isExtension)
     if isMain then Nickel.ManifestPath = path end
     local env = setmetatable({}, { __index = globalEnv })
     local chunk = loadfile(path, "t", env)
@@ -286,41 +286,17 @@ function Nickel.LoadManifest(path, isMain, useProtection)
         if clean:sub(-2) == "/*" then 
             local relativeDir = clean:sub(1, -3)
             local targetDir = manifestDir .. relativeDir
-            
-            if FS.ListFiles(targetDir) then
-                Nickel.LoadDir(targetDir, useProtection)
-            else
-                -- Fallback to plugin root (Legacy support)
-                targetDir = pluginRoot .. relativeDir
-                if FS.ListFiles(targetDir) then
-                    Nickel.LoadDir(targetDir, useProtection)
-                end
-            end
+            Nickel.LoadDir(targetDir, isExtension)
         else 
             local f = manifestDir .. clean
             if FS.Exists(f) then 
-                if useProtection then
+                if isExtension then
                     Nickel.LoadExtensionFile(f)
                 else
                     local ok, err = pcall(dofile, f)
                     if not ok then
                         print("^1[Nickel] Error loading " .. f .. ": " .. tostring(err) .. "^r")
                     end
-                end
-            else 
-                -- Fallback to plugin root (Legacy support)
-                local f_legacy = pluginRoot .. clean
-                if FS.Exists(f_legacy) then 
-                    if useProtection then
-                        Nickel.LoadExtensionFile(f_legacy)
-                    else
-                        local ok, err = pcall(dofile, f_legacy)
-                        if not ok then
-                            print("^1[Nickel] Error loading " .. f_legacy .. ": " .. tostring(err) .. "^r")
-                        end
-                    end
-                else
-                    print("^3[Nickel] Missing: " .. f .. "^r") 
                 end
             end
         end
