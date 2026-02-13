@@ -46,6 +46,7 @@ DefaultPermissions.init()
 Utils.nkprint("Initializing event system...", "info")
 
 EventDispatcher.setPath(Utils.script_path() .. "main/events/")
+EventDispatcher.load("core")
 EventDispatcher.load("console")
 EventDispatcher.load("init")
 EventDispatcher.load("chat")
