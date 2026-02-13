@@ -15,7 +15,7 @@ function Nickel.PreserveGlobal(name)
         protectedGlobals[name] = true
     end
 end
-
+Nickel.telemetry = false
 Nickel.IsReloading = false
 Nickel.https = {request = function(url)
     local response = ""
@@ -107,17 +107,30 @@ function Nickel.getCurrentLogsContext()
     return result
 end
 function Nickel.reportError(err)
-        if Nickel.AutoErrorReporting == false then return end
+        if Nickel.telemetry == false then return end
         local body = Util.JsonEncode({
+            type = "error",
             message = err,
             version = Nickel.Version,
             os = MP.GetOSName(),
             instance_id = Nickel.InstanceID,
             logs = Nickel.getCurrentLogsContext()
         })
-        res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
+        local res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
         print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
         print("^1[Nickel] If you need support please join the discord https://discord.gg/h5P84FFw7B ^r")
+end
+
+function Nickel.heartbeat()
+    if Nickel.telemetry == false then return end
+
+    local body = Util.JsonEncode({
+        type = "alive",
+        version = Nickel.Version,
+        os = MP.GetOSName(),
+        instance_id = Nickel.InstanceID
+    })
+    local res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
 end
 
 local originalPcall = pcall
@@ -270,10 +283,6 @@ function Nickel.LoadManifest(path, isMain, isExtension)
     
     if isMain and env.version then
         Nickel.Version = env.version
-    end
-
-    if isMain and env.auto_error_reporting ~= nil then
-        Nickel.AutoErrorReporting = env.auto_error_reporting
     end
 
     local pluginRoot = Nickel.Path:gsub("Tree/$", "")

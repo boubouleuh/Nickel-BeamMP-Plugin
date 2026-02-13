@@ -58,6 +58,7 @@ function ConfigManager.init()
         },
         advanced = {
             autoupdate = true,
+            telemetry = true,
             update_type = "tags", -- "tags" or "commit"
             target = "dev",
             allow_prerelease = false,

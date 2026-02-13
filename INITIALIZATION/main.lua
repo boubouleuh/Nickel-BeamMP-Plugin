@@ -1,7 +1,7 @@
 if Utils.getBeamMPConfig() and Utils.getBeamMPConfig().General.LogChat and ConfigManager.GetSetting("misc").chat_log then
     Utils.nkprint("Chat logging is enabled in the Nickel config, but also in the BeamMP config. Please disable one of them to avoid duplicate logs.", "warn")
 end
-
+Nickel.telemetry = ConfigManager.GetSetting("advanced").telemetry
 -- Create all database tables
 Utils.nkprint("Creating database tables...", "info")
 DatabaseManager:withConnection(function()
