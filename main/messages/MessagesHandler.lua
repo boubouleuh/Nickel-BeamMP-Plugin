@@ -1,5 +1,7 @@
 MessagesManager = {}
 
+local langCache = {}
+
 function MessagesManager:SendMessage(sender_id, messageKey, values)
     local chatcolor = "^l^7"
     local chatstyle = "^r^o"
@@ -70,11 +72,18 @@ function MessagesManager:GetMessage(sender_id, key, values)
         langCode = userLang.language
     end
 
-    local jsonFile = io.open(Utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")
-    local jsonFileContent = jsonFile:read("a")
-    jsonFile:close()
-
-    local json = Util.JsonDecode(jsonFileContent)
+    -- Use cached parsed JSON; only read file on first access per language
+    if not langCache[langCode] then
+        local jsonFile = io.open(Utils.script_path() .. "main/lang/all/" .. langCode .. ".json", "r")
+        if jsonFile then
+            local jsonFileContent = jsonFile:read("a")
+            jsonFile:close()
+            langCache[langCode] = Util.JsonDecode(jsonFileContent)
+        else
+            langCache[langCode] = {}
+        end
+    end
+    local json = langCache[langCode]
     
     local message = json[key]
     if message == nil then

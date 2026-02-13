@@ -2,17 +2,51 @@ Updater = {}
 Updater.target = ConfigManager.GetSetting("advanced").target or "main"
 
 local function exec(path, cmd)
-    return os.execute("cd " .. path .. " && " .. cmd)
+    if coroutine.running() then
+        local donefile = os.tmpname()
+        os.execute("(cd " .. path .. " && " .. cmd .. " >/dev/null 2>&1; echo done > " .. donefile .. ") &")
+        while true do
+            local f = io.open(donefile, "r")
+            if f then
+                f:close()
+                os.remove(donefile)
+                return true
+            end
+            Nickel.Wait(50)
+        end
+    else
+        return os.execute("cd " .. path .. " && " .. cmd)
+    end
 end
 
 local function exec_ret(path, cmd)
-    local tmp = os.tmpname()
-    local ok, type, code = os.execute("cd " .. path .. " && " .. cmd .. " > " .. tmp .. " 2>&1")
-    local f = io.open(tmp, "r")
-    local out = f and f:read("*a") or ""
-    if f then f:close() end
-    os.remove(tmp)
-    return ok, code, (out:gsub("^%s*(.-)%s*$", "%1"))
+    if coroutine.running() then
+        local tmp = os.tmpname()
+        local donefile = tmp .. ".done"
+        os.execute("(cd " .. path .. " && " .. cmd .. " > " .. tmp .. " 2>&1; echo $? > " .. donefile .. ") &")
+        while true do
+            local f = io.open(donefile, "r")
+            if f then
+                local exitCode = tonumber(f:read("*a"):match("(%d+)")) or -1
+                f:close()
+                local of = io.open(tmp, "r")
+                local out = of and of:read("*a") or ""
+                if of then of:close() end
+                os.remove(tmp)
+                os.remove(donefile)
+                return exitCode == 0, exitCode, (out:gsub("^%s*(.-)%s*$", "%1"))
+            end
+            Nickel.Wait(50)
+        end
+    else
+        local tmp = os.tmpname()
+        local ok, _, code = os.execute("cd " .. path .. " && " .. cmd .. " > " .. tmp .. " 2>&1")
+        local f = io.open(tmp, "r")
+        local out = f and f:read("*a") or ""
+        if f then f:close() end
+        os.remove(tmp)
+        return ok, code, (out:gsub("^%s*(.-)%s*$", "%1"))
+    end
 end
 
 local function clean(str) return str and str:gsub("[\r\n%s]+", "") or "" end
@@ -118,17 +152,36 @@ local function update_target(path, force)
 end
 
 function Updater.get_git_version(path)
-    local _, code, version = exec_ret(path, "git describe --tags --exact-match HEAD")
-    
-    if code ~= 0 then
-        local _, _, hash = exec_ret(path, "git rev-parse --short HEAD")
-        version = clean(hash) or "unknown"
+    -- Single shell script to get tag, hash and dirty status
+    local scriptFile = os.tmpname() .. ".sh"
+    local sf = io.open(scriptFile, "w")
+    if sf then
+        sf:write('#!/bin/sh\n')
+        sf:write('cd "' .. path .. '" 2>/dev/null\n')
+        sf:write('TAG=$(git describe --tags --exact-match HEAD 2>/dev/null) || TAG=""\n')
+        sf:write('HASH=$(git rev-parse --short HEAD 2>/dev/null) || HASH="unknown"\n')
+        sf:write('STATUS=$(git status --porcelain 2>/dev/null)\n')
+        sf:write('echo "TAG:${TAG}"\n')
+        sf:write('echo "HASH:${HASH}"\n')
+        sf:write('echo "STATUS:${STATUS}"\n')
+        sf:close()
+    end
+
+    local _, _, combined = exec_ret(".", "sh " .. scriptFile)
+    os.remove(scriptFile)
+
+    local tag = clean(combined:match("TAG:([^\n]+)") or "")
+    local hash = clean(combined:match("HASH:([^\n]+)") or "unknown")
+    local status = combined:match("STATUS:([^\n]*)") or ""
+
+    local version
+    if tag ~= "" then
+        version = tag
     else
-        version = clean(version)
+        version = hash
     end
     
-    local _, _, status = exec_ret(path, "git status --porcelain")
-    local dirty = (status and #status > 0) and "-dirty" or ""
+    local dirty = (clean(status) ~= "") and "-dirty" or ""
     
     return string.format("%s (%s)%s", version, Updater.target, dirty)
 end
@@ -155,4 +208,6 @@ function Updater.check(force)
     end
 end
 
-Updater.check()
+Nickel.CreateThread(function()
+    Updater.check()
+end)

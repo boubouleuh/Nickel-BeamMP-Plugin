@@ -494,7 +494,6 @@ function Nickel.ProtectCore()
     
     setmetatable(Nickel, mt)
     isProtected = true
-    print("^2[Nickel] Core Protected.^r")
 end
 
 function Nickel.UnprotectCore()

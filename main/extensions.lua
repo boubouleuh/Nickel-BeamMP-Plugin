@@ -20,7 +20,6 @@ function ExtensionsManager.init()
                 if FS.Exists(manifestPath) then
                     Nickel.LoadManifest(manifestPath, false, true) -- useProtection = true
                     table.insert(loadedExtensions, dir)
-                    Utils.nkprint("Extension loaded: " .. dir, "info")
                 end
             else
                 Utils.nkprint("Extension disabled: " .. dir, "info")

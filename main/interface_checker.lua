@@ -67,11 +67,31 @@ function InterfaceChecker.CheckForInterfaceMod()
             end
         else
             local safePath = fullPath:gsub('"', '\\"')
-            local cmd = string.format('unzip -l "%s" | grep -Fq "%s"', safePath, SIGNATURE_FILE)
-            local code = os.execute(cmd)
-            if code == true or code == 0 then
-                isMatch = true
+            local tmp = os.tmpname()
+            if coroutine.running() then
+                local donefile = tmp .. ".done"
+                os.execute('(unzip -l "' .. safePath .. '" > ' .. tmp .. ' 2>/dev/null; echo done > ' .. donefile .. ') &')
+                while true do
+                    local f = io.open(donefile, "r")
+                    if f then
+                        f:close()
+                        os.remove(donefile)
+                        break
+                    end
+                    Nickel.Wait(50)
+                end
+            else
+                os.execute('unzip -l "' .. safePath .. '" > ' .. tmp .. ' 2>/dev/null')
             end
+            local uf = io.open(tmp, "r")
+            if uf then
+                local content = uf:read("*a")
+                uf:close()
+                if content and content:find(SIGNATURE_FILE, 1, true) then
+                    isMatch = true
+                end
+            end
+            os.remove(tmp)
         end
         
         if isMatch then
@@ -92,4 +112,7 @@ function InterfaceChecker.CheckForInterfaceMod()
     end
 end
 
-InterfaceChecker.CheckForInterfaceMod()
+-- Defer ZIP inspection to a thread (os.execute calls are blocking)
+Nickel.CreateThread(function()
+    InterfaceChecker.CheckForInterfaceMod()
+end)

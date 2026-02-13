@@ -21,33 +21,27 @@ function CommandsManager.init()
     local commandCount = Utils.tableLength(NickelCommands)
     Utils.nkprint("[CommandsHandler] Initializing with " .. tostring(commandCount) .. " registered commands", "info")
 
-    for commandName, commandData in pairs(NickelCommands) do
-        local command = Command.new(commandName)
-        DatabaseManager:save(command)
-        
-        commandData.description = MessagesManager:GetMessage(-2, "commands." .. commandName .. ".description") or "No description"
-    end
+    -- Single connection for all command registration + cleanup
+    DatabaseManager:withConnection(function()
+        for commandName, commandData in pairs(NickelCommands) do
+            local command = Command.new(commandName)
+            DatabaseManager:save(command)
+            
+            commandData.description = MessagesManager:GetMessage(-2, "commands." .. commandName .. ".description") or "No description"
+        end
 
-    local function checkCommands()  --WATCH THIS IF COMMAND ARE NOT HANDLED CORRECTLY
-        DatabaseManager:withConnection(function()
-            local commandsFromDB = DatabaseManager:getAllEntry(Command)
-
-            -- Remove commands not present in memory from the database
-            for _, command in pairs(commandsFromDB) do
-                if not NickelCommands[command.commandName] then
-                    local conditions = {
-                        {"commandName", command.commandName},
-                    }
-
-                    DatabaseManager:deleteObject(Command, conditions)
-                    Utils.nkprint("[CommandsHandler] Removed obsolete command from database: " .. command.commandName, "warn")
-                end
+        -- Remove commands not present in memory from the database
+        local commandsFromDB = DatabaseManager:getAllEntry(Command)
+        for _, command in pairs(commandsFromDB) do
+            if not NickelCommands[command.commandName] then
+                local conditions = {
+                    {"commandName", command.commandName},
+                }
+                DatabaseManager:deleteObject(Command, conditions)
+                Utils.nkprint("[CommandsHandler] Removed obsolete command from database: " .. command.commandName, "warn")
             end
-        end)
-    end
-
-    checkCommands()
-
+        end
+    end)
 end
 
 

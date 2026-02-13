@@ -1204,7 +1204,6 @@ end
 
 function DatabaseManager:syncSchemas()
   if not DatabaseManager.registeredClasses then return end
-  Utils.nkprint("Syncing database schemas...", "info")
   DatabaseManager:withConnection(function()
     for _, class in ipairs(DatabaseManager.registeredClasses) do
       syncSchemaForClass(class, true)
