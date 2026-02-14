@@ -35,16 +35,14 @@ function Updater.check(force)
     exec_cmd(path, "git fetch origin --tags")
 
     if advanced.update_type == "tags" then
-        -- On récupère le nom et la date (timestamp) du dernier tag distant
         local _, latest_data = exec_cmd(path, "git tag --sort=creatordate --format='%(creatordate:unix) %(refname:short)' | tail -n1")
         local latest_time, latest_name = latest_data:match("(%d+)%s+(.+)")
         
-        -- On récupère la date du commit actuel (HEAD)
         local _, current_time = exec_cmd(path, "git log -1 --format=%ct")
         
         latest_time = tonumber(latest_time) or 0
         current_time = tonumber(current_time) or 0
-        
+
         if latest_name and (latest_time > current_time or force) then
             Utils.nkprint("Update found: " .. latest_name, "info")
             
