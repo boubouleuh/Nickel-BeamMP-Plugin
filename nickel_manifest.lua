@@ -1,6 +1,5 @@
 author = 'Bouboule'
 description = 'Nickel plugin'
-version = Nickel.GetGitVersion()
 enabled = true
 auto_error_reporting = true
 server_scripts = {

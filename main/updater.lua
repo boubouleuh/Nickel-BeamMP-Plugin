@@ -18,7 +18,7 @@ function Updater.get_git_version(path)
     if not ok or out == "" then return "unknown (" .. Updater.target .. ")" end
     return string.format("%s (%s)", out, Updater.target)
 end
-
+Nickel.Version = Updater.get_git_version()
 function Updater.check(force)
     local path = Utils.script_path()
     local advanced = ConfigManager.GetSetting("advanced")

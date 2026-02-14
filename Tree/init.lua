@@ -111,7 +111,7 @@ function Nickel.reportError(err)
         local body = Util.JsonEncode({
             type = "error",
             message = err,
-            version = Nickel.Version,
+            version = Nickel.Version or "unknown",
             os = MP.GetOSName(),
             instance_id = Nickel.InstanceID,
             logs = Nickel.getCurrentLogsContext()
@@ -194,27 +194,6 @@ local function getInstanceID()
 end
 
 Nickel.InstanceID = getInstanceID()
-
-function Nickel.GetGitVersion()
-    local root = Nickel.Path:gsub("Tree/$", "")
-    local headFile = io.open(root .. ".git/HEAD", "r")
-    if not headFile then return "Unknown" end
-    local head = headFile:read("*line")
-    headFile:close()
-    
-    if head:match("ref: ") then
-        local ref = head:sub(6)
-        local refFile = io.open(root .. ".git/" .. ref, "r")
-        if refFile then
-            local hash = refFile:read("*line")
-            refFile:close()
-            return hash:sub(1, 7)
-        end
-    else
-        return head:sub(1, 7)
-    end
-    return "Unknown"
-end
 
 function Nickel.LoadLib(path, func)
     local root = Nickel.Path:gsub("Tree/$", "")
