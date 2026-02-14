@@ -1,8 +1,13 @@
 Updater = {}
 Updater.target = ConfigManager.GetSetting("advanced").target or "main"
 
+local function isInCoroutine()
+    local co, isMain = coroutine.running()
+    return co ~= nil and not isMain
+end
+
 local function exec(path, cmd)
-    if coroutine.running() then
+    if isInCoroutine() then
         local donefile = os.tmpname()
         os.execute("(cd " .. path .. " && " .. cmd .. " >/dev/null 2>&1; echo done > " .. donefile .. ") &")
         while true do
@@ -20,7 +25,7 @@ local function exec(path, cmd)
 end
 
 local function exec_ret(path, cmd)
-    if coroutine.running() then
+    if isInCoroutine() then
         local tmp = os.tmpname()
         local donefile = tmp .. ".done"
         os.execute("(cd " .. path .. " && " .. cmd .. " > " .. tmp .. " 2>&1; echo $? > " .. donefile .. ") &")
