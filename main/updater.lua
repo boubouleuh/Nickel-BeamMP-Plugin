@@ -149,7 +149,7 @@ local function update_target(path, force)
     
     if clean(localH) ~= clean(remoteH) then
         Utils.nkprint("Updating target " .. Updater.target .. "...", "info")
-        local _, code, out = exec_ret(path, "git pull --ff-only origin " .. Updater.target)
+        local _, code, out = exec_ret(path, "git pull origin " .. Updater.target)
         if code ~= 0 then Utils.nkprint("Update failed: " .. out, "error") end
     else
         Utils.nkprint("Target " .. Updater.target .. " is up to date.", "info")
