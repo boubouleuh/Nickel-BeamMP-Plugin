@@ -152,31 +152,45 @@ local function getPath()
 end
 Nickel.Path = getPath()
 
-local function generateID()
-    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
-        return string.format('%x', v)
-    end)
+local function getFingerprint()
+    local root = Nickel.Path:gsub("Tree/$", "")
+    local os_name = MP.GetOSName() or "unknown"
+    return root .. "|" .. os_name
+end
+
+local function fingerprintToID(fingerprint)
+    -- Deterministic UUID from fingerprint via multiple hash passes
+    local h1, h2, h3, h4, h5 = 5381, 2166136261, 1, 31415, 27183
+    for i = 1, #fingerprint do
+        local b = string.byte(fingerprint, i)
+        h1 = (h1 * 33 + b) % 4294967291
+        h2 = (h2 * 16777619 + b) % 4294967291
+        h3 = (h3 * 31 + b) % 4294967291
+        h4 = (h4 * 65599 + b) % 4294967291
+        h5 = (h5 * 48271 + b) % 4294967291
+    end
+    return string.format('%08x-%04x-4%03x-%04x-%04x%08x',
+        h1,
+        math.floor(h2 / 65536) % 65536,
+        h2 % 4096,
+        32768 + h3 % 16384,
+        math.floor(h4 / 65536) % 65536,
+        h5)
 end
 
 local function getInstanceID()
     local root = Nickel.Path:gsub("Tree/$", "")
     local idFile = root .. ".nickel_instance_id"
-    local f = io.open(idFile, "r")
+    local fingerprint = getFingerprint()
+    local id = fingerprintToID(fingerprint)
+
+    -- Write to file for visibility
+    local f = io.open(idFile, "w")
     if f then
-        local id = f:read("*all")
-        f:close()
-        if id and #id > 0 then return id end
-    end
-    
-    local newID = generateID()
-    f = io.open(idFile, "w")
-    if f then
-        f:write(newID)
+        f:write(fingerprint .. "\n" .. id)
         f:close()
     end
-    return newID
+    return id
 end
 
 Nickel.InstanceID = getInstanceID()
