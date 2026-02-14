@@ -151,9 +151,25 @@ local function getPath()
     return str:match("(.*/)")
 end
 Nickel.Path = getPath()
-
+local function getHostPath()
+    local src = debug.getinfo(1, "S").source
+    if src:sub(1,1) == "@" then src = src:sub(2) end
+    local tmpfile = os.tmpname()
+    os.execute("pwd > " .. tmpfile)
+    local f = io.open(tmpfile, "r")
+    local pwd = f and f:read("*l") or ""
+    if f then f:close() end
+    local abs_path = pwd .. "/" .. src
+    os.remove(tmpfile)
+    local path = abs_path:match("(.*/)")
+    -- Enlève le dernier 'Tree/' du chemin si présent
+    if path:sub(-5) == "Tree/" then
+        path = path:sub(1, -6)
+    end
+    return path
+end
 local function getFingerprint()
-    local root = Nickel.Path:gsub("Tree/$", "")
+    local root = getHostPath()
     local os_name = MP.GetOSName() or "unknown"
     return root .. "|" .. os_name
 end
@@ -231,31 +247,31 @@ function Nickel.LoadDir(dir, isExtension)
     end
 end
 
-function Nickel.LoadExtensionFile(path)
-    local env = setmetatable({}, {
-        __index = globalEnv,
-        __newindex = function(t, k, v)
-            if k == "Nickel" then
-                print("^1[Nickel] Security Warning: Attempt to overwrite global 'Nickel' in " .. path .. "^r")
-                return
-            end
-            
-            if Nickel.IsGlobalProtected and Nickel.IsGlobalProtected(k) then
-                print("^1[Nickel] Security Warning: Attempt to overwrite core global '" .. k .. "' in " .. path .. "^r")
-                return
-            end
+Nickel.ExtensionEnvironments = {}
 
-            globalEnv[k] = v
-        end
-    })
-    rawset(env, "_G", env)
-    
+function Nickel.LoadExtensionFile(path)
+    local directory = path:match("(.*/)") or path
+    if not Nickel.ExtensionEnvironments[directory] then
+        local newEnv = setmetatable({}, {
+            __index = _G,
+            __newindex = function(t, k, v)
+                if k == "Nickel" or (Nickel.IsGlobalProtected and Nickel.IsGlobalProtected(k)) then
+                    return 
+                end
+                rawset(t, k, v)
+            end
+        })
+        rawset(newEnv, "_G", newEnv)
+        Nickel.ExtensionEnvironments[directory] = newEnv
+    end
+
+    local env = Nickel.ExtensionEnvironments[directory]
     local chunk, err = loadfile(path, "t", env)
     if not chunk then 
-        -- Nickel.reportError(err) Nah dont report extensions errors since its probably user fault
-        print("^1[Nickel] Error loading " .. path .. ": " .. err .. "^r")
+        print("^1[Nickel] Error: " .. err .. "^r")
         return nil
     end
+    
     return chunk()
 end
 
@@ -336,7 +352,7 @@ local function onFileChanged(path)
         local manifest = root .. "extensions/" .. extName .. "/ext_manifest.lua"
         if FS.Exists(manifest) then
             print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
-            Nickel.LoadManifest(manifest)
+            Nickel.LoadManifest(manifest, false, true)
             return
         end
     end
