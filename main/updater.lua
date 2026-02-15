@@ -14,6 +14,7 @@ end
 
 function Updater.get_git_version(path)
     local path = path or Utils.script_path()
+    exec_cmd(path, "git fetch --tags")
     local ok, out = exec_cmd(path, "git describe --tags --always --dirty")
     if not ok or out == "" then return "unknown (" .. Updater.target .. ")" end
     return string.format("%s (%s)", out, Updater.target)
