@@ -331,35 +331,60 @@ loadMod("threads.lua")
 loadMod("colors.lua")
 
 -- Hot Reload Logic
-local lastReloadTime = 0
-local function onFileChanged(path)
-    local root = Nickel.Path:gsub("Tree/$", "")
-    local pathSafe = path:gsub("\\", "/")
-    
-    -- Security & Loop prevention
-    if not pathSafe:find(root, 1, true) then return end
-    
-    if not path:match("%.lua$") then return end
 
-    -- Debounce (2 seconds)
-    local now = os.time()
-    if os.difftime(now, lastReloadTime) < 2 then return end
-    lastReloadTime = now
+-- Hot reload debounce logic
+local changedFiles = {}
+local debounceTimer = nil
+local debounceDelay = 500 -- ms
 
-    -- Check for extension change
-    local extName = pathSafe:match("/extensions/([^/]+)/")
-    if extName then
+local function performReload()
+    local files = {}
+    for f, _ in pairs(changedFiles) do table.insert(files, f) end
+    changedFiles = {}
+    debounceTimer = nil
+    local extName
+    for _, path in ipairs(files) do
+        local root = Nickel.Path:gsub("Tree/$", "")
+        local pathSafe = path:gsub("\\", "/")
+        local thisExt = pathSafe:match("/extensions/([^/]+)/")
+        if thisExt then
+            if not extName then extName = thisExt end
+            if extName ~= thisExt then extName = false break end
+        else
+            extName = false
+            break
+        end
+    end
+    if extName and extName ~= false then
+        local root = Nickel.Path:gsub("Tree/$", "")
         local manifest = root .. "extensions/" .. extName .. "/ext_manifest.lua"
         if FS.Exists(manifest) then
-            print("^3[Nickel] Extension changed: " .. extName .. " -> Reloading extension...^r")
+            print("^3[Nickel] Extension changed (multi): " .. extName .. " -> Reloading extension...^r")
             Nickel.LoadManifest(manifest, false, true)
             return
         end
     end
-    
-    print("^3[Nickel] Core file changed: " .. path .. " -> Full Reloading...^r")
+    print("^3[Nickel] Files changed: " .. table.concat(files, ", ") .. " -> Full Reloading...^r")
     Nickel.Reload()
 end
+
+local function debounceReload()
+    if debounceTimer then
+        if Nickel.ClearTimeout then Nickel.ClearTimeout(debounceTimer) end
+    end
+    debounceTimer = Nickel.SetTimeout and Nickel.SetTimeout(debounceDelay, performReload)
+end
+
+local function onFileChanged(path)
+    local root = Nickel.Path:gsub("Tree/$", "")
+    local pathSafe = path:gsub("\\", "/")
+    -- Security & Loop prevention
+    if not pathSafe:find(root, 1, true) then return end
+    if not path:match("%.lua$") then return end
+    changedFiles[pathSafe] = true
+    debounceReload()
+end
+
 _G.Nickel_HotReload = onFileChanged
 
 function Nickel.Reload()
