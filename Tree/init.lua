@@ -338,6 +338,9 @@ local debounceTimer = nil
 local debounceDelay = 500 -- ms
 
 local function performReload()
+    if not changedFiles or next(changedFiles) == nil then
+        return
+    end
     local files = {}
     for f, _ in pairs(changedFiles) do table.insert(files, f) end
     changedFiles = {}
@@ -368,11 +371,19 @@ local function performReload()
     Nickel.Reload()
 end
 
+
 local function debounceReload()
     if debounceTimer then
         if Nickel.ClearTimeout then Nickel.ClearTimeout(debounceTimer) end
     end
-    debounceTimer = Nickel.SetTimeout and Nickel.SetTimeout(debounceDelay, performReload)
+    if Nickel.SetTimeout then
+        debounceTimer = Nickel.SetTimeout(debounceDelay, function()
+            debounceTimer = nil
+            performReload()
+        end)
+    else
+        performReload()
+    end
 end
 
 local function onFileChanged(path)
