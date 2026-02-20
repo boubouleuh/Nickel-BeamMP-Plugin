@@ -69,9 +69,9 @@ BeamMP on Windows uses Lua 5.4, which may cause compatibility issues. It is reco
  - `forcenametags` Toggle forced display of player nametags (Interface only)
  - `broadcast <message>` Send a message to all players
  - `whitelist <add/remove> <playername>` Add or remove a player from the whitelist
- - `countdown <duration>` Start a countdown
+ - `countdown` Start a countdown
  - `reload` Reload the plugin
- - `debug` Toggle debug mode
+ - `debug` Debug tools (see the possibles arguments in the debug commands file because im lazy to list them)
  - `nkmigrate` Migrate old nickel data from the /data folder
  - `cemigrate` Migrate cobalt playerPermissions.json to nickel (SLOW) (place it in the /data folder of the plugin)
 
