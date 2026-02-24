@@ -4,7 +4,6 @@ DatabaseManager:addColumn(User, "money", defaultMoney)   -- Add money field to U
 
 
 -- Injecting money methods into User class
----@class User
 function User:getMoney()
     return tonumber(self.money) or 0
 end

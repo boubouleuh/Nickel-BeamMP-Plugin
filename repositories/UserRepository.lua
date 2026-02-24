@@ -13,6 +13,19 @@ function UserRepository.findByBeammpid(beammpid)
     end)
 end
 
+---Find user by name
+---@param name string
+---@return User|nil
+function UserRepository.findByName(name)
+    return DatabaseManager:withConnection(function()
+        local userData = DatabaseManager:getEntry(User, "name", name)
+        if userData then
+            return DatabaseManager:mapRowToClass(User, userData)
+        end
+        return nil
+    end)
+end
+
 ---Find all users
 function UserRepository.findAll()
     return DatabaseManager:withConnection(function()

@@ -33,6 +33,13 @@ function User.findByBeammpid(beammpid)
     return UserRepository.findByBeammpid(beammpid)
 end
 
+---Find user by name
+---@param name string
+---@return User|nil
+function User.findByName(name)
+    return UserRepository.findByName(name)
+end
+
 ---Get existing user or create new one
 ---@param beammpid number
 ---@param name string|nil

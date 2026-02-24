@@ -177,28 +177,35 @@ end
 ---getPlayerBeamMPID
 ---@param player_nameORid string|number
 ---@return number
-function Utils.getPlayerBeamMPID(player_nameORid) --Playername only used when using the web api
-
-  local player_id
-  if type(player_nameORid) == "string" then
-    player_id = Utils.GetPlayerId(player_nameORid)
-  else
-    player_id = player_nameORid
-  end
-  local identifiers = MP.GetPlayerIdentifiers(player_id)
-  if player_id == -1 then
-        local playerJson = Online.getPlayerJson(player_nameORid)
-        local beamid
-        if playerJson ~= nil then
-            beamid = playerJson.user.id
+function Utils.getPlayerBeamMPID(player_nameORid)
+    local player_id
+    local player_name
+    if type(player_nameORid) == "string" then
+        player_id = Utils.GetPlayerId(player_nameORid)
+        player_name = player_nameORid
+    else
+        player_id = player_nameORid
+    end
+    if player_id ~= -1 then
+        local identifiers = MP.GetPlayerIdentifiers(player_id)
+        local beammp_id = identifiers['beammp']
+        if beammp_id then
+            return beammp_id
         end
-        return beamid
-  end
-  local player_beammp_id = identifiers['beammp']
-  if player_beammp_id == nil then
-      return -1
-  end
-  return player_beammp_id
+    end
+
+    local user = User.findByName(player_name)
+    if user then
+        return user.beammpid
+    end
+
+    local playerJson = Online.getPlayerJson(player_name)
+    if playerJson ~= nil then
+        return playerJson.user.id
+    end
+
+
+    return -1
 end
 
 function Utils.getBeamMPConfig() 

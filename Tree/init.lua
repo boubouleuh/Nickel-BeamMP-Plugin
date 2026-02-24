@@ -411,7 +411,7 @@ function Nickel.Reload()
             globalEnv[k] = nil
         end
     end
-
+    Nickel.ExtensionEnvironments = {}
     if Nickel.ResetEvents then Nickel.ResetEvents() end
     
     -- Re-load threads to restore the tick system
