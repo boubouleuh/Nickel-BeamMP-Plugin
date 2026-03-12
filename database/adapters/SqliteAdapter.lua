@@ -17,6 +17,9 @@ function SqliteAdapter:connect()
     if not self.db then
         error("SqliteAdapter: failed to open database at path: " .. tostring(self.dbPath))
     end
+    self.db:exec("PRAGMA journal_mode=WAL")
+    self.db:exec("PRAGMA foreign_keys=ON")
+    self.db:exec("PRAGMA synchronous=NORMAL")
 end
 
 function SqliteAdapter:disconnect()
