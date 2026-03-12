@@ -23,8 +23,8 @@ DatabaseManager:withConnection(function()
     if entry == nil then
         DatabaseManager:save(Infos.new("isInitialDatabaseLaunch", "false"), true)
     elseif entry.infoValue == "false" then
-        local class = Infos.new("isInitialDatabaseLaunch", "true")
-        DatabaseManager:save(class, true)
+        entry.infoValue = "true"
+        DatabaseManager:save(entry, true)
     end
 end)
 

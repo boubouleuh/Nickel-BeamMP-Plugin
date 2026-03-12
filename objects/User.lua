@@ -142,13 +142,6 @@ function User:hasStatus(statusType)
 end
 
 function User:addStatus(statusType, reason, expiryTime)
-    local existing = UserStatusRepository.findByUserAndType(self.beammpid, statusType)
-    if existing then
-        existing.is_status_value = true
-        existing.reason = reason or ""
-        existing.expiry_time = expiryTime
-        return UserStatusRepository.save(existing)
-    end
     local status = UserStatus.new(self.beammpid, statusType, true, reason, expiryTime)
     return UserStatusRepository.save(status)
 end
