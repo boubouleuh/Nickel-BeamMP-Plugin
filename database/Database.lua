@@ -328,7 +328,11 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local values = {}
   local updateColumns = {}
   local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
+
+  local firstSchemaColumn = columnsOrder[1]
+  local isNewAutoIncrementRecord = (firstSchemaColumn ~= nil and object[firstSchemaColumn] == nil)
   local firstColumn
+
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
       firstColumn = columnName
@@ -347,6 +351,14 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(values, value)
     table.insert(updatePlaceholders, string.format("%s = ?", key))
   end
+
+  if isNewAutoIncrementRecord then
+    local placeholders = string.rep("?, ", #values - 1) .. "?"
+    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
+    Utils.nkprint(insertQuery, "debug")
+    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
+  end
+
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   Utils.nkprint(selectQuery, "debug")
   local rows = DatabaseManager:prepareAndSelect(selectQuery, object[firstColumn])

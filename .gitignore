@@ -13,3 +13,5 @@ database/nickel.sqlite
 extensions/*
 !extensions/example_extension/
 .nickel_instance_id
+database/nickel.sqlite-shm
+database/nickel.sqlite-wal
