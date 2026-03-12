@@ -41,7 +41,7 @@ function UsersService.new(beammpid)
             if tempBanStatus and tempBanStatus.is_status_value then
                 local currentTime = os.time()
                 if tempBanStatus.expiry_time and currentTime > tempBanStatus.expiry_time then
-                    DatabaseManager:delete(UserStatus, {{"id", tempBanStatus.id}})
+                    DatabaseManager:deleteObject(UserStatus, {{"id", tempBanStatus.id}})
                     return false
                 end
                 return true
@@ -63,7 +63,7 @@ function UsersService.new(beammpid)
             if tempMuteStatus and tempMuteStatus.is_status_value then
                 local currentTime = os.time()
                 if tempMuteStatus.expiry_time and currentTime > tempMuteStatus.expiry_time then
-                    DatabaseManager:delete(UserStatus, {{"id", tempMuteStatus.id}})
+                    DatabaseManager:deleteObject(UserStatus, {{"id", tempMuteStatus.id}})
                     return false
                 end
                 return true
@@ -106,12 +106,12 @@ function UsersService.new(beammpid)
     function self:getActiveStatuses()
         return DatabaseManager:withConnection(function()
             local statuses = {}
-            local allStatuses = DatabaseManager:getAllEntries(UserStatus, {{"beammpid", self.beammpid}})
+            local allStatuses = DatabaseManager:getAllEntry(UserStatus, {{"beammpid", self.beammpid}})
             
             for _, status in ipairs(allStatuses) do
                 local isActive = status.is_status_value
                 if isActive and status.expiry_time and os.time() > status.expiry_time then
-                    DatabaseManager:delete(UserStatus, {{"id", status.id}})
+                    DatabaseManager:deleteObject(UserStatus, {{"id", status.id}})
                     isActive = false
                 end
                 

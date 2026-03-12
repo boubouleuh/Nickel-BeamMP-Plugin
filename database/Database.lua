@@ -328,6 +328,15 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local values = {}
   local updateColumns = {}
   local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
+
+  -- Detect whether the first schema column (primary key) is nil in this object.
+  -- When true, the record is a new row with an auto-increment PK and must always
+  -- be INSERTed. Using any other column (e.g. beammpid) as the WHERE key would
+  -- accidentally overwrite every existing row that shares the same beammpid,
+  -- corrupting the UserIps and UsersStatus tables.
+  local firstSchemaColumn = columnsOrder[1]
+  local isNewAutoIncrementRecord = (firstSchemaColumn ~= nil and object[firstSchemaColumn] == nil)
+
   local firstColumn
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
@@ -347,6 +356,17 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(values, value)
     table.insert(updatePlaceholders, string.format("%s = ?", key))
   end
+
+  -- For new records whose primary key is auto-increment (nil), always INSERT.
+  -- Falling through to an UPDATE here would corrupt every row sharing the same
+  -- non-PK column value (e.g. all IPs or all statuses for a given beammpid).
+  if isNewAutoIncrementRecord then
+    local placeholders = string.rep("?, ", #values - 1) .. "?"
+    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
+    Utils.nkprint(insertQuery, "debug")
+    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
+  end
+
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
   Utils.nkprint(selectQuery, "debug")
   local rows = DatabaseManager:prepareAndSelect(selectQuery, object[firstColumn])

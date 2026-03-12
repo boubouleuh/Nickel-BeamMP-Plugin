@@ -30,7 +30,7 @@ end
 
 -- Save role-action relationship
 function RoleActionRepository.save(roleAction)
-    return DatabaseManager:save(roleAction, true)
+    return DatabaseManager:save(roleAction, false)
 end
 
 -- Delete role-action relationship

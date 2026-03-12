@@ -17,6 +17,7 @@ function UserIp.getColumns()
     "beammpid INTEGER",
     "ip VARCHAR(191)",
     "is_banned BOOLEAN NOT NULL",
-    "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE"
+    "FOREIGN KEY (beammpid) REFERENCES Users(beammpid) ON DELETE CASCADE",
+    "UNIQUE (beammpid, ip)"
   }
 end

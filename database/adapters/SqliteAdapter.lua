@@ -17,6 +17,13 @@ function SqliteAdapter:connect()
     if not self.db then
         error("SqliteAdapter: failed to open database at path: " .. tostring(self.dbPath))
     end
+    -- Use WAL journal mode for better crash-safety and reduced corruption risk
+    self.db:exec("PRAGMA journal_mode=WAL")
+    -- Enforce foreign key constraints so orphaned rows are rejected
+    self.db:exec("PRAGMA foreign_keys=ON")
+    -- NORMAL synchronous: flushes at safe points without the overhead of FULL,
+    -- protecting against OS crashes while staying fast
+    self.db:exec("PRAGMA synchronous=NORMAL")
 end
 
 function SqliteAdapter:disconnect()

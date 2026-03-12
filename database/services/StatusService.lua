@@ -11,7 +11,7 @@ function StatusService.hasActiveStatus(beammpid, statusType)
         
         -- Check expiry for temporary statuses
         if status.expiry_time and os.time() > status.expiry_time then
-            DatabaseManager:delete(UserStatus, {{"id", status.id}})
+            DatabaseManager:deleteObject(UserStatus, {{"id", status.id}})
             return false
         end
         
@@ -62,7 +62,7 @@ end
 function StatusService.removeStatus(beammpid, status_type)
     return DatabaseManager:withConnection(function()
         local conditions = {{"beammpid", beammpid}, {"status_type", status_type}}
-        return DatabaseManager:delete(UserStatus, conditions)
+        return DatabaseManager:deleteObject(UserStatus, conditions)
     end)
 end
 
