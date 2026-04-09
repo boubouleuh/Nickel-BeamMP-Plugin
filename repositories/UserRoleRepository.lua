@@ -42,6 +42,9 @@ end
 
 -- Get user roles with role details
 function UserRoleRepository.getUserRolesWithDetails(beammpid)
+    if beammpid == -1 then -- we assume its a guest
+        return RoleRepository.findAllDefault()
+    end
     return DatabaseManager:withConnection(function()
         local roles = {}
         local userRoles = DatabaseManager:getAllEntry(UserRole, {{"beammpid", beammpid}})

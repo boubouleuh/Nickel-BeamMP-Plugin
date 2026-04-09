@@ -71,6 +71,10 @@ end
 ---@param name string|nil
 ---@return User
 function UserRepository.getOrCreate(beammpid, name)
+    if beammpid == -1 then -- we assume its a guest
+        return User.new(beammpid, name or "Guest")
+    end
+
     -- Try to get existing user first
     local user = DatabaseManager:withConnection(function()
         return DatabaseManager:getClassByBeammpId(User, beammpid)
