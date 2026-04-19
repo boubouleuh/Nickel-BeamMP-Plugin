@@ -352,6 +352,15 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     table.insert(updatePlaceholders, string.format("%s = ?", key))
   end
 
+  if firstColumn and object[firstColumn] ~= nil then
+    local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
+    local rows = DatabaseManager:prepareAndSelect(selectQuery, object[firstColumn])
+    local count = rows[1] and tonumber(rows[1]["COUNT(*)"]) or 0
+    if count > 0 then
+      return "nickel.nochange"
+    end
+  end
+
   if isNewAutoIncrementRecord then
     local placeholders = string.rep("?, ", #values - 1) .. "?"
     local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)

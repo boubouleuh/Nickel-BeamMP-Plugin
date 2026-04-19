@@ -19,21 +19,15 @@ function ActionsManager.init()
     end
 
     local function checkActions()
-        DatabaseManager:withConnection(function()
-            local actionsFromDB = DatabaseManager:getAllEntry(Action)
-
-            -- Remove actions not present in memory from the database
-            for _, action in pairs(actionsFromDB) do
-                if not NickelActions[action.actionName] then
-                    local conditions = {
-                        {"actionName", action.actionName},
-                    }
-
-                    DatabaseManager:deleteObject(Action, conditions)
-                    print("Removed obsolete action from database: " .. action.actionName)
-                end
+        local actionsFromDB = ActionRepository.findAll()
+        
+        -- Remove actions not present in memory from the database
+        for _, action in pairs(actionsFromDB) do
+            if not NickelActions[action.actionName] then
+                ActionRepository.delete(action)
+                print("Removed obsolete action from database: " .. action.actionName)
             end
-        end)
+        end
     end
 
     checkActions()
