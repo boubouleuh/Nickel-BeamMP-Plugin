@@ -3,7 +3,7 @@ return Event(function(id)
     local playerName = MP.GetPlayerName(id)
     local beammpid = Utils.getPlayerBeamMPID(playerName)
     
-    if beammpid then
+    if beammpid ~= -1 then
         local highestRole = User.findByBeammpid(beammpid):getHighestRole()
         local roleName = highestRole and highestRole.roleName or "Guest"
         

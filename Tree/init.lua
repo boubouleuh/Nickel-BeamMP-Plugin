@@ -108,17 +108,18 @@ function Nickel.getCurrentLogsContext()
 end
 function Nickel.reportError(err)
         if Nickel.telemetry == false then return end
-        local body = Util.JsonEncode({
-            type = "error",
-            message = err,
-            version = Nickel.Version or "unknown",
-            os = MP.GetOSName(),
-            instance_id = Nickel.InstanceID,
-            logs = Nickel.getCurrentLogsContext()
-        })
-        local res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
-        print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
-        print("^1[Nickel] If you need support please join the discord https://discord.gg/h5P84FFw7B ^r")
+        -- prefere to disable it for now.
+        -- local body = Util.JsonEncode({
+        --     type = "error",
+        --     message = err,
+        --     version = Nickel.Version or "unknown",
+        --     os = MP.GetOSName(),
+        --     instance_id = Nickel.InstanceID,
+        --     logs = Nickel.getCurrentLogsContext()
+        -- })
+        -- local res, code = Nickel.https.post("https://nickel.bouboule.workers.dev/", body)
+        -- print("^1[Nickel] Error reported to Nickel server with response code: " .. tostring(code) .. "^r")
+        -- print("^1[Nickel] If you need support please join the discord https://discord.gg/h5P84FFw7B ^r")
 end
 
 function Nickel.heartbeat()
