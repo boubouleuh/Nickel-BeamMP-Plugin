@@ -24,7 +24,7 @@ function CommandsManager.init()
     -- Single connection for all command registration + cleanup
     DatabaseManager:withConnection(function()
         for commandName, commandData in pairs(NickelCommands) do
-            local command = Command.new(commandName)
+            local command = Command.create(commandName)
             DatabaseManager:save(command)
             
             commandData.description = MessagesManager:GetMessage(-2, "commands." .. commandName .. ".description") or "No description"

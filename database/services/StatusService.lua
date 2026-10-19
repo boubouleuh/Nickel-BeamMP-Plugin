@@ -53,7 +53,7 @@ function StatusService.canPlayerConnect(beammpid)
 end
 
 function StatusService.createStatus(beammpid, status_type, reason, expiry_time)
-    local statusEntry = UserStatus.new(beammpid, status_type, true, reason, expiry_time)
+    local statusEntry = UserStatus.create(beammpid, status_type, true, reason, expiry_time)
     return DatabaseManager:withConnection(function()
         return DatabaseManager:save(statusEntry, false)
     end)
@@ -71,4 +71,3 @@ function StatusService.getStatusDetails(beammpid, status_type)
         return DatabaseManager:getAllEntry(UserStatus, {{"beammpid", beammpid}, {"status_type", status_type}})
     end)
 end
-

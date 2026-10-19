@@ -21,9 +21,9 @@ end)
 DatabaseManager:withConnection(function()
     local entry = DatabaseManager:getEntry(Infos, "infoKey", "isInitialDatabaseLaunch")
     if entry == nil then
-        DatabaseManager:save(Infos.new("isInitialDatabaseLaunch", "false"), true)
+        DatabaseManager:save(Infos.create("isInitialDatabaseLaunch", "false"), true)
     elseif entry.infoValue == "false" then
-        local class = Infos.new("isInitialDatabaseLaunch", "true")
+        local class = Infos.create("isInitialDatabaseLaunch", "true")
         DatabaseManager:save(class, true)
     end
 end)

@@ -26,7 +26,7 @@ function command.init(sender_id, sender_name, rolename, permlvl)
         if existingRoles and #existingRoles > 0 then
             MessagesManager:SendMessage(sender_id, "commands.createrole.already_exists", {Role = rolename})
         else
-            local newRole = Role.new(rolename, permlvl_num, false)            
+            local newRole = Role.create(rolename, permlvl_num, false)
             local result = DatabaseManager:save(newRole, true)
             
 

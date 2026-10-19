@@ -13,6 +13,8 @@ server_scripts = {
     "/objects/Role.lua",
     "/objects/RoleAction.lua",
     "/objects/RoleCommand.lua",
+    "/database/NICKEL_ORM/models/fields.lua",
+    "/database/NICKEL_ORM/models/base.lua",
     "/objects/User.lua",
     "/objects/UserIp.lua",
     "/objects/UserRole.lua",

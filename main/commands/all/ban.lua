@@ -26,15 +26,16 @@ function command.init(sender_id, sender_name, playername, reason)
     if user:isBanned() or user:isTempBanned() then
         MessagesManager:SendMessage(sender_id, "moderation.alreadybanned", {Player = playername})
     else
-        local result = user:ban(reason)
+        local success, message = user:ban(reason)
         
         local target_id = Utils.GetPlayerId(playername)
         if target_id ~= -1 then
             MP.DropPlayer(target_id, MessagesManager:GetMessage(sender_id, "moderation.banned", {Reason = reason}))
         end
-        
+        if not success then
+            MessagesManager:SendMessage(sender_id, string.format("database.code.%s", message))
+        end
         MessagesManager:SendMessage(sender_id, "commands.ban.success", {Player = playername, Reason = reason})
-        MessagesManager:SendMessage(sender_id, string.format("database.code.%s", result))
     end
 
     return true

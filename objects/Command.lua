@@ -1,17 +1,11 @@
-Command = {}
-Command.tableName = "Commands"
-
-function Command.new(cmdname)
-  local self = {}
-  self.tableName = Command.tableName
-  self.commandID = nil
-  self.commandName = cmdname
-  return self
-end
-
-function Command.getColumns()
-    return {
-      "commandID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "commandName VARCHAR(191) UNIQUE NOT NULL",
-    }
+---@class Command: ModelInstance, ModelClass
+---@field commandID number?
+---@field commandName string
+Command = Model{
+    __tablename__ = "Commands",
+    Fields.Integer("commandID"):PrimaryKey():AutoIncrement(),
+    Fields.String("commandName"):MaxLength(191):Unique():NotNull()
+}
+function Command.create(cmdname)
+  return Command({commandName = cmdname})
 end

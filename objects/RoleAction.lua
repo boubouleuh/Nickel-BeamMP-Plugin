@@ -1,20 +1,11 @@
-RoleAction = {}
-RoleAction.tableName = "RoleActions"
-
-function RoleAction.new(roleID, actionID)
-  local self = {}
-  self.tableName = RoleAction.tableName
-  self.roleID = roleID
-  self.actionID = actionID
-  return self
-end
-
-function RoleAction.getColumns()
-    return {
-        "roleID INTEGER",
-        "actionID INTEGER",
-        "PRIMARY KEY (roleID, actionID)",
-        "FOREIGN KEY (roleID) REFERENCES Roles(roleID)",
-        "FOREIGN KEY (actionID) REFERENCES Actions(actionID) ON DELETE CASCADE"
-    }
+---@class RoleAction: ModelInstance, ModelClass
+---@field roleID number
+---@field actionID number
+RoleAction = Model{
+    __tablename__ = "RoleActions",
+    Fields.Integer("roleID"):ForeignKey("Roles", "roleID"):PrimaryKey(),
+    Fields.Integer("actionID"):ForeignKey("Actions", "actionID"):PrimaryKey()
+}
+function RoleAction.create(roleID, actionID)
+    return RoleAction({roleID = roleID, actionID = actionID})
 end

@@ -1,43 +1,37 @@
----@class User
-User = {}
-User.tableName = "Users"
+---@class User: ModelInstance, ModelClass
+---@field beammpid number
+---@field name string
+---@field whitelisted boolean
+---@field language string?
+User = Model{
+    __tablename__ = "Users",
+    Fields.Integer("beammpid"):PrimaryKey(),
+    Fields.String("name"):NotNull(),
+    Fields.Boolean("whitelisted"):NotNull():Default(false),
+    Fields.String("language")
+}
 
 ---Create new User instance
 ---@param beammpid number
 ---@param name string
 ---@return User
-function User.new(beammpid, name)
-  local self = {}
-  setmetatable(self, {__index = User})
-  self.tableName = User.tableName
-  self.beammpid = beammpid or 0
-  self.name = name or ""
-  self.whitelisted = false
-  self.language = nil
-  return self
-end
-
-function User.getColumns()
-    return {
-      "beammpid INTEGER PRIMARY KEY",
-      "name VARCHAR(191) NOT NULL",
-      "whitelisted BOOLEAN NOT NULL",
-      "language VARCHAR(191)"
-    }
+function User.create(beammpid, name)
+  local newUser = User({ beammpid = beammpid, name = name , whitelisted = false, language = nil })
+  return newUser
 end
 
 ---Find user by BeamMP ID
 ---@param beammpid number
 ---@return User|nil
 function User.findByBeammpid(beammpid)
-    return UserRepository.findByBeammpid(beammpid)
+    return User:find({ beammpid = beammpid })[1]
 end
 
 ---Find user by name
 ---@param name string
 ---@return User|nil
 function User.findByName(name)
-    return UserRepository.findByName(name)
+    return User:find({ name = name })[1]
 end
 
 ---Get existing user or create new one
@@ -45,20 +39,17 @@ end
 ---@param name string|nil
 ---@return User
 function User.getOrCreate(beammpid, name)
-    return UserRepository.getOrCreate(beammpid, name)
-end
-
--- Instance methods
----Save user to database
----@return boolean
-function User:save()
-    return UserRepository.save(self)
-end
-
----Delete user from database
----@return boolean
-function User:delete()
-    return UserRepository.delete(self.beammpid)
+    local user = User.findByBeammpid(beammpid)
+    if user then
+        if name and user.name ~= name then
+            user.name = name
+            user:save()
+        end
+        return user
+    end
+    local newUser = User.create(beammpid, name or "Unknown")
+    newUser:save()
+    return newUser
 end
 
 function User:setWhitelisted(whitelisted)
@@ -128,7 +119,9 @@ function User:isStatusExpired(status)
 end
 
 function User:hasStatus(statusType)
-    local status = UserStatusRepository.findActiveByUserAndType(self.beammpid, statusType)
+    local status = UserStatus:where("beammpid", "=", self.beammpid)
+        :where("status_type", "=", statusType)
+        :where("is_status_value", "=", true):get()[1]
     if not status then
         return false
     end
@@ -142,24 +135,48 @@ function User:hasStatus(statusType)
 end
 
 function User:addStatus(statusType, reason, expiryTime)
-    local status = UserStatus.new(self.beammpid, statusType, true, reason, expiryTime)
-    return UserStatusRepository.save(status)
+    local status = UserStatus:where("beammpid", "=", self.beammpid)
+        :where("status_type", "=", statusType):get()[1]
+    if not status then
+        status = UserStatus.create(self.beammpid, statusType, true, reason, expiryTime)
+    else
+        status.is_status_value = true
+        status.reason = reason or ""
+        status.expiry_time = expiryTime
+    end
+    return status:save()
 end
 
 function User:removeStatus(statusType)
-    return UserStatusRepository.deleteByUserAndType(self.beammpid, statusType)
+    local statuses = UserStatus:where("beammpid", "=", self.beammpid)
+        :where("status_type", "=", statusType):get()
+    local success = true
+    for _, status in ipairs(statuses) do
+        local deleted = status:delete()
+        success = deleted and success
+    end
+    return success
 end
 
 function User:deactivateStatus(statusType)
-    return UserStatusRepository.deactivateByUserAndType(self.beammpid, statusType)
+    local statuses = UserStatus:where("beammpid", "=", self.beammpid)
+        :where("status_type", "=", statusType):get()
+    local success = true
+    for _, status in ipairs(statuses) do
+        status.is_status_value = false
+        local saved = status:save()
+        success = saved and success
+    end
+    return success
 end
 
 function User:getStatus(statusType)
-    return UserStatusRepository.findByUserAndType(self.beammpid, statusType)
+    return UserStatus:where("beammpid", "=", self.beammpid)
+        :where("status_type", "=", statusType):get()[1]
 end
 
 function User:getAllStatuses()
-    return UserStatusRepository.findAllByUser(self.beammpid)
+    return UserStatus:where("beammpid", "=", self.beammpid):get()
 end
 
 -- High-level status checks
@@ -210,17 +227,18 @@ end
 -- IP methods
 
 function User:addIp(ip)
-    local existingIp = UserIpRepository.findByUserAndIp(self.beammpid, ip)
+    local existingIp = UserIp:where("beammpid", "=", self.beammpid)
+        :where("ip", "=", ip):get()[1]
     if existingIp then
         return
     end
     
-    local newUserIp = UserIp.new(self.beammpid, ip)
-    return UserIpRepository.save(newUserIp)
+    local newUserIp = UserIp.create(self.beammpid, ip)
+    return newUserIp:save()
 end
 
 function User:getAllIps()
-    return UserIpRepository.findAllByUser(self.beammpid)
+    return UserIp:where("beammpid", "=", self.beammpid):get()
 end
 
 function User:isIpBanned()
@@ -243,7 +261,7 @@ function User:banAllIps()
     for _, ip in ipairs(ips) do
         if not Utils.isTruthy(ip.is_banned) then
             ip.is_banned = true
-            UserIpRepository.save(ip)
+            ip:save()
             count = count + 1
         end
     end
@@ -258,7 +276,7 @@ function User:unbanAllIps()
     for _, ip in ipairs(ips) do
         if Utils.isTruthy(ip.is_banned) then
             ip.is_banned = false
-            UserIpRepository.save(ip)
+            ip:save()
             count = count + 1
         end
     end
@@ -296,7 +314,7 @@ end
 
 function User:getActiveStatuses()
     local statuses = {}
-    local allStatuses = UserStatusRepository.findAllByUser(self.beammpid)
+    local allStatuses = self:getAllStatuses()
     
     for _, status in ipairs(allStatuses) do
         local isActive = Utils.isTruthy(status.is_status_value)
@@ -315,35 +333,46 @@ end
 
 -- Role management methods
 function User:getRoles()
-    return UserRoleRepository.getUserRolesWithDetails(self.beammpid)
+    local roles = {}
+    local userRoles = UserRole:where("beammpid", "=", self.beammpid):get()
+    for _, userRole in ipairs(userRoles) do
+        local role = Role:where("roleID", "=", userRole.roleID):get()[1]
+        if role then
+            table.insert(roles, role)
+        end
+    end
+    return roles
 end
 
 function User:assignRole(rolename)
-    local role = RoleRepository.findByName(rolename)
+    local role = Role:where("roleName", "=", rolename):get()[1]
     if not role then
         return "commands.grantrole.role_not_found"
     end
     
-    local existingUserRole = UserRoleRepository.findByBeammpidAndRoleId(self.beammpid, role.roleID)
-    if existingUserRole and #existingUserRole > 0 then
+    local existingUserRole = UserRole:where("beammpid", "=", self.beammpid)
+        :where("roleID", "=", role.roleID):get()[1]
+    if existingUserRole then
         return "commands.grantrole.already_has_role"
     end
     
-    local newUserRole = UserRole.new(self.beammpid, role.roleID)
-    return UserRoleRepository.save(newUserRole)
+    local newUserRole = UserRole.create(self.beammpid, role.roleID)
+    return newUserRole:save()
 end
 
 function User:unassignRole(rolename)
-    local role = RoleRepository.findByName(rolename)
+    local role = Role:where("roleName", "=", rolename):get()[1]
     if not role then
         return "commands.grantrole.role_not_found"
     end
     
-    if role.is_default == 1 then
+    if Utils.isTruthy(role.is_default) then
         return "commands.grantrole.cannot_unassign_default_role"
     end
     
-    return UserRoleRepository.deleteByBeammpidAndRoleId(self.beammpid, role.roleID)
+    local userRole = UserRole:where("beammpid", "=", self.beammpid)
+        :where("roleID", "=", role.roleID):get()[1]
+    return userRole and userRole:delete() or false
 end
 
 function User:getHighestRole()
@@ -359,7 +388,7 @@ end
 
 function User:getCommands()
     local commands = {}
-    local allCommands = CommandRepository.findAll()
+    local allCommands = Command:all()
     
     for _, command in ipairs(allCommands) do
         if self:hasPermission(command.commandName) then
@@ -371,7 +400,7 @@ end
 
 function User:getActions()
     local actions = {}
-    local allActions = ActionRepository.findAll()
+    local allActions = Action:all()
     
     for _, action in ipairs(allActions) do
         if self:hasPermissionForAction(action.actionName) then
@@ -391,14 +420,15 @@ function User:hasPermission(commandname)
         return false
     end
 
-    local command = CommandRepository.findByName(commandname)
+    local command = Command:where("commandName", "=", commandname):get()[1]
     if not command then
         return false
     end
 
     -- Check direct role-command permissions
     for _, userRole in ipairs(userRoles) do
-        local roleCommandEntries = RoleCommandRepository.findByRoleAndCommand(userRole.roleID, command.commandID)
+        local roleCommandEntries = RoleCommand:where("roleID", "=", userRole.roleID)
+            :where("commandID", "=", command.commandID):get()
         if #roleCommandEntries > 0 then
             return true
         end
@@ -406,13 +436,14 @@ function User:hasPermission(commandname)
 
     -- Check inherited permissions from lower permission levels
     for _, userRole in ipairs(userRoles) do
-        local role = RoleRepository.findById(userRole.roleID)
+        local role = Role:where("roleID", "=", userRole.roleID):get()[1]
         local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
 
         while lowerPermissions >= 0 do
-            local lowerRole = RoleRepository.findByPermissionLevel(lowerPermissions)
+            local lowerRole = Role:where("permlvl", "=", lowerPermissions):get()[1]
             if lowerRole then
-                local lowerRoleCommandEntries = RoleCommandRepository.findByRoleAndCommand(lowerRole.roleID, command.commandID)
+                local lowerRoleCommandEntries = RoleCommand:where("roleID", "=", lowerRole.roleID)
+                    :where("commandID", "=", command.commandID):get()
                 if #lowerRoleCommandEntries > 0 then
                     return true
                 end
@@ -434,14 +465,15 @@ function User:hasPermissionForAction(actionName)
         return false
     end
 
-    local action = ActionRepository.findByName(actionName)
+    local action = Action:where("actionName", "=", actionName):get()[1]
     if not action then
         return false
     end
 
     -- Check direct role-action permissions
     for _, userRole in ipairs(userRoles) do
-        local roleActionEntries = RoleActionRepository.findByRoleAndAction(userRole.roleID, action.actionID)
+        local roleActionEntries = RoleAction:where("roleID", "=", userRole.roleID)
+            :where("actionID", "=", action.actionID):get()
         if #roleActionEntries > 0 then
             return true
         end
@@ -449,13 +481,14 @@ function User:hasPermissionForAction(actionName)
 
     -- Check inherited permissions from lower permission levels
     for _, userRole in ipairs(userRoles) do
-        local role = RoleRepository.findById(userRole.roleID)
+        local role = Role:where("roleID", "=", userRole.roleID):get()[1]
         local lowerPermissions = role and tonumber(role.permlvl) - 1 or 0
 
         while lowerPermissions >= 0 do
-            local lowerRole = RoleRepository.findByPermissionLevel(lowerPermissions)
+            local lowerRole = Role:where("permlvl", "=", lowerPermissions):get()[1]
             if lowerRole then
-                local lowerRoleActionEntries = RoleActionRepository.findByRoleAndAction(lowerRole.roleID, action.actionID)
+                local lowerRoleActionEntries = RoleAction:where("roleID", "=", lowerRole.roleID)
+                    :where("actionID", "=", action.actionID):get()
                 if #lowerRoleActionEntries > 0 then
                     return true
                 end
@@ -474,7 +507,7 @@ function User:canManageRole(rolename)
         return false
     end
 
-    local role = RoleRepository.findByName(rolename)
+    local role = Role:where("roleName", "=", rolename):get()[1]
     if not role then
         return false
     end

@@ -1,23 +1,20 @@
 
-Role = {}
-Role.tableName = "Roles"
-
-function Role.new(rolename, permlvl, is_default)
-  local self = {}
-  self.tableName = Role.tableName
-  self.roleID = nil
-  self.roleName = rolename
-  self.permlvl = permlvl
-  self.is_default = is_default
-  return self
-end
-
-
-function Role.getColumns()
-    return {
-      "roleID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "roleName VARCHAR(191) UNIQUE NOT NULL",
-      "permlvl INT NOT NULL",
-      "is_default BOOLEAN NOT NULL",
-    }
+---@class Role: ModelInstance, ModelClass
+---@field roleID number?
+---@field roleName string
+---@field permlvl number
+---@field is_default boolean
+Role = Model{
+    __tablename__ = "Roles",
+    Fields.Integer("roleID"):PrimaryKey():AutoIncrement(),
+    Fields.String("roleName"):MaxLength(191):Unique():NotNull(),
+    Fields.Integer("permlvl"):NotNull(),
+    Fields.Boolean("is_default"):NotNull()
+}
+function Role.create(rolename, permlvl, is_default)
+  return Role({
+    roleName = rolename,
+    permlvl = permlvl,
+    is_default = is_default
+  })
 end

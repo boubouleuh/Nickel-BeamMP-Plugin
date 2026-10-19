@@ -14,7 +14,7 @@ function ActionsManager.init()
 
     for actionName, actionData in pairs(NickelActions) do
         Utils.nkprint("[ActionsHandler] Found registered action: " .. actionName, "debug")
-        local action = Action.new(actionName)
+        local action = Action.create(actionName)
         DatabaseManager:save(action)
     end
 

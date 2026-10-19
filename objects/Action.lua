@@ -1,17 +1,11 @@
-Action = {}
-Action.tableName = "Actions"
-
-function Action.new(actname)
-  local self = {}
-  self.tableName = Action.tableName
-  self.actionID = nil
-  self.actionName = actname
-  return self
-end
-
-function Action.getColumns()
-    return {
-      "actionID INTEGER PRIMARY KEY AUTOINCREMENT",
-      "actionName VARCHAR(191) UNIQUE NOT NULL",
-    }
+---@class Action: ModelInstance, ModelClass
+---@field actionID number?
+---@field actionName string
+Action = Model{
+    __tablename__ = "Actions",
+    Fields.Integer("actionID"):PrimaryKey():AutoIncrement(),
+    Fields.String("actionName"):MaxLength(191):Unique():NotNull()
+}
+function Action.create(actname)
+  return Action({actionName = actname})
 end

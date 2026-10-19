@@ -43,7 +43,7 @@ function command.init(sender_id, sender_name, actionName, rolename)
         return false
     end
     
-    local roleAction = RoleAction.new(role.roleID, action.actionID)
+    local roleAction = RoleAction.create(role.roleID, action.actionID)
     local code = RoleActionRepository.save(roleAction)
     MessagesManager:SendMessage(sender_id, "database.code." .. code)
     

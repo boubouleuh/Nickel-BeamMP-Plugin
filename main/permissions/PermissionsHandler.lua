@@ -1,7 +1,7 @@
 PermissionsManager = {}
 
 function PermissionsManager:addRole(rolename, permlvl, default)
-    local newRole = Role.new(rolename, permlvl, default)
+    local newRole = Role.create(rolename, permlvl, default)
     local result = DatabaseManager:save(newRole, false)
     return result
 end
@@ -19,7 +19,7 @@ function PermissionsManager:assignRole(rolename, beammpid)
     return DatabaseManager:withConnection(function()
         local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
 
-        local newUserRole = UserRole.new(beammpid, roleid)
+        local newUserRole = UserRole.create(beammpid, roleid)
         return DatabaseManager:save(newUserRole, false)
     end)
 end
@@ -76,7 +76,7 @@ function PermissionsManager:assignCommand(commandname, rolename)
         local roleid = DatabaseManager:getEntry(Role, "roleName", rolename).roleID
         return commandid, roleid
     end)
-    local newRoleCommand = RoleCommand.new(roleid, commandid)
+    local newRoleCommand = RoleCommand.create(roleid, commandid)
     local result = DatabaseManager:save(newRoleCommand, false)
 
     return result
@@ -89,7 +89,7 @@ function PermissionsManager:assignAction(actionname, rolename)
         return actionid, roleid
     end)
 
-    local newRoleAction = RoleAction.new(roleid, actionid)
+    local newRoleAction = RoleAction.create(roleid, actionid)
     local result = DatabaseManager:save(newRoleAction, false)
 
     return result
