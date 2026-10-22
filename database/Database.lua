@@ -321,74 +321,69 @@ function DatabaseManager:mapRowToClass(class, row)
 end
 
 function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
-
   Utils.nkprint("TABLENAME = " .. tableName, "debug")
-  object.tableName = nil
-  local columns = {}
-  local values = {}
-  local updateColumns = {}
-  local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
 
+  local columnsOrder = DatabaseManager:getTableColumnsName(tableName)
   local firstSchemaColumn = columnsOrder[1]
   local isNewAutoIncrementRecord = (firstSchemaColumn ~= nil and object[firstSchemaColumn] == nil)
-  local firstColumn
 
+  local keyColumn
   for _, columnName in ipairs(columnsOrder) do
     if object[columnName] ~= nil and object[columnName] ~= "" then
-      firstColumn = columnName
+      keyColumn = columnName
       break
     end
   end
-  local updatePlaceholders = {}
-  for key, value in pairs(object) do
-    table.insert(columns, key)
-    if type(value) == "table" then
-      value = Utils.table_to_string(value)
-    elseif type(value) == "boolean" then
-      value = value and 1 or 0
-    end
 
-    table.insert(values, value)
-    table.insert(updatePlaceholders, string.format("%s = ?", key))
-  end
-
-  if canupdate and firstColumn and object[firstColumn] ~= nil then
-    local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
-    local rows = DatabaseManager:prepareAndSelect(selectQuery, object[firstColumn])
-    local count = rows[1] and tonumber(rows[1]["COUNT(*)"]) or 0
-    if count > 0 then
-      return "nickel.nochange"
+  local columns, values, updatePlaceholders = {}, {}, {}
+  for _, columnName in ipairs(columnsOrder) do
+    local value = object[columnName]
+    if value ~= nil then
+      if type(value) == "table" then
+        value = Utils.table_to_string(value)
+      elseif type(value) == "boolean" then
+        value = value and 1 or 0
+      end
+      table.insert(columns, columnName)
+      table.insert(values, value)
+      table.insert(updatePlaceholders, columnName .. " = ?")
     end
   end
 
-  if isNewAutoIncrementRecord then
+  if #values == 0 then
+    return nil, "empty object"
+  end
+
+  local function doInsert()
     local placeholders = string.rep("?, ", #values - 1) .. "?"
-    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
-    Utils.nkprint(insertQuery, "debug")
-    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
+    local q = string.format("INSERT INTO %s (%s) VALUES (%s)",
+      tableName, table.concat(columns, ", "), placeholders)
+    Utils.nkprint(q, "debug")
+    return DatabaseManager:prepareAndExecute(q, table.unpack(values, 1, #values))
   end
 
-  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, firstColumn)
+  if isNewAutoIncrementRecord or not keyColumn then
+    return doInsert()
+  end
+
+  local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, keyColumn)
   Utils.nkprint(selectQuery, "debug")
-  local rows = DatabaseManager:prepareAndSelect(selectQuery, object[firstColumn])
+  local rows = DatabaseManager:prepareAndSelect(selectQuery, object[keyColumn])
   local count = rows[1] and tonumber(rows[1]["COUNT(*)"]) or 0
-  if count > 0 and canupdate then
 
-      -- Update query with a placeholder for the WHERE clause
-      local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?", tableName, table.concat(updatePlaceholders, ", "), firstColumn)
-
-      -- Execute the query using prepareAndExecute with bound values (all columns) and the WHERE value appended
-      local params = {}
-      for _, v in ipairs(values) do table.insert(params, v) end
-      table.insert(params, object[firstColumn])
-      return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(params))
-  else
-    local placeholders = string.rep("?, ", #values - 1) .. "?" -- Generate placeholders like ?, ?, ?, ...
-    local insertQuery = string.format("INSERT INTO %s (%s) VALUES (%s)", tableName, table.concat(columns, ", "), placeholders)
-    
-    -- Execute the query using prepareAndExecute with the values array
-    return DatabaseManager:prepareAndExecute(insertQuery, table.unpack(values))
+  if count == 0 then
+    return doInsert()
   end
+
+  if canupdate then
+    local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?",
+      tableName, table.concat(updatePlaceholders, ", "), keyColumn)
+    local params = { table.unpack(values, 1, #values) }
+    params[#params + 1] = object[keyColumn]
+    return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(params, 1, #params))
+  end
+
+  return "nickel.nochange"
 end
 
 
