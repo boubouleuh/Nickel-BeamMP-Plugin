@@ -354,16 +354,20 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
     return nil, "empty object"
   end
 
-  local function doInsert()
-    local placeholders = string.rep("?, ", #values - 1) .. "?"
+  local placeholders = string.rep("?, ", #values - 1) .. "?"
+
+  if isNewAutoIncrementRecord or not keyColumn then
     local q = string.format("INSERT INTO %s (%s) VALUES (%s)",
       tableName, table.concat(columns, ", "), placeholders)
     Utils.nkprint(q, "debug")
     return DatabaseManager:prepareAndExecute(q, table.unpack(values, 1, #values))
   end
 
-  if isNewAutoIncrementRecord or not keyColumn then
-    return doInsert()
+  if not canupdate then
+    local q = string.format("INSERT OR IGNORE INTO %s (%s) VALUES (%s)",
+      tableName, table.concat(columns, ", "), placeholders)
+    Utils.nkprint(q, "debug")
+    return DatabaseManager:prepareAndExecute(q, table.unpack(values, 1, #values))
   end
 
   local selectQuery = string.format("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, keyColumn)
@@ -372,18 +376,17 @@ function DatabaseManager:insertOrUpdateObject(tableName, object, canupdate)
   local count = rows[1] and tonumber(rows[1]["COUNT(*)"]) or 0
 
   if count == 0 then
-    return doInsert()
+    local q = string.format("INSERT INTO %s (%s) VALUES (%s)",
+      tableName, table.concat(columns, ", "), placeholders)
+    Utils.nkprint(q, "debug")
+    return DatabaseManager:prepareAndExecute(q, table.unpack(values, 1, #values))
   end
 
-  if canupdate then
-    local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?",
-      tableName, table.concat(updatePlaceholders, ", "), keyColumn)
-    local params = { table.unpack(values, 1, #values) }
-    params[#params + 1] = object[keyColumn]
-    return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(params, 1, #params))
-  end
-
-  return "nickel.nochange"
+  local updateQuery = string.format("UPDATE %s SET %s WHERE %s = ?",
+    tableName, table.concat(updatePlaceholders, ", "), keyColumn)
+  local params = { table.unpack(values, 1, #values) }
+  params[#params + 1] = object[keyColumn]
+  return DatabaseManager:prepareAndExecute(updateQuery, table.unpack(params, 1, #params))
 end
 
 
