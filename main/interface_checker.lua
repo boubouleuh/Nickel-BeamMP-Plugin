@@ -113,6 +113,6 @@ function InterfaceChecker.CheckForInterfaceMod()
 end
 
 -- Defer ZIP inspection to a thread (os.execute calls are blocking)
-Nickel.CreateThread(function()
-    InterfaceChecker.CheckForInterfaceMod()
-end)
+-- Nickel.CreateThread(function()
+--     InterfaceChecker.CheckForInterfaceMod()
+-- end) --disable interface check
